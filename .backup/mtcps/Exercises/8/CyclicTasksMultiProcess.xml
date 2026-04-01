@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+const int N=7;
+typedef int [1,N] id_t;
+
+const int M=5;
+typedef int [0,M-1] id_c;
+
+chan release[M];
+urgent chan run[M];
+
+clock time;</declaration>
+	<template>
+		<name x="5" y="5">TASK</name>
+		<parameter>const id_t id, const int T, const int C</parameter>
+		<declaration>// Place local declarations here.
+clock t, c;</declaration>
+		<location id="id0" x="68" y="68">
+			<name x="85" y="59">ERR</name>
+		</location>
+		<location id="id1" x="-68" y="136">
+			<name x="-51" y="136">Running</name>
+			<label kind="invariant" x="-51" y="153">c&lt;=C &amp;&amp;
+t&lt;=T</label>
+		</location>
+		<location id="id2" x="-68" y="0">
+			<name x="-127" y="-8">Ready</name>
+			<label kind="invariant" x="-109" y="8">t&lt;=T</label>
+		</location>
+		<location id="id3" x="-68" y="-136">
+			<name x="-78" y="-170">Idle</name>
+			<label kind="invariant" x="-51" y="-144">t&lt;=T</label>
+		</location>
+		<init ref="id2"/>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="select" x="-238" y="34">i:id_c</label>
+			<label kind="guard" x="-221" y="-17">c==C</label>
+			<label kind="synchronisation" x="-272" y="8">release[i]!</label>
+			<nail x="-170" y="136"/>
+			<nail x="-170" y="-136"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="25" y="110">t==T</label>
+			<nail x="68" y="136"/>
+		</transition>
+		<transition id="id6">
+			<source ref="id2"/>
+			<target ref="id0"/>
+			<label kind="guard" x="17" y="-25">t==T</label>
+			<nail x="68" y="0"/>
+		</transition>
+		<transition id="id7">
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="select" x="-59" y="34">i:id_c</label>
+			<label kind="synchronisation" x="-59" y="59">run[i]?</label>
+			<label kind="assignment" x="-59" y="93">c=0</label>
+		</transition>
+		<transition id="id8">
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-51" y="-119">t==T</label>
+			<label kind="assignment" x="-51" y="-42">t=0</label>
+		</transition>
+	</template>
+	<template>
+		<name>CPU</name>
+		<parameter>const id_c id</parameter>
+		<location id="id9" x="-102" y="34">
+			<name x="-112" y="0">USED</name>
+		</location>
+		<location id="id10" x="-102" y="-102">
+			<name x="-112" y="-136">IDLE</name>
+		</location>
+		<init ref="id10"/>
+		<transition id="id11">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-272" y="-42">release[id]?</label>
+			<nail x="-170" y="34"/>
+			<nail x="-170" y="-102"/>
+		</transition>
+		<transition id="id12">
+			<source ref="id10"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-25" y="-51">run[id]!</label>
+			<nail x="-34" y="-102"/>
+			<nail x="-34" y="34"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+PrA = TASK(1,20,4);
+PrB = TASK(2,20,3);
+PrC = TASK(3,30,8);
+PrD = TASK(4,40,4);
+PrE = TASK(5,40,5);
+PrF = TASK(6,50,10);
+PrG = TASK(7,50,20);
+
+// List one or more processes to be composed into a system.
+system PrA, PrB, PrC, PrD, PrE, PrF, PrG, CPU;
+
+
+</system>
+	<queries>
+		<option key="--search-order" value="2"/>
+		<option key="--diagnostic" value="-1"/>
+		<query>
+			<formula>// Does there exists a solution?</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>....</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>E[] not (PrA.ERR or PrB.ERR or PrC.ERR or PrD.ERR or PrE.ERR or PrF.ERR or PrG.ERR)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-03-25 12:09:12 +0100">
+				<option key="--search-order" value="2"/>
+				<option key="--diagnostic" value="-1"/>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula>// Is the solution cyclic?</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>....</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>E&lt;&gt; PrA.Ready and PrB.Ready and PrC.Ready and PrD.Ready and PrE.Ready and PrF.Ready and PrG.Ready and 
+PrA.t==0 and PrB.t==0 and PrC.t==0 and PrD.t==0 and PrE.t==0 and PrF.t==0 and PrG.t==0 and 
+time&gt;0</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-03-25 12:09:14 +0100">
+				<option key="--search-order" value="2"/>
+				<option key="--diagnostic" value="-1"/>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment/>
+		</query>
+		<query>
+			<formula>E&lt;&gt; PrA.Ready and PrB.Ready and PrC.Ready and PrD.Ready and PrE.Ready and 
+PrA.t==0 and PrB.t==0 and PrC.t==0 and PrD.t==0 and PrE.t==0 and 
+time&gt;0</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>E[] not (PrA.ERR or PrB.ERR or PrC.ERR or PrD.ERR or PrE.ERR)</formula>
+			<comment/>
+		</query>
+	</queries>
+</nta>

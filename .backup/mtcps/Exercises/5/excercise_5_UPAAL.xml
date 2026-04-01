@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta>
+<nta>
+	<declaration>typedef int[1,2] proc_t;
+proc_t turn;
+bool flag[proc_t] = {false, false};
+chan go[proc_t];
+</declaration>
+	<template>
+		<name x="5" y="5">P</name>
+		<parameter>const proc_t id</parameter>
+		<declaration>// Place local declarations here.
+const int MAX_CRIT_STEPS=100;
+int steps=0;
+</declaration>
+		<location id="id0" x="0" y="0">
+			<name x="-17" y="25">Idle</name>
+			<urgent/>
+		</location>
+		<location id="id1" x="348" y="0">
+			<name x="331" y="17">Try1</name>
+			<urgent/>
+		</location>
+		<location id="id2" x="620" y="0">
+			<name x="603" y="17">Try2</name>
+			<urgent/>
+		</location>
+		<location id="id3" x="909" y="0">
+			<name x="901" y="17">Try3</name>
+			<urgent/>
+		</location>
+		<location id="id4" x="1224" y="0">
+			<name x="1215" y="17">Crit</name>
+			<urgent/>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="731" y="68">turn==id</label>
+			<label kind="synchronisation" x="739" y="51">go[id]?</label>
+			<nail x="867" y="51"/>
+			<nail x="671" y="51"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id4"/>
+			<label kind="guard" x="841" y="-144">flag[3-id] == 0</label>
+			<label kind="synchronisation" x="867" y="-161">go[id]?</label>
+			<nail x="739" y="-119"/>
+			<nail x="1071" y="-119"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="586" y="144">go[id]?</label>
+			<label kind="assignment" x="561" y="178">flag[id] := 0,
+steps := 0</label>
+			<nail x="1062" y="170"/>
+			<nail x="153" y="170"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id4"/>
+			<label kind="guard" x="1071" y="-170">steps &lt;= MAX_CRIT_STEPS</label>
+			<label kind="synchronisation" x="1190" y="-153">go[id]?</label>
+			<label kind="assignment" x="1174" y="-127">steps++</label>
+			<nail x="1275" y="-127"/>
+			<nail x="1156" y="-127"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="994" y="-17">turn==3-id</label>
+			<label kind="synchronisation" x="1003" y="-34">go[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="guard" x="705" y="-25">flag[3-id]==1</label>
+			<label kind="synchronisation" x="722" y="-42">go[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="425" y="-42">go[id]?</label>
+			<label kind="assignment" x="416" y="-25">turn := id</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="119" y="-51">go[id]?</label>
+			<label kind="assignment" x="110" y="-25">flag[id] := 1</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-17" y="-136">go[id]?</label>
+			<nail x="68" y="-110"/>
+			<nail x="-42" y="-110"/>
+		</transition>
+	</template>
+	<template>
+		<name>UnfairScheduler</name>
+		<location id="id5" x="0" y="0">
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="-8" y="102">go[2]!</label>
+			<nail x="68" y="102"/>
+			<nail x="-42" y="102"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="-25" y="-119">go[1]!</label>
+			<nail x="-59" y="-102"/>
+			<nail x="59" y="-102"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+P1 = P(1);
+P2 = P(2);
+// List one or more processes to be composed into a system.
+system P1, P2, UnfairScheduler;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] !(P1.Crit &amp;&amp; P2.Crit)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>P1.Try1 --&gt; P1.Crit</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>P2.Try1 --&gt; P2.Crit</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
