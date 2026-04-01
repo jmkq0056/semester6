@@ -1,0 +1,542 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{colortbl}
+
+\definecolor{accolor}{RGB}{180,40,40}
+\definecolor{mtcpscolor}{RGB}{40,100,180}
+\definecolor{successgreen}{RGB}{40,140,40}
+\definecolor{warnred}{RGB}{200,50,50}
+\definecolor{lightgray}{RGB}{245,245,245}
+
+\titleformat{\section}{\Large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Semester 6 --- April--June 2026}
+\lhead{Jawad M.K. Qayyum}
+\rfoot{\thepage}
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries Semester 6 Study Plan}\\[0.5em]
+{\large April 1 $\rightarrow$ Exam ($\sim$June 1) --- 8 weeks}\\[0.3em]
+{\large Courses: AC, mtcps, Security (10--15 days), + Bachelor's Project}
+\end{center}
+
+\vspace{1em}
+
+%=============================================================================
+\section{How We Learn and Remember --- Our Toolkit}
+%=============================================================================
+
+We have no YouTube tutorials, no online courses, no textbook solutions for these two courses. What we have:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lp{10cm}}
+\toprule
+\textbf{Tool} & \textbf{Role in Learning} \\
+\midrule
+\textbf{Claude Opus 4.6} & On-demand tutor. Explain concepts we don't understand. Generate practice problems. Check our reasoning. Debate our proof attempts. \textit{Not} a replacement for doing the work --- a sparring partner. \\
+\textbf{LaTeX} & Structure our understanding. Compile definitions, theorems, formulas into clean references. For mtcps: build the open-book master reference. For AC: build study notes (not exam material). \\
+\textbf{Handwriting} & \textbf{The memory tool.} Writing by hand forces slow processing and deep encoding. For AC: every definition, every proof, every reduction must pass through the hand. The A4 exam page is handwritten --- so the hand must know the material. \\
+\textbf{Blackboard} & Teach-to-learn. When we explain a concept on the blackboard to each other, we discover what we actually understand vs.\ what we only \textit{think} we understand. Especially critical for AC proofs and mtcps state machines. \\
+\textbf{Pair study (Jawad + friend)} & Two brains catch blind spots one brain misses. One person explains, the other challenges. Alternate roles per topic. Quiz each other. Simulate exam conditions together. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Learning Loop}
+
+Every topic in both courses must go through this cycle:
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{
+\begin{enumerate}[nosep]
+\item \textbf{Read} the lecture slides
+\item \textbf{Ask Claude} to explain what you don't understand --- ask ``why'', not just ``what''
+\item \textbf{Handwrite} the key definitions, theorems, and proof sketches on paper
+\item \textbf{Attempt} the exercise \textbf{before} looking at the solution
+\item \textbf{Blackboard}: explain the topic to your friend. If you can't explain it simply, you don't understand it
+\item \textbf{Error catalog}: write down what you got wrong and why
+\item \textbf{LaTeX}: compile the clean version into your notes/master-reference
+\item \textbf{Repeat}: revisit weak topics from the error catalog next session
+\end{enumerate}
+}}
+\end{center}
+
+\subsection{Why Handwriting is Non-Negotiable for AC}
+
+\begin{itemize}[nosep]
+\item The exam allows \textbf{one handwritten A4 page (one side)}. If your hand hasn't written it, your hand won't remember it under pressure.
+\item Typing is fast but shallow --- you can type a formula without understanding it. Handwriting is slow and forces you to process every symbol.
+\item The diagonalization proof, the reduction chain, the complexity class hierarchy --- these must be \textbf{muscle memory}. Write them 3+ times each.
+\item Your LaTeX notes are the \textit{map}. Your handwritten pages are the \textit{territory}. The exam tests the territory.
+\end{itemize}
+
+\subsection{Why Blackboard + Pair Study is Non-Negotiable}
+
+\begin{itemize}[nosep]
+\item In Semester 5, you compiled master references \textit{alone}. That gave you organized notes but shallow understanding (MI = 7).
+\item When you explain a reduction on the blackboard and your friend asks ``but why does $w \in A \iff f(w) \in B$?'' --- that question forces real understanding.
+\item Pair study creates a \textbf{feedback loop} that solo study doesn't: your friend catches your errors in real time.
+\item For mtcps: build UPPAAL models together. One person drives, the other verifies. Switch roles.
+\item For AC: quiz each other. ``Prove CLIQUE is NP-complete. Go.'' Timer on. Only A4 allowed.
+\end{itemize}
+
+\subsection{How Claude Opus 4.6 Fits In}
+
+Claude is not a shortcut --- it's a \textbf{study partner that never gets tired}:
+
+\begin{itemize}[nosep]
+\item \textbf{Before} lecture: ``Explain Turing machines like I'm a 2nd-semester student who scored 4 in Theoretical Foundations''
+\item \textbf{During} exercises: ``I'm stuck on this reduction. Here's what I tried. Where is my reasoning wrong?''
+\item \textbf{After} exercises: ``Generate 3 practice problems similar to Exercise 4 but harder''
+\item \textbf{Exam prep}: ``Quiz me on NP-completeness. I can only use this A4 page. Check if my proof is valid''
+\item \textbf{For mtcps}: ``Explain this UPPAAL query syntax. What does \texttt{E<>} mean vs.\ \texttt{A[]}?''
+\item \textbf{Never}: ``Write my notes for me'' or ``Solve this exercise for me'' --- that bypasses the learning
+\end{itemize}
+
+\vspace{0.5em}
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{
+\textbf{The rule:} Claude explains. You handwrite. The blackboard tests. LaTeX organizes. The exam rewards what your hand and brain retained --- not what Claude said.
+}}
+\end{center}
+
+\vspace{1em}
+
+%=============================================================================
+\section{The Actual Study Session --- How We Attack a Lecture}
+%=============================================================================
+
+The slides alone are hard to attack. They are dense, mathematical, and don't explain \textit{why}. So we don't read slides alone --- we use Claude to build a \textbf{cheatsheet per lecture} first, then split-view slides + cheatsheet together.
+
+\subsection{What the Cheatsheet Is}
+
+For each lecture, Claude produces a cheatsheet that:
+\begin{itemize}[nosep]
+\item Explains every concept in \textbf{plain English} alongside the math --- ``this formula says: if the tape head is at position $i$ and reads symbol $a$, it writes $b$, moves right, and goes to state $q_3$''
+\item \textbf{Steps out} every process --- not ``apply the reduction'' but ``Step 1: take the SAT instance. Step 2: for each clause, build a gadget. Step 3: connect gadgets like this\ldots''
+\item Uses the \textbf{exercises as intuition} --- ``this definition matters because Exercise 3 Question 2 asks you to do exactly this'' vs.\ ``this is background theory you won't be tested on''
+\item \textbf{Narrows the scope}: marks what is \textcolor{accolor}{\textbf{exam-relevant}} vs.\ what is \textcolor{gray}{\textit{general knowledge}}
+\item Is written in LaTeX so it's clean, searchable, and printable
+\end{itemize}
+
+\subsection{The Split-View Workflow}
+
+\begin{center}
+\fbox{\parbox{0.93\textwidth}{
+\textbf{Screen left:} Lecture slides (PDF) \hfill \textbf{Screen right:} Cheatsheet (PDF)
+
+\begin{enumerate}[nosep]
+\item Open the lecture slides on the left, the cheatsheet on the right
+\item Go slide by slide --- the cheatsheet explains each slide in plain English
+\item When the math appears, the cheatsheet steps it out with intuition
+\item Handwrite the key definitions and steps as you go (paper + pen on the desk)
+\item When you hit an ``exam-relevant'' tag in the cheatsheet, pay extra attention
+\item When you hit a ``general knowledge'' tag, read it but don't stress about memorizing
+\end{enumerate}
+}}
+\end{center}
+
+\subsection{After the Split-View: Exercises}
+
+This is where AC and mtcps diverge:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{p{7cm}p{7cm}}
+\toprule
+\textcolor{accolor}{\textbf{AC --- Closed Book Exercise}} & \textcolor{mtcpscolor}{\textbf{mtcps --- Open Book Exercise}} \\
+\midrule
+Close the cheatsheet. Close the slides. Close Claude. & Keep the cheatsheet open. Keep UPPAAL open. Keep Claude available. \\
+\midrule
+You have \textbf{only}: the exercise, a pen, paper, and your handwritten notes from the split-view session. & You have: the exercise, the cheatsheet, the master reference, UPPAAL, Python, and Claude as a tool. \\
+\midrule
+Attempt every question. Write down where you get stuck. & Attempt every question using your tools. Focus on \textit{using} the reference efficiently. \\
+\midrule
+\textbf{Then} check the solution. Update your error catalog. Whatever you needed but didn't have $\rightarrow$ A4 page candidate. & \textbf{Then} check the solution. Update your master reference with anything you were missing. \\
+\midrule
+\textit{This simulates exam conditions: you + A4 + pen.} & \textit{This simulates exam conditions: you + open book + tools.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Why This Works}
+
+\begin{itemize}[nosep]
+\item The cheatsheet \textbf{removes the barrier} of dense slides --- you can actually understand what you're reading
+\item The exercise-based scoping means you \textbf{don't waste time} memorizing background theory that won't be tested
+\item For AC: the closed-book exercise forces you to discover your gaps \textit{before} the exam, not during it
+\item For mtcps: the open-book exercise trains you to \textit{use your references fast} --- because in a 4-hour exam, speed matters
+\item Plain English + math together builds the bridge between ``I can read the formula'' and ``I understand what it means''
+\end{itemize}
+
+\subsection{Claude's Role: Cheatsheet Generator, Not Answer Machine}
+
+\begin{center}
+\fbox{\parbox{0.93\textwidth}{
+\textbf{We ask Claude to:}
+\begin{itemize}[nosep]
+\item ``Read lecture 3 slides and the exercise 3. Build me a cheatsheet that explains every concept in plain English, steps out the math, and marks what's exam-relevant based on the exercise.''
+\item ``This slide has a proof by diagonalization. Step it out like I'm explaining it to a friend at a blackboard.''
+\item ``Exercise 4 asks me to reduce $A_{TM}$ to $E_{TM}$. Don't solve it --- explain what a reduction IS so I can attempt it myself.''
+\end{itemize}
+\textbf{We never ask Claude to:}
+\begin{itemize}[nosep]
+\item Solve the exercise for us
+\item Write the A4 page for us
+\item Skip the handwriting step
+\end{itemize}
+}}
+\end{center}
+
+\vspace{1em}
+
+%=============================================================================
+\section{Learning Strategy Audit --- Semester 5}
+%=============================================================================
+
+\subsection{DBS (Database Systems) --- Grade: \textcolor{successgreen}{10 (B)} --- Your Best Method}
+
+\begin{center}
+\begin{tabular}{l}
+\texttt{lectures/} $\rightarrow$ \texttt{notes/} (instructor PDFs, 12 lectures) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{Exercises/} (9 sets with solutions, worked post-lecture) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{master-reference/} (91-page LaTeX PDF --- unified lookup) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{Exam-reference/} (9 topic PDFs: Basic + Standard tiers) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{prev-exam/} (7 historical + 1 LaTeX practice exam with solutions) \\
+\hspace{3em}$\downarrow$ \\
+\textbf{EXAM $\rightarrow$ 10}
+\end{tabular}
+\end{center}
+
+\textbf{What made DBS work:}
+\begin{itemize}[nosep]
+\item Topic-based reference tiers (Basic vs.\ Standard) --- prevented cognitive overload
+\item LaTeX practice exam with solutions built into the same document
+\item Exercises done post-lecture with immediate solution checking
+\item Master reference was a single 91-page consolidated document
+\item Supplementary references (\texttt{\_KEY\_ER\_MAPPING}, \texttt{dictionary-ra-sql-operators})
+\end{itemize}
+
+\textbf{Key:} Exercises as primary learning tool. Master reference as exam weapon. Practice exams for active recall.
+
+\vspace{0.5em}
+
+\subsection{MI (Machine Intelligence) --- Grade: \textcolor{warnred}{7 (C)} --- What Went Wrong}
+
+\begin{center}
+\begin{tabular}{l}
+\texttt{lectures/} $\rightarrow$ \texttt{notes/} (per-lecture PDFs) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{master-reference/} (2 LaTeX docs: L1--L6 search + L7--L12 ML) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{Exercises/} (completed but not deeply internalized) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{NOTEBOOKS/} (Python: gradient descent, MLP, CNN --- PART2 only) \\
+\hspace{3em}$\downarrow$ \\
+\texttt{exam-rehearsal/} (1 notebook, near the end) \\
+\hspace{3em}$\downarrow$ \\
+\textbf{EXAM $\rightarrow$ 7}
+\end{tabular}
+\end{center}
+
+\textbf{What went wrong:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{4.5cm}p{10cm}}
+\toprule
+\textbf{Problem} & \textbf{Impact} \\
+\midrule
+No implementation for PART1 & Never coded BFS, DFS, A* --- couldn't debug understanding \\
+Theory--practice gap & Master ref is formula-heavy, notebooks are code-heavy --- no bridge \\
+Passive consolidation & References well-organized but don't force active problem-solving \\
+Exercises not internalized & Worked through solutions but didn't rewrite or generate test cases \\
+Late exam rehearsal & Only 1 notebook near the end --- too late to find gaps \\
+No error catalog & No ``pitfalls'' or ``common mistakes'' section \\
+No feedback loop & No self-testing step --- blind spots persist until exam \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Pattern: DBS = 10, MI = 7 --- Why?}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+\textbf{Factor} & \textbf{DBS (10)} & \textbf{MI (7)} \\
+\midrule
+Nature & Applied, tool-based, visual & Abstract, mathematical, proof-heavy \\
+Your approach & Exercises $\rightarrow$ master ref $\rightarrow$ prev-exams & Read $\rightarrow$ compile ref $\rightarrow$ exercises $\rightarrow$ hope \\
+Practice exams & 7 historical + 1 custom LaTeX & 1 rehearsal notebook \\
+Active recall & Practice exam forces retrieval & Master ref encourages re-reading \\
+Implementation & SQL is inherently hands-on & PART1 algorithms never implemented \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.3em}
+\fbox{\parbox{0.95\textwidth}{
+\textbf{Bottom line:} You learn best through \textbf{exercises and practice exams} (DBS method), not through \textbf{reading and compiling references} (MI method). When the course is mathematical/abstract, you default to passive compilation --- which doesn't work.
+}}
+
+%=============================================================================
+\section{How Semester 6 Courses Map to Your Experience}
+%=============================================================================
+
+\subsection{\textcolor{accolor}{AC (Algorithms \& Computability)} --- LIKE MI, NOT DBS}
+
+AC is mathematical like MI was: algorithm design, complexity theory, Turing machines, NP-completeness, reductions, proofs. No tool to lean on.
+
+\textbf{The danger:} You will instinctively use the MI method (compile master ref, read exercises). That gave you 7. With AC's weaker foundation (4 in both prerequisites), the MI method could give you \textbf{4 or worse}.
+
+\textbf{Exam constraint:} Handwritten one-side A4 only. No master reference allowed.
+
+\textbf{Prerequisite gaps (both scored 4):}
+\begin{itemize}[nosep]
+\item Algorithms and Data Structures --- Big-O, recurrences, basic DP, greedy, graphs
+\item Theoretical Foundations of CS --- automata, formal languages, Turing machines, logic
+\end{itemize}
+
+\subsection{\textcolor{mtcpscolor}{mtcps (Models \& Tools for CPS)} --- LIKE DBS, BUT WITH FIGURES}
+
+mtcps is visual and tool-based like DBS: 40--50\% of slides are diagrams, heavy UPPAAL dependency (like SQL for DBS), exercise-driven, 4 previous exams available.
+
+\textbf{The opportunity:} Use the DBS method. Exercises $\rightarrow$ UPPAAL $\rightarrow$ drill prev-exams.
+
+\textbf{The challenge:} Figures are hard to reproduce in LaTeX. DBS had tables and SQL (text). mtcps has timed automata, state machines, block diagrams, zone diagrams.
+
+\textbf{mtcps exam format (audited from 4 previous exams):}
+\begin{itemize}[nosep]
+\item 6 exercises, 75 points, 4 hours, open book, digital submission
+\item $\sim$25\% calculation, $\sim$40\% drawing/modeling, $\sim$35\% explanation
+\item UPPAAL models provided with exam (you modify and verify)
+\item Python required for one exercise (dynamical systems / ODE)
+\end{itemize}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+\textbf{Topic} & \textbf{Exam Weight} & \textbf{Your Foundation} \\
+\midrule
+UPPAAL query writing \& verification & \textbf{35\%} & New --- must learn \\
+Synchronous / asynchronous components & 20\% & Syntax \& Semantics (7) helps \\
+Timed automata and zones & 15\% & Formal methods background helps \\
+Control systems / dynamical systems & 20\% & New --- must learn \\
+Scheduling (cyclic exec, FPS, EDF) & 10\% & CompArch/OS (4) --- weak \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{Adapted Learning Strategies}
+%=============================================================================
+
+\subsection{\textcolor{accolor}{For AC --- Use the ``Anti-MI'' Method}}
+
+You cannot repeat the MI approach. Instead:
+
+\textbf{Step 1: Patch foundations FIRST (Week 1)}
+\begin{itemize}[nosep]
+\item Revisit Big-O, recurrences, Master theorem, basic DP, greedy, graph algorithms
+\item Revisit automata, DFA/NFA, formal languages, basic Turing machine notation
+\item Do this \textbf{actively} --- solve problems, don't just re-read
+\end{itemize}
+
+\textbf{Step 2: Exercise-first learning (Weeks 2--4)}
+\begin{itemize}[nosep]
+\item For each lecture: attempt the exercise \textbf{BEFORE} reading the solution
+\item Write down where you got stuck and why
+\item Build an \textbf{error catalog}: ``I forgot X'', ``I confused X with Y''
+\item This forces active recall instead of passive compilation
+\end{itemize}
+
+\textbf{Step 3: Build your A4 page iteratively (Weeks 2--6)}
+\begin{itemize}[nosep]
+\item After each exercise set, write down what you needed but didn't have in your head
+\item That becomes your A4 page content
+\item Draft 1 (week 3) $\rightarrow$ Draft 2 (week 4) $\rightarrow$ Draft 3 (week 6) $\rightarrow$ Final (week 8)
+\item Practice handwriting it --- your hand is the printer, not LaTeX
+\end{itemize}
+
+\textbf{Step 4: Create your own practice problems (Weeks 4--6)}
+\begin{itemize}[nosep]
+\item AC has \textbf{NO previous exams} --- this is the biggest gap
+\item After each lecture, write 2--3 exam-style questions yourself
+\item Swap with classmates if possible
+\item Solve under timed conditions with only your A4 draft
+\end{itemize}
+
+\fbox{\parbox{0.95\textwidth}{
+\textbf{What NOT to do for AC:}
+\begin{itemize}[nosep]
+\item Do NOT compile a 50-page master reference you can't bring to the exam
+\item Do NOT just read exercise solutions without attempting them first
+\item Do NOT spend time on beautiful LaTeX notes --- handwriting is what you need
+\end{itemize}
+}}
+
+\vspace{0.5em}
+
+\subsection{\textcolor{mtcpscolor}{For mtcps --- Use the DBS Method (Adapted for Visual Content)}}
+
+\textbf{Step 1: Lectures + Exercises together (Weeks 3--5)}
+\begin{itemize}[nosep]
+\item Work through exercises WITH UPPAAL open --- hands-on, like SQL for DBS
+\item For each exercise: model it, verify it, modify it
+\item The tool is your learning medium, not the slides
+\end{itemize}
+
+\textbf{Step 2: Notes --- hybrid approach for visual content}
+\begin{itemize}[nosep]
+\item \textbf{LaTeX} for: definitions, formulas, UPPAAL query syntax, scheduling calculations
+\item \textbf{Screenshots / hand-drawn} for: timed automata, state machines, zone diagrams, block diagrams
+\item The goal is not beautiful notes --- it's notes you can quickly reference
+\end{itemize}
+
+\textbf{Step 3: Master reference --- YES, build one (Weeks 5--6)}
+\begin{itemize}[nosep]
+\item mtcps is \textbf{open book}. A master reference IS your exam weapon (unlike AC)
+\item Structure it like your DBS master reference (91 pages, topic-based)
+\item Include: UPPAAL query cheat sheet, zone computation steps, scheduling formulas, PID equations
+\end{itemize}
+
+\textbf{Step 4: Drill prev-exams (Weeks 5--7)}
+\begin{itemize}[nosep]
+\item You have 4 previous exams. DBS had 7 and you got 10. Same approach
+\item Do them timed (4 hours each)
+\item After each: identify weak areas, update master reference
+\item Save 2025 exam (has solutions) for last as final mock
+\end{itemize}
+
+%=============================================================================
+\section{Your Academic Profile}
+%=============================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{llll}
+\toprule
+\textbf{Course} & \textbf{Grade} & \textbf{Sem} & \textbf{Relevance} \\
+\midrule
+Imperative Programming & \textcolor{successgreen}{\textbf{12}} & S1 & --- \\
+Theoretical Foundations of CS & \textcolor{warnred}{\textbf{4}} & S1 & AC foundation (Turing, logic) \\
+Algorithms and Data Structures & \textcolor{warnred}{\textbf{4}} & S2 & \textbf{Direct AC prerequisite} \\
+Probability Theory \& Linear Algebra & 10 & S2 & --- \\
+Object-Oriented Programming & 10 & S3 & --- \\
+Design and Evaluation of UI & \textcolor{successgreen}{\textbf{12}} & S3 & --- \\
+Languages and Compilers & 10 & S4 & --- \\
+Syntax and Semantics & 7 & S4 & mtcps foundation (formal models) \\
+Computer Architecture and OS & \textcolor{warnred}{\textbf{4}} & S4 & mtcps foundation (scheduling) \\
+Machine Intelligence & 7 & S5 & Similar challenge to AC \\
+Database Systems & \textcolor{successgreen}{\textbf{10}} & S5 & Similar approach to mtcps \\
+Agile Software Engineering & 7 & S5 & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Pattern:} Strong in applied courses (10--12), weak in pure theory (4). You learn best through exercises and tools, worst through passive reading of abstract material.
+
+%=============================================================================
+\section{8-Week Schedule}
+%=============================================================================
+
+\textbf{Key facts:} Both AC and mtcps have \textbf{12 lectures total} each. We have 7 (AC) and 9 (mtcps) so far. Lectures 8--12 arrive during the semester.
+
+\textbf{Core principle:} The brain cannot context-switch between two courses at the same time. We don't interleave --- we do \textbf{hackathons}. One course at a time, full immersion, then switch.
+
+\vspace{0.5em}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{center}
+\begin{tabular}{p{3cm}p{2.5cm}p{8.5cm}}
+\toprule
+\textbf{When} & \textbf{Focus} & \textbf{What} \\
+\midrule
+\textbf{Week 1--2} \newline Apr 1--14 & \textcolor{accolor}{\textbf{AC HACKATHON}} & Full immersion. Cheatsheets + split-view for all 7 available lectures. Exercises 1--7 closed-book. Start error catalog. A4 draft 1. Process new lecture 8 when it arrives. \\
+\midrule
+\textbf{Week 3--4} \newline Apr 15--28 & \textcolor{mtcpscolor}{\textbf{mtcps HACKATHON}} & Full immersion. Cheatsheets + split-view for all 9 available lectures. Exercises 1--9 with UPPAAL open. Start master-reference. Prev-exam 2023 (timed). Process new lectures 10--11 when they arrive. \\
+\midrule
+\textbf{Week 5} \newline Apr 29--May 5 & \textcolor{accolor}{\textbf{AC ROUND 2}} & Process new lectures 9--11. Exercises 9--11 closed-book. Redo weakest exercises from round 1. Error catalog update. A4 draft 2. \\
+\midrule
+\textbf{Week 6} \newline May 6--12 & \textcolor{mtcpscolor}{\textbf{mtcps ROUND 2}} & Process lecture 12. Exercises 10--12. Prev-exam 2024 + 2023-reexam (timed). Master-reference updated with all 12 lectures. \\
+\midrule
+\textbf{Week 7} \newline May 13--23 & \textbf{SECURITY} & 10--15 day sprint. AC + mtcps: zero. Full context switch. \\
+\midrule
+\textbf{Week 8} \newline May 24--Exam & \textbf{FINAL PASS} & \textcolor{accolor}{\textbf{AC:}} Lecture 12 + exercise 12. Handwrite final A4 (practice 2--3x). Solve problems timed. Blackboard session. \newline\textcolor{mtcpscolor}{\textbf{mtcps:}} Prev-exam 2025 (final mock). UPPAAL refresher. Master-reference final pass. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\fbox{\parbox{0.93\textwidth}{
+\textbf{The hackathon rule:} When you're in the AC hackathon, mtcps does not exist. When you're in the mtcps hackathon, AC does not exist. No splitting attention. Full immersion, then full switch.
+
+\vspace{0.3em}
+
+\textbf{New lectures:} When a new lecture drops mid-hackathon for the \textit{other} course, just save the PDF. Don't read it. Process it in that course's next hackathon round.
+}}
+\end{center}
+
+%=============================================================================
+\section{What to Create in the Repo}
+%=============================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{llll}
+\toprule
+\textbf{Subject} & \textbf{Folder} & \textbf{Status} & \textbf{Purpose} \\
+\midrule
+AC & \texttt{lectures/} & Have 7/12 & Lecture slides (8--12 arriving weekly) \\
+AC & \texttt{Exercises/} & Have 7/12 & Exercises with solutions \\
+AC & \texttt{notes/} & \textcolor{warnred}{CREATE} & Short LaTeX per lecture (1--2 pages) \\
+AC & \texttt{error-catalog/} & \textcolor{warnred}{CREATE} & What you get wrong and why \\
+AC & \texttt{a4-drafts/} & \textcolor{warnred}{CREATE} & Photos/scans of handwritten A4 iterations \\
+\midrule
+mtcps & \texttt{lectures/} & Have 9/12 & Lecture slides (10--12 arriving weekly) \\
+mtcps & \texttt{Exercises/} & Have 9/12 & Exercise sets \\
+mtcps & \texttt{prev-exam/} & Have (4) & Previous exams (massive advantage) \\
+mtcps & \texttt{notes/} & \textcolor{warnred}{CREATE} & LaTeX + screenshots hybrid \\
+mtcps & \texttt{master-reference/} & \textcolor{warnred}{CREATE} & Open-book exam weapon \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{The Core Insight}
+%=============================================================================
+
+\begin{center}
+\fbox{\parbox{0.93\textwidth}{
+\textbf{\textcolor{accolor}{AC} (mathematical, like MI):} Don't repeat the MI mistake. Exercise-first, error-catalog, active recall. The A4 constraint forces internalization. Your notes help you study but cannot save you in the exam.
+
+\vspace{0.5em}
+
+\textbf{\textcolor{mtcpscolor}{mtcps} (visual/tool-based, like DBS):} Repeat the DBS success. UPPAAL is your SQL. Prev-exams are your practice exams. Build a master reference for open-book use. This is your stronger learning mode.
+
+\vspace{0.5em}
+
+\textbf{Start AC today. It's the course where your method and your foundation are both weakest.}
+}}
+\end{center}
+
+\end{document}
