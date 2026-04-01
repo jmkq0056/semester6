@@ -1,0 +1,1712 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{tocloft}
+\usepackage{algorithmic}
+\usepackage{fancyhdr}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+\geometry{a4paper, margin=1in, top=0.75in, bottom=0.75in}
+
+% Header setup
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\textbf{SHAFE:JAWAD}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Fix TOC section number width
+\setlength{\cftsecnumwidth}{3em}
+
+\tcbuselibrary{skins,breakable}
+
+% Compact spacing
+\setlength{\parskip}{0.5pt}
+\setlength{\parindent}{0pt}
+\titlespacing*{\section}{0pt}{2pt}{1pt}
+\titlespacing*{\subsection}{0pt}{2pt}{1pt}
+\titleformat{\section}{\normalfont\bfseries\color{defcolor}}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\bfseries\small\color{subseccolor}}{\thesubsection}{0.5em}{}
+
+% Define custom colors
+\definecolor{defcolor}{RGB}{0,51,102}
+\definecolor{excolor}{RGB}{0,102,51}
+\definecolor{notecolor}{RGB}{102,51,0}
+\definecolor{warncolor}{RGB}{153,0,0}
+\definecolor{subseccolor}{RGB}{51,51,102}
+
+% Definition box
+\newtcolorbox{definitionbox}[1][]{
+    colback=defcolor!5,
+    colframe=defcolor,
+    fonttitle=\bfseries,
+    title=#1,
+    boxsep=0.5pt,
+    left=1.5pt,
+    right=1.5pt,
+    top=0.5pt,
+    bottom=0.5pt
+}
+
+% Example box
+\newtcolorbox{examplebox}[1][]{
+    colback=excolor!5,
+    colframe=excolor,
+    fonttitle=\bfseries,
+    title=#1,
+    boxsep=0.5pt,
+    left=1.5pt,
+    right=1.5pt,
+    top=0.5pt,
+    bottom=0.5pt
+}
+
+% Note box
+\newtcolorbox{notebox}[1][]{
+    colback=notecolor!5,
+    colframe=notecolor,
+    fonttitle=\bfseries,
+    title=#1,
+    boxsep=0.5pt,
+    left=1.5pt,
+    right=1.5pt,
+    top=0.5pt,
+    bottom=0.5pt
+}
+
+% Warning box
+\newtcolorbox{warningbox}[1][]{
+    colback=warncolor!5,
+    colframe=warncolor,
+    fonttitle=\bfseries,
+    title=#1,
+    boxsep=0.5pt,
+    left=1.5pt,
+    right=1.5pt,
+    top=0.5pt,
+    bottom=0.5pt
+}
+
+\title{\textbf{Machine Intelligence: Search, Planning \& Theory Reference}\\
+\large Lectures 2--6: State Space, Heuristics, FDR, PDB, POR}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-1em}
+
+%% DOCUMENT STRUCTURE OVERVIEW
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Part} & \textbf{Topic} & \textbf{Lecture} \\
+\hline
+\textbf{A} & Definitions \& Key Concepts (State Space, Nodes, Costs) & L2 \\
+\textbf{B} & Uninformed Search (DFS, BFS, UCS, IDS) & L2 \\
+\textbf{C} & Informed Search (Heuristics, GBFS, A*, Hill Climbing) & L3 \\
+\textbf{D} & Classical Planning \& FDR (Delete Relaxation, FF) & L4 \\
+\textbf{E} & Abstractions \& Pattern Databases (PDB, Orthogonality) & L5 \\
+\textbf{F} & Partial Order Reduction (Action Dependencies, S3) & L6 \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{-0.5em}
+\tableofcontents
+
+\newpage
+
+%% ########################################
+%% QUICK REFERENCE TABLES
+%% ########################################
+\begin{center}
+\textbf{\LARGE QUICK REFERENCE TABLES}
+\end{center}
+\vspace{0.5em}
+
+%% SEARCH ALGORITHM COMPARISON
+\begin{definitionbox}[Search Algorithm Comparison]
+\begin{center}
+\begin{tabular}{@{}lccccl@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Complete?} & \textbf{Optimal?} & \textbf{Time} & \textbf{Space} & \textbf{Data Structure} \\
+\midrule
+\multicolumn{6}{c}{\textbf{UNINFORMED SEARCH}} \\
+\midrule
+DFS & \textbf{NO} & \textbf{NO} & $O(b^m)$ & $O(bm)$ & Stack (LIFO) \\
+BFS & YES & YES$^*$ & $O(b^d)$ & $O(b^d)$ & Queue (FIFO) \\
+IDS & YES & YES$^*$ & $O(b^d)$ & $O(bd)$ & Stack + depth limit \\
+UCS & YES & YES & $O(b^{1+\lfloor g^*/\epsilon\rfloor})$ & $O(\cdot)$ & Priority Q by $g(n)$ \\
+\midrule
+\multicolumn{6}{c}{\textbf{INFORMED SEARCH}} \\
+\midrule
+GBFS & YES$^\dagger$ & \textbf{NO} & $O(b^m)$ & $O(b^m)$ & Priority Q by $h(n)$ \\
+\textbf{A*} & YES & YES$^{**}$ & $O(b^d)$ & $O(b^d)$ & Priority Q by $f(n)$ \\
+Hill Climbing & \textbf{NO} & \textbf{NO} & Variable & $O(b)$ & None (greedy) \\
+\bottomrule
+\end{tabular}
+\end{center}
+$^*$Unit costs only \quad $^{**}$Requires admissible $h$ \quad $^\dagger$With duplicate elimination
+
+\textbf{Key:} $b$=branching factor, $d$=goal depth, $m$=max depth, $\epsilon$=min action cost
+\end{definitionbox}
+
+%% HEURISTICS COMPARISON
+\begin{definitionbox}[Heuristics Comparison]
+\begin{center}
+\begin{tabular}{@{}lccl@{}}
+\toprule
+\textbf{Heuristic} & \textbf{Adm?} & \textbf{Time} & \textbf{Plain English} \\
+\midrule
+$h^*$ & YES & Unknown & The TRUE cost (what we want but can't compute) \\
+$h^+$ & YES & NP-hard & Best relaxed cost (ignore delete effects) \\
+$h^{\max}$ & YES & Poly & Cost of hardest single goal fact (conservative) \\
+$h^{\text{add}}$ & \textbf{NO} & Poly & Sum costs of all goal facts (double-counts!) \\
+$h^{\text{FF}}$ & \textbf{NO} & Poly & Greedy plan extraction from RPG layers \\
+$h^P$ (PDB) & YES & $O(1)$ & Precomputed lookup for subset of variables \\
+$h^{\text{clique}}$ & YES & $O(1)$ & Best sum of orthogonal PDBs (see below) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Relationship:} $h^{\max} \leq h^+ \leq h^*$ (all admissible ones never overestimate)
+\end{definitionbox}
+
+%% CLIQUES HEURISTIC EXPLANATION
+\begin{notebox}[$h^{\text{clique}}$ --- Combining Multiple PDBs]
+\textbf{Problem:} One small PDB may be weak. Can we combine multiple?
+
+\textbf{Naive SUM:} Adding any two PDBs can \textbf{overestimate} (double-count actions)
+
+\textbf{Solution:} Only SUM \textbf{orthogonal} patterns (no action affects both)
+
+\textbf{Formula:} $h^{\text{clique}}(s) = \max_{\text{clique } D} \sum_{P \in D} h^P(s)$
+
+\textbf{Plain English:} Find groups of patterns that don't interfere. Sum within each group. Take the best (max) result.
+\end{notebox}
+
+%% ACTION DEPENDENCIES
+\begin{warningbox}[Action Dependencies (POR/L6)]
+\begin{center}
+\begin{tabular}{@{}lp{10cm}@{}}
+\toprule
+\textbf{Relationship} & \textbf{Plain English Meaning} \\
+\midrule
+\textbf{Enabling} & Action $a_1$ makes action $a_2$ possible (unlocks it) \\
+\textbf{Disabling} & Action $a_1$ makes action $a_2$ impossible (locks it) \\
+\textbf{Conflict} & Actions give different results depending on order \\
+\textbf{Interfering} & Actions either conflict or one disables the other \\
+\textbf{Commutative} & Actions are completely independent (the good case!) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key:} Interfering = Conflict OR Disabling \quad Commutative = NOT Interfering AND NOT Enabling
+\end{warningbox}
+
+%% PLANNING ALGORITHMS
+\begin{examplebox}[Planning/Analysis Algorithms]
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Purpose} & \textbf{Output} & \textbf{Adm?} \\
+\midrule
+SimpleDeleteHeur & Delete relax (layers) & $h$-value & Approx \\
+FF Forward & Build RPG layers & Fact levels & --- \\
+FF Backward & Extract relaxed plan & $h^{FF}$ & \textbf{NO} \\
+NES (Goal) & Find $\mathcal{A}_{s \to^* G}$ & Goal-needed actions & --- \\
+NES (Action) & Find $\mathcal{A}_{s \to^* a}$ & Enablers of $a$ & --- \\
+S3 & Build stubborn set & Pruned $\rho(s)$ & YES \\
+PDB Construction & Backward Dijkstra & $h^P$ table & YES \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+%% HEURISTIC PROPERTIES
+\begin{notebox}[Heuristic Property Implications]
+\begin{center}
+\textbf{Consistent} $\Rightarrow$ \textbf{Admissible} $\Rightarrow$ \textbf{Safe}
+
+(But: Safe $\not\Rightarrow$ Admissible $\not\Rightarrow$ Consistent)
+\end{center}
+
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Property} & \textbf{Definition} & \textbf{Guarantees} \\
+\midrule
+Safe & $h(s)=\infty \Rightarrow h^*(s)=\infty$ & No false dead-ends \\
+Admissible & $h(s) \leq h^*(s)$ for all $s$ & A* optimality \\
+Consistent & $h(s) \leq \text{cost}(a) + h(s')$ & No reopening needed \\
+\bottomrule
+\end{tabular}
+\end{notebox}
+
+\newpage
+
+%% ########################################
+%% PART A: DEFINITIONS & THEORY
+%% ########################################
+\begin{center}
+\textbf{\LARGE PART A: Definitions \& Key Concepts}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{A.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: STATE SPACE FUNDAMENTALS
+%% ========================================
+\section{State Space Fundamentals}
+
+\begin{definitionbox}[State Space Definition]
+A \textbf{state space} is a tuple:
+\[\Theta = (S, A, \text{cost}, T, I, S_G)\]
+\begin{itemize}[leftmargin=*,nosep]
+\item $S$ = finite set of \textbf{states}
+\item $A$ = finite set of \textbf{actions}
+\item $\text{cost}: A \to \mathbb{N}_0$ = \textbf{cost function} (non-negative)
+\item $T \subseteq S \times A \times S$ = \textbf{transition relation} (deterministic)
+\item $I \in S$ = \textbf{initial state} (exactly one)
+\item $S_G \subseteq S$ = \textbf{goal states} (can be multiple)
+\end{itemize}
+
+\textbf{Transition notation:} $(s, a, s') \in T$ written as $s \xrightarrow{a} s'$
+
+\textbf{Action applicability:} Action $a$ is applicable in $s$ iff $\exists s'$ such that $(s, a, s') \in T$
+\end{definitionbox}
+
+\begin{definitionbox}[State Relationships]
+\begin{tabular}{@{}ll@{}}
+\textbf{Successor} & $s'$ is successor of $s$ if $s \xrightarrow{a} s'$ for some $a$ \\
+\textbf{Predecessor} & $s$ is predecessor of $s'$ if $s \xrightarrow{a} s'$ for some $a$ \\
+\textbf{Reachable from $s$} & $s'$ reachable from $s$ if $\exists$ path $s = s_0 \to s_1 \to \cdots \to s_n = s'$ \\
+\textbf{Reachable} & $s$ is reachable if reachable from $I$ \\
+\textbf{Solvable} & $s$ is solvable if some $g \in S_G$ is reachable from $s$ \\
+\textbf{Dead-end} & $s$ is dead-end if no goal reachable from $s$ \\
+\end{tabular}
+\end{definitionbox}
+
+\begin{definitionbox}[Path Types --- Exact Format]
+A \textbf{path} is a sequence of transitions: $\tau = ((s_0, a_1, s_1), (s_1, a_2, s_2), \ldots, (s_{n-1}, a_n, s_n))$
+
+\textbf{Three representations:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Transition-path:} $((B, d, J), (J, e, E), (E, i, F))$ or $B \xrightarrow{d} J \xrightarrow{e} E \xrightarrow{i} F$
+\item \textbf{Action-path:} $(d, e, i)$
+\item \textbf{State-path:} $(B, J, E, F)$
+\end{itemize}
+
+\textbf{Path cost:} $\text{cost}(\tau) = \text{cost}(\pi) = \sum_{i=1}^{n} \text{cost}(a_i)$
+
+\textbf{Empty path:} Valid with $n=0$. Every state reachable from itself with cost 0.
+\end{definitionbox}
+
+\begin{definitionbox}[Solutions]
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Solution for state $s$}: Path from $s$ to some $g \in S_G$
+\item \textbf{Solution for $\Theta$}: Solution for initial state $I$
+\item \textbf{Optimal solution}: Solution with \textbf{minimal cost}
+\item \textbf{Solvable}: $\Theta$ is solvable iff a solution exists
+\item \textbf{Unit cost}: All actions have cost 1
+\end{itemize}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 2: COST NOTATION
+%% ========================================
+\section{Cost Notation}
+
+\begin{definitionbox}[Important Cost Values]
+\begin{tabular}{@{}ll@{}}
+$g(n)$ & Path cost from $I$ to node $n$ (actual cost incurred) \\
+$g^*(s)$ & \textbf{Optimal} cost to reach state $s$ from $I$ \\
+$g^*$ & Cost of optimal solution (from $I$ to any goal) \\
+$h(s)$ & Heuristic estimate of cost from $s$ to goal \\
+$h^*(s)$ & \textbf{True} optimal cost from $s$ to nearest goal \\
+$f(n)$ & $g(n) + h(n)$ --- estimated total cost through $n$ \\
+\end{tabular}
+
+\textbf{g-value update:} $g(n') = g(n) + \text{cost}(a)$ where $n \xrightarrow{a} n'$
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 3: SEARCH NODE STRUCTURE
+%% ========================================
+\section{Search Node Structure}
+
+\begin{definitionbox}[Search Node vs State]
+A \textbf{search node} $n$ contains:
+\begin{itemize}[leftmargin=*,nosep]
+\item \texttt{n.State}: The state this node represents
+\item \texttt{n.Pred}: Pointer to parent node (or \texttt{null})
+\item \texttt{n.Action}: Action that led to this node (or \texttt{null})
+\item $g(n)$: Cost of path from $I$ to this node
+\end{itemize}
+
+\textbf{Key distinction:} Same state can appear in multiple nodes (different paths)!
+\end{definitionbox}
+
+\begin{definitionbox}[Search Terminology]
+\begin{tabular}{@{}ll@{}}
+\textbf{Node expansion} & Generate all successors of a node \\
+\textbf{Open list (frontier)} & Nodes waiting to be expanded \\
+\textbf{Closed list (explored)} & States already expanded (graph search only) \\
+\textbf{Tree search} & No duplicate elimination, no closed list \\
+\textbf{Graph search} & With duplicate elimination, uses closed list \\
+\end{tabular}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 4: ALGORITHM PROPERTIES
+%% ========================================
+\section{Algorithm Evaluation Criteria}
+
+\begin{definitionbox}[Four Properties]
+\begin{tabular}{@{}lp{10cm}@{}}
+\textbf{Complete} & Guaranteed to find a solution if one exists \\
+\textbf{Optimal} & Returned solution is guaranteed minimal cost \\
+\textbf{Time complexity} & Number of nodes expanded (typically $O(b^d)$ or $O(b^m)$) \\
+\textbf{Space complexity} & Maximum nodes stored simultaneously \\
+\end{tabular}
+
+\textbf{Parameters:}
+\begin{itemize}[leftmargin=*,nosep]
+\item $b$ = branching factor (average successors per state)
+\item $d$ = goal depth (minimum depth of any goal)
+\item $m$ = maximum depth of state space
+\item $\epsilon$ = minimum positive action cost
+\end{itemize}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 5: UNINFORMED SEARCH ALGORITHMS
+%% ========================================
+\section{Uninformed Search Algorithms}
+
+\begin{definitionbox}[Algorithm Comparison]
+\begin{center}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Data Struct.} & \textbf{Complete?} & \textbf{Optimal?} & \textbf{Time} & \textbf{Space} \\
+\midrule
+DFS & Stack (LIFO) & No$^*$/Yes$^{**}$ & No & $O(b^m)$ & $O(bm)$/$O(b^m)$ \\
+BFS & Queue (FIFO) & Yes & Unit cost & $O(b^d)$ & $O(b^d)$ \\
+UCS & Priority (by $g$) & Yes & \textbf{Yes} & $O(b^{1+\lfloor g^*/\epsilon\rfloor})$ & $O(b^{1+\lfloor g^*/\epsilon\rfloor})$ \\
+IDS & Stack + depth & Yes & Unit cost & $O(b^d)$ & $O(bd)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+$^*$Tree search \quad $^{**}$Graph search
+\end{definitionbox}
+
+\begin{warningbox}[Critical Distinctions]
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{UCS is ALWAYS optimal} (any non-negative costs)
+\item \textbf{BFS and IDS optimal ONLY for unit cost}
+\item \textbf{IDS has best space:} $O(bd)$ --- linear!
+\item \textbf{DFS tree search NOT complete} (can cycle forever)
+\item \textbf{UCS $\equiv$ Dijkstra's algorithm} on state space graph
+\end{itemize}
+\end{warningbox}
+
+%% ========================================
+%% SECTION 6: DFS
+%% ========================================
+\section{Depth-First Search (DFS)}
+
+\begin{definitionbox}[DFS Strategy]
+\textbf{Core idea:} Go as deep as possible, then backtrack when stuck
+
+\textbf{Data structure:} LIFO queue (stack) --- Last In, First Out
+
+\textbf{Behavior:} Explores one branch completely before trying another
+\end{definitionbox}
+
+\begin{examplebox}[DFS Pseudocode (Graph Search)]
+\begin{algorithmic}
+\STATE $n \gets \text{InitNode}()$ \COMMENT{Create node for initial state}
+\STATE $Q \gets$ empty stack; $\text{Push}(Q, n)$ \COMMENT{\textbf{STACK = LIFO = go DEEP}}
+\STATE $\text{closed} \gets \emptyset$ \COMMENT{Remember what we've expanded}
+\WHILE{$Q$ not empty}
+    \STATE $n \gets \text{Pop}(Q)$ \COMMENT{Take LAST added (most recent)}
+    \IF{$\text{GoalTest}(n.\text{State})$}
+        \RETURN $\text{ExtractSolution}(n)$ \COMMENT{Follow parent pointers back}
+    \ENDIF
+    \STATE $\text{closed} \gets \text{closed} \cup \{n.\text{State}\}$ \COMMENT{Mark as visited}
+    \FOR{each $a \in \text{Actions}(n.\text{State})$} \COMMENT{Try all applicable actions}
+        \STATE $n' \gets \text{SuccNode}(n, a)$ \COMMENT{Make child node}
+        \IF{$n'.\text{State} \notin \text{closed}$} \COMMENT{Only if not seen before}
+            \STATE $\text{Push}(Q, n')$ \COMMENT{Add to stack}
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\RETURN ``unsolvable'' \COMMENT{Exhausted all options}
+\end{algorithmic}
+\textbf{Plain English:} Stack means we dive deep before backtracking. No $g$-values $\Rightarrow$ NOT optimal.
+\end{examplebox}
+
+%% ========================================
+%% SECTION 7: BFS
+%% ========================================
+\section{Breadth-First Search (BFS)}
+
+\begin{definitionbox}[BFS Strategy]
+\textbf{Core idea:} Explore all nodes at depth $d$ before any at depth $d+1$
+
+\textbf{Data structure:} FIFO queue --- First In, First Out
+
+\textbf{Behavior:} Level-by-level exploration (shallowest first)
+\end{definitionbox}
+
+\begin{examplebox}[BFS Pseudocode]
+\begin{algorithmic}
+\STATE $n \gets \text{InitNode}()$ \COMMENT{Create node for initial state}
+\STATE $Q \gets$ empty queue; $\text{Enqueue}(Q, n)$ \COMMENT{\textbf{QUEUE = FIFO = level by level}}
+\WHILE{$Q$ not empty}
+    \STATE $n \gets \text{Dequeue}(Q)$ \COMMENT{Take OLDEST (first added)}
+    \IF{$\text{GoalTest}(n.\text{State})$}
+        \RETURN $\text{ExtractSolution}(n)$ \COMMENT{Follow parent pointers back}
+    \ENDIF
+    \FOR{each $a \in \text{Actions}(n.\text{State})$} \COMMENT{Try all applicable actions}
+        \STATE $n' \gets \text{SuccNode}(n, a)$ \COMMENT{Make child node}
+        \STATE $\text{Enqueue}(Q, n')$ \COMMENT{Add to back (will wait its turn)}
+    \ENDFOR
+\ENDWHILE
+\RETURN ``unsolvable'' \COMMENT{Exhausted all options}
+\end{algorithmic}
+\textbf{Plain English:} Queue means we explore ALL nodes at depth $d$ before ANY at depth $d{+}1$. Shallowest goal found first $\Rightarrow$ optimal ONLY if all actions cost the same!
+\end{examplebox}
+
+\begin{notebox}[Why BFS Optimal for Unit Cost Only]
+If all actions cost 1: path cost = depth $\Rightarrow$ shallowest = cheapest
+
+If costs differ: deeper node might have lower total cost than shallower node!
+\end{notebox}
+
+%% ========================================
+%% SECTION 8: UCS
+%% ========================================
+\section{Uniform-Cost Search (UCS)}
+
+\begin{definitionbox}[UCS Strategy]
+\textbf{Core idea:} Always expand node with \textbf{lowest} $g(n)$
+
+\textbf{Data structure:} Priority queue ordered by $g$-value
+
+\textbf{Key insight:} When we expand a node, we've found optimal path to it!
+\end{definitionbox}
+
+\begin{examplebox}[UCS Pseudocode (Graph Search)]
+\begin{algorithmic}
+\STATE $n \gets \text{InitNode}()$; $g(n) \gets 0$ \COMMENT{Start node costs 0 to reach}
+\STATE $\text{open} \gets$ priority queue by $g$; Insert $n$ \COMMENT{\textbf{Expand CHEAPEST so far}}
+\STATE $\text{closed} \gets \emptyset$ \COMMENT{Remember what we've fully explored}
+\WHILE{$\text{open}$ not empty}
+    \STATE $n \gets \text{Pop}(\text{open})$ \COMMENT{Get node with LOWEST $g(n)$}
+    \IF{$\text{GoalTest}(n.\text{State})$} \COMMENT{First time we pop goal = optimal!}
+        \RETURN $\text{ExtractSolution}(n)$
+    \ENDIF
+    \STATE $\text{closed} \gets \text{closed} \cup \{n.\text{State}\}$ \COMMENT{This state is done}
+    \FOR{each $a \in \text{Actions}(n.\text{State})$}
+        \STATE $n' \gets \text{SuccNode}(n, a)$ \COMMENT{$g(n') = g(n) + \text{cost}(a)$}
+        \IF{$n'.\text{State} \notin \text{closed}$ and $n'.\text{State} \notin \text{States}(\text{open})$}
+            \STATE Insert $n'$ into open \COMMENT{New state discovered}
+        \ELSIF{$\exists n'' \in \text{open}$ with $n''.\text{State} = n'.\text{State}$ and $g(n') < g(n'')$}
+            \STATE Replace $n''$ with $n'$ in open \COMMENT{Found CHEAPER path!}
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\RETURN ``unsolvable''
+\end{algorithmic}
+\textbf{Plain English:} Priority queue by $g$ = always expand the node we've reached most cheaply. When we first pop a goal, that's guaranteed to be the optimal path. This is basically Dijkstra's algorithm!
+\end{examplebox}
+
+%% ========================================
+%% SECTION 9: IDS
+%% ========================================
+\section{Iterative Deepening Search (IDS)}
+
+\begin{definitionbox}[IDS Strategy]
+\textbf{Core idea:} Run DFS with depth limit 0, 1, 2, \ldots until goal found
+
+\textbf{Purpose:} BFS completeness + optimality (unit cost) with DFS memory
+
+\textbf{Overhead:} Only $\sim$11\% more work than BFS (most work at deepest level)
+\end{definitionbox}
+
+\begin{examplebox}[IDS Pseudocode]
+\begin{algorithmic}
+\STATE \textbf{function} IterativeDeepening
+\STATE $n \gets \text{InitNode}()$
+\FOR{depth $= 0$ to $\infty$}
+    \STATE result $\gets$ DFSLimited($n$, depth)
+    \IF{result $\neq$ ``cutoff''}
+        \RETURN result
+    \ENDIF
+\ENDFOR
+\end{algorithmic}
+
+\vspace{0.5em}
+\textbf{DFSLimited}$(n, \text{depth})$: Returns solution, ``cutoff'', or ``unsolvable''
+\begin{itemize}[leftmargin=*,nosep]
+\item If goal: return solution
+\item If depth $= 0$: return ``cutoff''
+\item Recursively call on successors with depth$-1$
+\item Return ``cutoff'' if any child returned cutoff, else ``unsolvable''
+\end{itemize}
+\end{examplebox}
+
+%% ========================================
+%% SECTION 10: GBFS
+%% ========================================
+\section{Greedy Best-First Search (GBFS)}
+
+\begin{definitionbox}[GBFS Strategy]
+\textbf{Core idea:} Always expand node with \textbf{lowest} $h(n)$
+
+\textbf{Data structure:} Priority queue ordered by $h$-value (ascending)
+
+\textbf{Key difference from UCS:} Uses $h(n)$ only, ignores $g(n)$
+\end{definitionbox}
+
+\begin{examplebox}[GBFS Pseudocode]
+\begin{algorithmic}
+\STATE $n \gets \text{InitNode}()$ \COMMENT{Create node for initial state}
+\STATE $\text{open} \gets$ priority queue by $h$; Insert $n$ \COMMENT{\textbf{Expand closest-LOOKING}}
+\STATE $\text{closed} \gets \emptyset$ \COMMENT{Remember what we've expanded}
+\WHILE{$\text{open}$ not empty}
+    \STATE $n \gets \text{Pop}(\text{open})$ \COMMENT{Get node with LOWEST $h(n)$}
+    \IF{$\text{GoalTest}(n.\text{State})$} \COMMENT{Found goal (maybe not optimal!)}
+        \RETURN $\text{ExtractSolution}(n)$
+    \ENDIF
+    \STATE $\text{closed} \gets \text{closed} \cup \{n.\text{State}\}$
+    \FOR{each $a \in \text{Actions}(n.\text{State})$}
+        \STATE $n' \gets \text{SuccNode}(n, a)$
+        \IF{$n'.\text{State} \notin \text{closed}$ \textbf{and} $n'.\text{State} \notin \text{States}(\text{open})$}
+            \STATE Insert $n'$ into open \COMMENT{NOTE: No cheaper-path check!}
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\RETURN ``unsolvable''
+\end{algorithmic}
+\textbf{Plain English:} Greedy = always go toward what LOOKS closest to goal (lowest $h$). Ignores actual cost paid ($g$). Fast but can find expensive solutions!
+\end{examplebox}
+
+\begin{notebox}[GBFS Properties]
+\begin{tabular}{@{}ll@{}}
+\textbf{Complete?} & Yes (with duplicate elimination) \\
+\textbf{Optimal?} & \textbf{NO} --- follows $h$ greedily \\
+\textbf{Time:} & $O(b^m)$ \\
+\textbf{Space:} & $O(b^m)$ \\
+\end{tabular}
+
+\textbf{No cheaper path logic!} If seen state before, GBFS ignores new path.
+\end{notebox}
+
+%% ========================================
+%% SECTION 11: A* SEARCH
+%% ========================================
+\section{A* Search Algorithm}
+
+\begin{definitionbox}[A* Evaluation Function]
+A* combines both costs:
+\[f(n) = g(n) + h(n)\]
+\begin{itemize}[leftmargin=*,nosep]
+\item $g(n)$ = actual cost from start to $n$
+\item $h(n)$ = estimated cost from $n$ to goal
+\item $f(n)$ = estimated total cost through $n$
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[A* Pseudocode]
+\begin{algorithmic}
+\STATE $n \gets \text{InitNode}()$; $g(n) \gets 0$; $f(n) \gets h(n.\text{State})$ \COMMENT{$f = g + h$}
+\STATE $\text{open} \gets$ priority queue by $f$; Insert $n$ \COMMENT{\textbf{Expand most PROMISING}}
+\STATE $\text{closed} \gets \emptyset$
+\WHILE{$\text{open}$ not empty}
+    \STATE $n \gets \text{Pop}(\text{open})$ \COMMENT{Lowest $f(n) = g(n) + h(n)$}
+    \IF{$\text{GoalTest}(n.\text{State})$} \COMMENT{Optimal if $h$ admissible!}
+        \RETURN $\text{ExtractSolution}(n)$
+    \ENDIF
+    \STATE $\text{closed} \gets \text{closed} \cup \{n.\text{State}\}$
+    \FOR{each $a \in \text{Actions}(n.\text{State})$}
+        \STATE $n' \gets \text{SuccNode}(n, a)$ \COMMENT{Creates child, sets $g(n')$}
+        \IF{$n'.\text{State} \notin \text{closed}$ \textbf{and} $n'.\text{State} \notin \text{States}(\text{open})$}
+            \STATE Insert $n'$ into open \COMMENT{New state}
+        \ELSIF{$\exists n'' \in \text{open}$ with same state \textbf{and} $g(n') < g(n'')$}
+            \STATE Replace $n''$ with $n'$ \COMMENT{Cheaper path}
+        \ELSIF{$\exists n''.\text{State} \in \text{closed}$ \textbf{and} $g(n') < g(n'')$}
+            \STATE Remove from closed; Insert $n'$ into open \COMMENT{Reopening!}
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\RETURN ``unsolvable''
+\end{algorithmic}
+\textbf{Plain English:} $f = g + h$ balances what we've spent ($g$) with what we expect to spend ($h$). Combines UCS's optimality with heuristic guidance. \textbf{With admissible $h$: always finds optimal solution!}
+\end{examplebox}
+
+\begin{definitionbox}[A* Properties]
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Property} & \textbf{Value} & \textbf{Condition} \\
+\midrule
+Complete? & Yes & Safe $h$, finite $b$, costs $> \epsilon$ \\
+Optimal? & \textbf{Yes} & Admissible $h$ \\
+Time & $O(b^d)$ & Exponential \\
+Space & $O(b^d)$ & Stores all nodes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{With consistent $h$:} No reopening needed (line for reopening never executes)
+\end{definitionbox}
+
+\begin{warningbox}[A* Optimality Proof Intuition]
+When A* expands goal $G$:
+\begin{enumerate}[leftmargin=*,nosep]
+\item $f(G) = g(G) + h(G) = g(G) + 0 = g(G)$
+\item All remaining nodes in open have $f(n) \geq f(G)$
+\item If cheaper goal existed, some node on optimal path would have $f < f(G)$
+\item But A* expanded $G$ first $\Rightarrow$ no such node exists
+\end{enumerate}
+\end{warningbox}
+
+%% ########################################
+%% PAGE BREAK - PART B
+%% ########################################
+\newpage
+
+%% ########################################
+%% PART B: PROBLEM-SOLVING PATTERNS
+%% ########################################
+\begin{center}
+\textbf{\LARGE PART B: Problem-Solving Patterns \& Table Formats}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{B.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: STATE SPACE DRAWING
+%% ========================================
+\section{State Space Drawing Convention}
+
+\begin{definitionbox}[Drawing Elements]
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{States:} Circles with state name inside
+\item \textbf{Initial state $I$:} Incoming arrow with no source
+\item \textbf{Goal states $S_G$:} Double circles
+\item \textbf{Transitions:} Labeled directed edges (action names on edges)
+\item \textbf{Costs:} Numbers on edges (if not unit cost)
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[Finding Reachable and Solvable States]
+\textbf{Reachable states:} BFS/DFS \textbf{forward} from $I$
+
+\textbf{Solvable states:} BFS/DFS \textbf{backward} from $S_G$ (reverse all edges)
+
+\textbf{Dead-ends:} Reachable but not solvable
+\end{examplebox}
+
+%% ========================================
+%% SECTION 2: UCS TABLE FORMAT
+%% ========================================
+\section{UCS Table Format}
+
+\begin{definitionbox}[UCS Iteration Table]
+\begin{center}
+\begin{tabular}{|c|c|c|l|}
+\hline
+\textbf{Step} & \textbf{State} & \textbf{g-value} & \textbf{Closed} \\
+\hline
+1 & $I$ & 0 & $\{I\}$ \\
+2 & next lowest $g$ & $g$ & $\{I, \ldots\}$ \\
+3 & \ldots & \ldots & \ldots \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key points:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Priority queue:} Always pop node with lowest $g$-value
+\item \textbf{Closed set:} Add state to closed AFTER popping
+\item \textbf{Stop when:} Goal state popped from open list
+\item \textbf{Tie-breaking:} Alphabetical/lexicographical order
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[UCS Example (Taxi Problem)]
+\begin{center}
+\begin{tabular}{|c|ccc|c|l|}
+\hline
+Step & $t$ & $p_1$ & $p_2$ & g & Closed \\
+\hline
+1 & A & C & E & 0 & $\{(A,C,E)\}$ \\
+2 & B & C & E & 1 & $\{.., (B,C,E)\}$ \\
+3 & D & C & E & 2 & $\{.., (D,C,E)\}$ \\
+4 & C & C & E & 3 & $\{.., (C,C,E)\}$ \\
+5 & E & C & E & 3 & $\{.., (E,C,E)\}$ \\
+6 & C & $t$ & E & 4 & $\{.., (C,t,E)\}$ \\
+7 & E & C & $t$ & 4 & $\{.., (E,C,t)\}$ \\
+8 & F & C & E & 4 & $\{.., (F,C,E)\}$ \\
+9 & F & C & $t$ & 5 & $\{.., (F,C,t)\}$ \\
+10 & F & C & F & 6 & GOAL \\
+\hline
+\end{tabular}
+\end{center}
+State encoding: $(t, p_1, p_2)$ where $t$ = taxi location, $p_i$ = passenger location ($t$ = in taxi)
+\end{examplebox}
+
+%% ========================================
+%% SECTION 3: DFS TABLE FORMAT
+%% ========================================
+\section{DFS Iteration Table Format}
+
+\begin{definitionbox}[DFS Iteration Table]
+\begin{center}
+\begin{tabular}{|c|c|l|l|}
+\hline
+\textbf{Step} & \textbf{Node Popped} & \textbf{Children Pushed to Stack} & \textbf{Closed} \\
+\hline
+0 & --- & $S_0$ (initial state) & $\emptyset$ \\
+1 & $S_0$ & $S_1, S_2, \ldots$ (successors) & $\{S_0\}$ \\
+2 & $S_k$ (last pushed) & children of $S_k$ & $\{S_0, S_k\}$ \\
+\ldots & \ldots & \ldots & \ldots \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key points:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{LIFO order:} Last child pushed = first popped next step
+\item \textbf{Closed set:} Add node to closed AFTER popping (when expanded)
+\item \textbf{Stop when:} Goal state popped OR stack empty
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[DFS Example Trace]
+\begin{center}
+\begin{tabular}{|c|c|l|l|}
+\hline
+\textbf{Step} & \textbf{Node Popped} & \textbf{Children Pushed} & \textbf{Closed} \\
+\hline
+0 & --- & $S_0$ & $\emptyset$ \\
+1 & $S_0$ & $S_1, S_2, S_3, S_4, S_5, S_6$ & $\{S_0\}$ \\
+2 & $S_6$ & $S_{11}, S_{15}, S_{18}, S_{20}, S_{21}$ & $\{S_0, S_6\}$ \\
+3 & $S_{21}$ & $S_{26}, S_{27}, S_{28}, S_{29}$ & $\{S_0, S_6, S_{21}\}$ \\
+4 & $S_{29}$ & $S_{32}, S_{33}, S_{34}$ & $\{.., S_{29}\}$ \\
+5 & $S_{34}$ & $S_{37}, S_{38}$ & $\{.., S_{34}\}$ \\
+6 & $S_{38}$ & $S_{40}$ & $\{.., S_{38}\}$ \\
+7 & $S_{40}$ & none (goal) & $\{.., S_{40}\}$ \\
+\hline
+\end{tabular}
+\end{center}
+\textbf{Note:} DFS explores deeply along one branch before backtracking.
+\end{examplebox}
+
+%% ========================================
+%% SECTION 4: BFS TABLE FORMAT
+%% ========================================
+\section{BFS Iteration Table Format}
+
+\begin{definitionbox}[BFS Iteration Table]
+\begin{center}
+\begin{tabular}{|c|c|l|l|}
+\hline
+\textbf{Step} & \textbf{Node Dequeued} & \textbf{Children Added to Queue} & \textbf{Closed} \\
+\hline
+0 & --- & $S_0$ (initial state) & $\emptyset$ \\
+1 & $S_0$ & $S_1, S_2, \ldots$ (successors) & $\{S_0\}$ \\
+2 & $S_1$ (first in queue) & children of $S_1$ & $\{S_0, S_1\}$ \\
+\ldots & \ldots & \ldots & \ldots \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key points:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{FIFO order:} First child added = first dequeued (level-by-level)
+\item \textbf{Closed set:} Add node to closed AFTER dequeuing (when expanded)
+\item \textbf{Stop when:} Goal state dequeued OR queue empty
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[BFS Example Trace]
+\begin{center}
+\begin{tabular}{|c|c|l|l|}
+\hline
+\textbf{Step} & \textbf{Node Dequeued} & \textbf{Children Added} & \textbf{Closed} \\
+\hline
+0 & --- & $S_0$ & $\emptyset$ \\
+1 & $S_0$ & $S_1, S_2, S_3, S_4, S_5, S_6$ & $\{S_0\}$ \\
+2 & $S_1$ & $S_7, S_8, S_9, S_{10}, S_{11}$ & $\{S_0, S_1\}$ \\
+3 & $S_2$ & $S_{12}, S_{13}, S_{14}, S_{15}$ & $\{.., S_2\}$ \\
+4 & $S_3$ & $S_{16}, S_{17}, S_{18}$ & $\{.., S_3\}$ \\
+5 & $S_4$ & $S_{19}, S_{20}$ & $\{.., S_4\}$ \\
+6 & $S_5$ & $S_{21}$ & $\{.., S_5\}$ \\
+7 & $S_6$ & none (all in closed) & $\{.., S_6\}$ \\
+8 & $S_7$ & $S_{22}, S_{23}, S_{24}, S_{25}$ & $\{.., S_7\}$ \\
+\hline
+\end{tabular}
+\end{center}
+\textbf{Note:} BFS explores all nodes at depth $d$ before any at depth $d{+}1$.
+\end{examplebox}
+
+%% ========================================
+%% SECTION 5: IDS TABLE FORMAT
+%% ========================================
+\section{IDS Table Format}
+
+\begin{definitionbox}[IDS Iteration Table]
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{depth limit} & \textbf{step} & \textbf{state} \\
+\hline
+0 & 1 & $I$ \\
+\hline
+1 & 1 & $I$ \\
+1 & 2 & child$_1$ \\
+1 & 3 & child$_2$ \\
+\hline
+2 & 1 & $I$ \\
+2 & 2 & child$_1$ \\
+2 & 3 & grandchild$_{11}$ \\
+\ldots & \ldots & \ldots \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Each depth limit:} Complete DFS up to that depth, then restart
+
+\textbf{Order:} DFS order within each depth limit (last child first)
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 6: GBFS TABLE FORMAT
+%% ========================================
+\section{GBFS Iteration Table Format}
+
+\begin{definitionbox}[GBFS Table Format]
+\begin{center}
+\begin{tabular}{|c|c|c|l|}
+\hline
+\textbf{Step} & \textbf{State} & $h$ & \textbf{Closed} \\
+\hline
+1 & $I$ & $h(I)$ & $\{I\}$ \\
+2 & next lowest $h$ & $h$ & $\{I, \ldots\}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key points:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Priority queue:} Always pop node with lowest $h(n)$ (heuristic only!)
+\item \textbf{Ignores $g$-value:} Path cost does NOT matter --- pure greedy
+\item \textbf{Closed set:} Add state to closed AFTER popping
+\item \textbf{No cheaper path check:} Unlike UCS/A*, GBFS doesn't update paths
+\item \textbf{Tie-breaking:} Alphabetical/lexicographical order
+\item \textbf{Stop when:} Goal state popped from open
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[GBFS Example Trace]
+\begin{center}
+\begin{tabular}{|c|c|c|l|}
+\hline
+\textbf{Step} & \textbf{State} & $h$ & \textbf{Closed} \\
+\hline
+1 & $A$ & 5 & $\{A\}$ \\
+2 & $B$ & 3 & $\{A, B\}$ \\
+3 & $D$ & 2 & $\{A, B, D\}$ \\
+4 & $G$ & 0 & GOAL \\
+\hline
+\end{tabular}
+\end{center}
+\textbf{Note:} GBFS greedily follows lowest $h$. May find suboptimal solution!
+\end{examplebox}
+
+%% ========================================
+%% SECTION 7: A* TABLE FORMAT
+%% ========================================
+\section{A* Iteration Table Format}
+
+\begin{definitionbox}[A* Table Format]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|l|}
+\hline
+\textbf{Step} & \textbf{State} & $g$ & $h$ & $f = g + h$ & \textbf{Closed} \\
+\hline
+1 & $I$ & 0 & $h(I)$ & $h(I)$ & $\{I\}$ \\
+2 & next lowest $f$ & $g$ & $h$ & $f$ & $\{I, \ldots\}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key points:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Priority queue:} Always pop node with lowest $f = g + h$
+\item \textbf{Closed set:} Add state to closed AFTER popping
+\item \textbf{Tie-breaking:} Alphabetical (or by lower $h$, then alphabetical)
+\item \textbf{Stop when:} Goal state popped from open
+\end{itemize}
+\end{definitionbox}
+
+\begin{warningbox}[GBFS vs UCS vs A* --- What Gets Expanded]
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Priority} & \textbf{Guarantees} \\
+\midrule
+UCS & $g(n)$ only & Optimal (ignores goal direction) \\
+GBFS & $h(n)$ only & Fast but \textbf{NOT optimal} \\
+A* & $g(n) + h(n)$ & Optimal (with admissible $h$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{warningbox}
+
+%% ========================================
+%% SECTION 8: BFS/DFS EXPANSION ORDER
+%% ========================================
+\section{BFS vs DFS Expansion Order}
+
+\begin{definitionbox}[Queue Operations]
+\textbf{BFS (Queue - FIFO):}
+\begin{verbatim}
+Open: [A] -> pop A, add children [B,C]
+Open: [B,C] -> pop B, add children [D,E]
+Open: [C,D,E] -> pop C...
+(level by level)
+\end{verbatim}
+
+\textbf{DFS (Stack - LIFO):}
+\begin{verbatim}
+Open: [A] -> pop A, add children [B,C]
+Open: [C,B] -> pop C, add children [F,G]
+Open: [G,F,B] -> pop G...
+(deepest first)
+\end{verbatim}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 7: API FUNCTIONS
+%% ========================================
+\section{Blackbox API Functions}
+
+\begin{definitionbox}[State Space API]
+\begin{tabular}{@{}ll@{}}
+\texttt{InitialState()} & Returns initial state $I$ \\
+\texttt{GoalTest(s)} & Returns true iff $s \in S_G$ \\
+\texttt{Cost(a)} & Returns cost of action $a$ \\
+\texttt{Actions(s)} & Returns set of actions applicable in $s$ \\
+\texttt{Successor(s, a)} & Returns $s'$ where $s \xrightarrow{a} s'$ \\
+\end{tabular}
+\end{definitionbox}
+
+\begin{definitionbox}[Helper Functions]
+\textbf{InitNode():}
+\begin{itemize}[leftmargin=*,nosep]
+\item $n.\text{State} \gets \text{InitialState}()$
+\item $n.\text{Pred} \gets \texttt{null}$; $n.\text{Action} \gets \texttt{null}$; $g(n) \gets 0$
+\end{itemize}
+
+\textbf{SuccNode(p, a):}
+\begin{itemize}[leftmargin=*,nosep]
+\item $n.\text{State} \gets \text{Successor}(p.\text{State}, a)$
+\item $n.\text{Pred} \gets p$; $n.\text{Action} \gets a$
+\item $g(n) \gets g(p) + \text{Cost}(a)$
+\end{itemize}
+
+\textbf{ExtractSolution(n):} Follow Pred pointers backward, collect actions
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 8: ALGORITHM SELECTION
+%% ========================================
+\section{Algorithm Selection Guide}
+
+\begin{definitionbox}[Decision Tree]
+\textbf{Need optimality?}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Yes + non-unit costs:} Use \textbf{UCS}
+\item \textbf{Yes + unit costs + memory OK:} Use \textbf{BFS}
+\item \textbf{Yes + unit costs + limited memory:} Use \textbf{IDS}
+\item \textbf{No (any solution OK):} Use \textbf{DFS} (graph search)
+\end{itemize}
+\end{definitionbox}
+
+\begin{warningbox}[Common Mistakes]
+\begin{enumerate}[leftmargin=*,nosep]
+\item Using BFS for non-unit costs --- \textbf{NOT optimal!}
+\item Forgetting duplicate elimination in DFS --- can loop forever
+\item Not updating g-values in UCS when finding cheaper path
+\item Confusing open (candidates) vs closed (already expanded)
+\end{enumerate}
+\end{warningbox}
+
+%% ########################################
+%% L3: INFORMED SEARCH
+%% ########################################
+\newpage
+\begin{center}
+\textbf{\LARGE PART C: Informed Search (L3)}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{C.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: HEURISTIC FUNCTIONS
+%% ========================================
+\section{Heuristic Functions}
+
+\begin{definitionbox}[Heuristic Function]
+A \textbf{heuristic function} is a mapping:
+\[h: S \to \mathbb{N}_0 \cup \{\infty\}\]
+where $h(s)$ estimates the cost from state $s$ to the nearest goal.
+
+\textbf{Key notation:}
+\begin{itemize}[leftmargin=*,nosep]
+\item $h(s)$ = heuristic estimate for state $s$
+\item $h^*(s)$ = \textbf{perfect heuristic} (true optimal cost from $s$ to goal)
+\end{itemize}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 2: HEURISTIC PROPERTIES
+%% ========================================
+\section{Heuristic Properties (CRITICAL)}
+
+\begin{definitionbox}[Three Key Properties]
+\textbf{1. SAFE:} $h(s) = \infty \Rightarrow h^*(s) = \infty$
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Plain English:} If $h$ says ``impossible'', it's truly impossible
+\item Only marks TRUE dead-ends as $\infty$ (never lies about reachability)
+\end{itemize}
+
+\textbf{2. ADMISSIBLE:} $h(s) \leq h^*(s)$ for all states $s$
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Plain English:} $h$ is always optimistic (never overestimates)
+\item Why it matters: A* won't skip a good path thinking it's bad
+\end{itemize}
+
+\textbf{3. CONSISTENT (Monotonic):} $h(s) \leq \text{cost}(a) + h(s')$ for all $s \xrightarrow{a} s'$
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Plain English:} Estimate can't drop faster than actual cost
+\item Why it matters: $f$-values never decrease along a path $\Rightarrow$ no reopening needed
+\end{itemize}
+\end{definitionbox}
+
+\begin{warningbox}[Implication Chain]
+\textbf{Consistent} $\Rightarrow$ \textbf{Admissible} $\Rightarrow$ \textbf{Safe}
+
+But: Safe $\not\Rightarrow$ Admissible $\not\Rightarrow$ Consistent
+\end{warningbox}
+
+\begin{examplebox}[Checking Properties --- Table Method]
+Given graph $A \xrightarrow{1} B \xrightarrow{1} C$ (goal), $B \xrightarrow{1} D$ (dead-end):
+
+$h^*$: $A=2$, $B=1$, $C=0$, $D=\infty$
+
+\textbf{To check Safe:} For each $n$ where $h(n)=\infty$, verify $h^*(n)=\infty$
+
+\textbf{To check Admissible:} For each $n$, verify $h(n) \leq h^*(n)$
+
+\textbf{To check Consistent:} For each edge $n \to n'$ with cost $c$, verify $h(n) \leq c + h(n')$
+\end{examplebox}
+
+%% ========================================
+%% SECTION 3: COMMON HEURISTICS
+%% ========================================
+\section{Common Heuristics}
+
+\begin{definitionbox}[Grid/Route Heuristics]
+\textbf{4-directional (N, S, E, W):} Manhattan distance
+\[h = |x_1 - x_g| + |y_1 - y_g|\]
+
+\textbf{8-directional (diagonals):} Chebyshev distance
+\[h = \max(|x_1 - x_g|, |y_1 - y_g|)\]
+
+\textbf{Any-angle:} Euclidean distance
+\[h = \sqrt{(x_1 - x_g)^2 + (y_1 - y_g)^2}\]
+
+\textbf{Route planning:} Straight-line distance (always admissible)
+\end{definitionbox}
+
+\begin{definitionbox}[8-Puzzle Heuristics]
+\textbf{$h_1$:} Number of misplaced tiles
+
+\textbf{$h_2$:} Manhattan distance (sum of tile distances)
+
+\textbf{Dominance:} $h_2 \geq h_1$ for all states $\Rightarrow$ $h_2$ better
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 8: LOCAL SEARCH
+%% ========================================
+\section{Local Search: Hill Climbing}
+
+\begin{definitionbox}[Hill Climbing]
+\textbf{Core idea:} Start at current state, move to best neighbor
+
+\textbf{Strategy:} $\arg\min_{s' \in \text{neighbors}} h(s')$
+
+\textbf{Termination:} No neighbor is better than current state
+\end{definitionbox}
+
+\begin{examplebox}[Hill Climbing Pseudocode]
+\begin{algorithmic}
+\STATE $\text{current} \gets \text{InitialState}()$ \COMMENT{Start somewhere}
+\WHILE{true} \COMMENT{Keep going until stuck}
+    \STATE $\text{neighbors} \gets$ all states reachable in one step from current
+    \STATE $\text{next} \gets$ the neighbor with the LOWEST $h$ value
+    \IF{$h(\text{next}) \geq h(\text{current})$} \COMMENT{No neighbor is better?}
+        \RETURN current \COMMENT{Stuck! This is a local optimum}
+    \ENDIF
+    \STATE $\text{current} \gets \text{next}$ \COMMENT{Move to the better neighbor}
+\ENDWHILE
+\end{algorithmic}
+
+\textbf{Plain English:}
+\begin{enumerate}[leftmargin=*,nosep]
+\item Start at initial state
+\item Look at all neighbors (states one action away)
+\item Pick the neighbor with best (lowest) $h$ value
+\item If that neighbor is NOT better than current $\Rightarrow$ STOP (we're at a local optimum)
+\item Otherwise, move there and repeat
+\end{enumerate}
+\end{examplebox}
+
+\begin{warningbox}[Hill Climbing Limitations]
+\begin{tabular}{@{}ll@{}}
+\textbf{Complete?} & \textbf{No} --- stuck at local optima \\
+\textbf{Optimal?} & \textbf{No} --- finds local, not global optimum \\
+\textbf{Space:} & $O(1)$ --- only stores current state \\
+\end{tabular}
+
+\textbf{Problems:}
+\begin{itemize}[leftmargin=*,nosep]
+\item Local maxima/minima
+\item Plateaus (flat regions)
+\item Ridges
+\end{itemize}
+
+\textbf{Solution:} Random-restart hill climbing (run multiple times)
+\end{warningbox}
+
+%% ########################################
+%% L4: CLASSICAL PLANNING & FDR
+%% ########################################
+\newpage
+\begin{center}
+\textbf{\LARGE PART D: Classical Planning \& FDR (L4)}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{D.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: FDR FUNDAMENTALS
+%% ========================================
+\section{FDR: Finite Domain Representation}
+
+\begin{definitionbox}[FDR Planning Task]
+A \textbf{planning task} is a tuple:
+\[\Pi = (V, A, \text{cost}, I, G)\]
+\begin{itemize}[leftmargin=*,nosep]
+\item $V$ = finite set of \textbf{state variables}, each $v \in V$ has domain $D_v$
+\item $A$ = finite set of \textbf{actions}, each $a = (\text{pre}_a, \text{eff}_a)$
+\item $\text{cost}: A \to \mathbb{N}_0$ = action cost function
+\item $I$ = \textbf{initial state} (complete variable assignment)
+\item $G$ = \textbf{goal} (partial variable assignment)
+\end{itemize}
+
+\textbf{State space size:} $|\Theta_\Pi| = \prod_{v \in V} |D_v|$
+\end{definitionbox}
+
+\begin{definitionbox}[Facts and Partial States]
+\textbf{Fact:} $(v, d)$ where $v \in V$ and $d \in D_v$. Written as $v{=}d$
+
+\textbf{Partial state:} Set of facts, each variable appears \textbf{at most once}
+
+\textbf{Complete state:} Each variable appears \textbf{exactly once}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 2: ACTION SEMANTICS
+%% ========================================
+\section{Action Semantics}
+
+\begin{definitionbox}[Action Application]
+Action $a = (\text{pre}_a, \text{eff}_a)$
+
+\textbf{Applicability:} $a$ applicable in state $s$ iff $\text{pre}_a \subseteq s$
+
+\textbf{Transition:}
+\[s' = s[a] = (s \setminus \{(v,d) \in s \mid v \in \text{vars}(\text{eff}_a)\}) \cup \text{eff}_a\]
+
+\textbf{In words:} Remove old values of affected variables, add new effect values
+\end{definitionbox}
+
+\begin{examplebox}[Action Application Example]
+\textbf{State:} $s = \{truck{=}A, pkg{=}C, fuel{=}full\}$
+
+\textbf{Action:} $drive\_AB$ with pre $= \{truck{=}A\}$, eff $= \{truck{=}B\}$
+
+\textbf{Result:} $s' = \{truck{=}B, pkg{=}C, fuel{=}full\}$
+\end{examplebox}
+
+%% ========================================
+%% SECTION 3: DELETE RELAXATION
+%% ========================================
+\section{Delete Relaxation}
+
+\begin{definitionbox}[Delete-Relaxed Problem $\Pi^+$]
+\textbf{Key idea:} Once a fact becomes true, it STAYS true forever
+
+\textbf{State transition:}
+\[s^+[a] = s^+ \cup \text{eff}_a\]
+(Just add effects, never remove anything!)
+
+\textbf{Plain English:} Imagine you never lose anything you gain. Picked up a key? You have it forever. This makes planning EASIER (why it's called ``relaxation'').
+
+\textbf{Consequence:} Variables can have multiple values simultaneously (weird but useful!)
+\end{definitionbox}
+
+\begin{definitionbox}[The $h^+$ Heuristic]
+\[h^+(s) = \min_{\pi^+} \text{cost}(\pi^+)\]
+where $\pi^+$ is a delete-relaxed plan from $s$ to goal.
+
+\textbf{Properties:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Admissible:} $h^+(s) \leq h^*(s)$
+\item \textbf{NP-hard} to compute exactly
+\end{itemize}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 4: DELETE-RELAXATION HEURISTICS
+%% ========================================
+\section{Delete-Relaxation Heuristics}
+
+\begin{definitionbox}[Heuristic Comparison]
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Heuristic} & \textbf{Admissible?} & \textbf{Complexity} & \textbf{Informativeness} \\
+\midrule
+$h^+$ & Yes & NP-hard & Optimal relaxed \\
+$h^{\max}$ & Yes & Polynomial & Conservative \\
+$h^{\text{add}}$ & \textbf{No} & Polynomial & More informed \\
+$h^{\text{FF}}$ & \textbf{No} & Polynomial & Very informed \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Relationship:} $h^{\max}(s) \leq h^+(s) \leq h^*(s)$
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 5: SIMPLE DELETE RELAXATION ALG
+%% ========================================
+\section{SimpleDeleteRelaxationHeur Algorithm}
+
+\begin{examplebox}[Algorithm (Layer-Based)]
+\begin{algorithmic}
+\STATE $F \gets s$; $C \gets 0$; $\mathcal{A} \gets A$
+\WHILE{$G \not\subseteq F$}
+    \STATE $\mathcal{A}' \gets \{a \in \mathcal{A} \mid \text{pre}_a \subseteq F\}$ \hfill $\triangleright$ Applicable actions
+    \STATE $F' \gets F \cup \bigcup_{a \in \mathcal{A}'} \text{eff}_a$
+    \IF{$F = F'$}
+        \RETURN $\infty$
+    \ENDIF
+    \STATE $C \gets C + \min_{a \in \mathcal{A}'} \text{cost}(a)$
+    \STATE $\mathcal{A} \gets \mathcal{A} \setminus \mathcal{A}'$; $F \gets F'$
+\ENDWHILE
+\RETURN $C$
+\end{algorithmic}
+\end{examplebox}
+
+\begin{definitionbox}[Delete Relaxation Table Format]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Layer} & \textbf{Facts $F_i$} & \textbf{Goal?} & \textbf{Applicable Actions} & \textbf{Cost $C$} \\
+\hline
+0 & (initial state) & No & (list actions) & 0 \\
+\hline
+1 & $F_0 \cup$ new effects & No & (list actions) & $C + \min$ cost \\
+\hline
+\end{tabular}
+\end{center}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 6: FF HEURISTIC
+%% ========================================
+\section{FF Heuristic (Fast Forward)}
+
+\begin{definitionbox}[FF Algorithm Overview]
+\textbf{Phase 1: Forward RPG Construction}
+\begin{enumerate}[leftmargin=*,nosep]
+\item Build layers: $F_0 = s$
+\item $F_{i+1} = F_i \cup \bigcup_{a \in A_i} \text{eff}_a$
+\item Track when each fact first appears: $\text{level}[f]$
+\item Stop when $G \subseteq F_i$
+\end{enumerate}
+
+\textbf{Phase 2: Backward Plan Extraction}
+\begin{enumerate}[leftmargin=*,nosep]
+\item $SG[\text{goal\_layer}] = G$
+\item For each layer $j$ down to 1:
+\item For each fact $f \in SG[j]$ with $\text{level}[f] = j$:
+\begin{itemize}[nosep]
+\item Choose action $a \in A_{j-1}$ with $f \in \text{eff}_a$
+\item Add $a$ to plan
+\item Add $\text{pre}_a$ to $SG[j-1]$
+\end{itemize}
+\end{enumerate}
+
+\textbf{Return:} $h^{FF}(s) = |$plan$|$
+\end{definitionbox}
+
+\begin{warningbox}[FF Properties]
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{NOT admissible} (can overestimate due to greedy extraction)
+\item Very informed --- works well for satisficing planning
+\item Complexity: $O(|A| \cdot |V|^2)$
+\end{itemize}
+\end{warningbox}
+
+%% ========================================
+%% SECTION 7: PLANNING COMPLEXITY
+%% ========================================
+\section{Planning Complexity}
+
+\begin{definitionbox}[Complexity Classes]
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Problem} & \textbf{Complexity} \\
+\midrule
+PlanEx (unbounded) & PSPACE-complete \\
+PlanEx($\leq k$) bounded & NP-complete \\
+PlanOptimal($\leq c$) & NP-complete \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{definitionbox}
+
+%% ########################################
+%% L5: ABSTRACTIONS & PATTERN DATABASES
+%% ########################################
+\newpage
+\begin{center}
+\textbf{\LARGE PART E: Abstractions \& PDBs (L5)}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{E.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: ABSTRACTION FUNDAMENTALS
+%% ========================================
+\section{Abstraction Fundamentals}
+
+\begin{definitionbox}[Abstraction Mapping]
+An \textbf{abstraction} is a surjective function:
+\[\alpha: S \to S^\alpha\]
+
+\textbf{Plain English:} Group similar states together. Many concrete states $\to$ one abstract state.
+
+If $\alpha(s_1) = \alpha(s_2)$, then $s_1, s_2$ are \textbf{equivalent} under $\alpha$ (we treat them as ``the same'')
+
+\textbf{Abstract state space:} $\Theta^\alpha$ with:
+\begin{itemize}[leftmargin=*,nosep]
+\item $I^\alpha = \alpha(I)$ --- abstract version of initial state
+\item $S_G^\alpha = \{\alpha(s) : s \in S_G\}$ --- abstract goals
+\item $T^\alpha = \{(\alpha(s), a, \alpha(t)) : (s,a,t) \in T\}$ --- abstract transitions
+\end{itemize}
+\end{definitionbox}
+
+\begin{definitionbox}[Abstraction Heuristic]
+\[h^\alpha(s) = h^*_{\Theta^\alpha}(\alpha(s))\]
+
+\textbf{Plain English:} Solve the SIMPLER abstract problem exactly, use that cost as estimate.
+
+\textbf{Key properties:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Admissible:} $h^\alpha(s) \leq h^*(s)$ always (abstract paths can be shortcuts)
+\item \textbf{Consistent:} Triangle inequality holds
+\item Self-loops ``don't count'' --- actions that do nothing in abstract space are free
+\end{itemize}
+
+\textbf{Why it underestimates:} Abstraction can ``merge'' states, creating shortcuts that don't exist in reality.
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 2: PATTERN DATABASE HEURISTICS
+%% ========================================
+\section{Pattern Database (PDB) Heuristics}
+
+\begin{definitionbox}[Projection and PDB]
+\textbf{Pattern:} $P \subseteq V$ (subset of variables)
+
+\textbf{Projection:} $\pi_P(s) = s|_P$ (restrict state to $P$)
+
+\textbf{Syntactic projection:} $\Pi|_P$ = planning task with only $P$ variables
+
+\textbf{PDB heuristic:} $h^P(s) = h^*_{\Theta^P}(\pi_P(s))$
+\end{definitionbox}
+
+\begin{examplebox}[PDB Computation Steps]
+\begin{enumerate}[leftmargin=*,nosep]
+\item \textbf{Syntactic projection:} Build $\Pi|_P$
+\item \textbf{Build abstract space:} Forward search from $I|_P$
+\item \textbf{Backward Dijkstra:} Compute $h^*$ from goal states
+\item \textbf{Store PDB:} Hash table for $O(1)$ lookup
+\end{enumerate}
+
+\textbf{Hash function:} index $= s(v_1) + |D_{v_1}| \cdot s(v_2) + \ldots$
+\end{examplebox}
+
+%% ========================================
+%% SECTION 3: ORTHOGONAL PATTERNS
+%% ========================================
+\section{Orthogonal Patterns (CRITICAL)}
+
+\begin{definitionbox}[Affectedness and Orthogonality]
+\textbf{Affected variables:} $\text{aff}(a) = \{v \in V : \text{eff}_a(v) \neq \bot\}$
+
+\textbf{Plain English:} Which variables does action $a$ change?
+
+\textbf{Action affects pattern:} $a$ affects $P$ iff $\text{aff}(a) \cap P \neq \emptyset$
+
+\textbf{Orthogonal patterns:} $P_1 \perp P_2$ iff:
+\[\forall a \in A: |\text{aff}(a) \cap (P_1 \cup P_2)| \leq 1\]
+
+\textbf{Plain English:} No action touches BOTH patterns. Each action is ``dedicated'' to at most one pattern.
+\end{definitionbox}
+
+\begin{warningbox}[Critical Distinction]
+\textbf{Disjoint} $\not\Rightarrow$ \textbf{Orthogonal}!
+
+Patterns may be disjoint ($P_1 \cap P_2 = \emptyset$) but NOT orthogonal if some action affects both.
+
+\textbf{Example:} \texttt{fancyCar} affects both $A$ and $B$ $\Rightarrow$ $\{A\}$ and $\{B\}$ not orthogonal!
+\end{warningbox}
+
+\begin{definitionbox}[Additivity Theorem]
+If $P_1, P_2, \ldots, P_k$ are \textbf{pairwise orthogonal}:
+\[h^{\{P_1, \ldots, P_k\}}(s) = \sum_{i=1}^k h^{P_i}(s) \quad \text{is \textbf{admissible}}\]
+
+\textbf{Non-orthogonal:} Use $\max$ instead (always safe)
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 4: CLIQUES HEURISTIC
+%% ========================================
+\section{Cliques Heuristic}
+
+\begin{definitionbox}[Orthogonality Graph and Cliques]
+\textbf{Orthogonality graph:}
+\begin{itemize}[leftmargin=*,nosep]
+\item Vertices = patterns in collection $\mathcal{C}$
+\item Edge $(P_i, P_j)$ iff $P_i \perp P_j$
+\end{itemize}
+
+\textbf{Cliques heuristic:}
+\[h^{\text{cliques}}_{\mathcal{C}}(s) = \max_{D \in \text{cliques}(\mathcal{C})} \sum_{P \in D} h^P(s)\]
+
+Sum within each clique, take max over all maximal cliques.
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 5: PATHOLOGICAL ABSTRACTIONS
+%% ========================================
+\section{Pathological Abstractions}
+
+\begin{definitionbox}[Three Extremes to Avoid]
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Type} & \textbf{Compute $\alpha$} & \textbf{Compute $h^*$} & \textbf{Quality} \\
+\midrule
+One-State & Trivial & Trivial & Useless ($h=0$) \\
+Identity & Trivial & NP-hard & Perfect \\
+Perfect ($h^*$) & NP-hard & Easy & Perfect \\
+\midrule
+\textbf{Practical PDB} & \textbf{Fast} & \textbf{Polynomial} & \textbf{Good} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{definitionbox}
+
+%% ########################################
+%% L6: PARTIAL ORDER REDUCTION (POR) & S3
+%% ########################################
+\newpage
+\begin{center}
+\textbf{\LARGE PART F: Partial Order Reduction (L6)}
+\end{center}
+\vspace{1em}
+
+\renewcommand{\thesection}{F.\arabic{section}}
+
+%% ========================================
+%% SECTION 1: MOTIVATION
+%% ========================================
+\section{Motivation: Why POR?}
+
+\begin{warningbox}[Even Almost-Perfect Heuristics Fail!]
+\textbf{Problem:} With $h(s) = h^*(s) - 1$, search still explodes exponentially!
+
+\textbf{Cause:} \textbf{Plan permutations} --- different orderings of same actions
+
+\textbf{Example:} sock\_L, sock\_R can be done in any order. A* explores ALL orderings!
+
+\textbf{Solution:} POR prunes equivalent permutations --- works \textbf{orthogonally} to heuristics
+\end{warningbox}
+
+%% ========================================
+%% SECTION 2: ACTION DEPENDENCIES
+%% ========================================
+\section{Action Dependencies (CRITICAL)}
+
+\begin{definitionbox}[Four Key Relationships]
+\begin{center}
+\begin{tabular}{@{}lp{6cm}p{4cm}@{}}
+\toprule
+\textbf{Relation} & \textbf{Definition} & \textbf{Plain English} \\
+\midrule
+\textbf{Enabling} & $a_2 \notin \mathcal{A}(s)$ but $a_2 \in \mathcal{A}(s[a_1])$ & $a_1$ unlocks $a_2$ \\
+\textbf{Disabling} & $a_2 \in \mathcal{A}(s)$ but $a_2 \notin \mathcal{A}(s[a_1])$ & $a_1$ locks $a_2$ \\
+\textbf{Conflict} & $s[\langle a_1, a_2 \rangle] \neq s[\langle a_2, a_1 \rangle]$ & Order matters! \\
+\textbf{Interfering} & Conflict OR Disabling & Can't safely reorder \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Examples:}
+\begin{itemize}[leftmargin=*,nosep]
+\item \textbf{Enabling:} drive(A,B) enables drive(B,C) --- must be at B first!
+\item \textbf{Disabling:} pickup(ball) disables another pickup(ball) --- ball is gone
+\item \textbf{Conflict:} paint(red) vs paint(blue) --- final color depends on order
+\end{itemize}
+\end{definitionbox}
+
+\begin{definitionbox}[Commutative Actions (KEY)]
+$a_1, a_2$ are \textbf{commutative} iff:
+\begin{itemize}[leftmargin=*,nosep]
+\item NOT interfering (no conflict, no disabling)
+\item Neither enables the other
+\end{itemize}
+
+\textbf{Commutative actions can be done in any order with same result!}
+
+\textbf{POR goal:} Prune orderings of commutative actions
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 3: STRONG STUBBORN SETS
+%% ========================================
+\section{Strong Stubborn Sets (S3)}
+
+\begin{definitionbox}[Strong Stubborn Set Properties]
+A set $S \subseteq A$ is a \textbf{Strong Stubborn Set} for state $s$ if:
+\begin{enumerate}[leftmargin=*,nosep]
+\item \textbf{Goal-awareness:} If $G \not\subseteq s$, then $S \cap \mathcal{A}_{s \to^* G} \neq \emptyset$
+\item \textbf{Interference closure:} If $a \in S \cap \mathcal{A}(s)$ and $b$ interferes with $a$, then $b \in S$
+\item \textbf{Enabling closure:} If $a \in S \setminus \mathcal{A}(s)$, then $S \cap \mathcal{A}_{s \to^* a} \neq \emptyset$
+\end{enumerate}
+
+\textbf{Pruning function:} $\rho(s) = S \cap \mathcal{A}(s)$ (applicable actions from S3)
+\end{definitionbox}
+
+\begin{examplebox}[S3 Algorithm]
+\begin{algorithmic}
+\STATE $S \gets \emptyset$ \COMMENT{Start with empty set}
+\IF{$G \not\subseteq s$} \COMMENT{Goal not yet satisfied?}
+    \STATE Pick $a \in \mathcal{A}_{s \to^* G}$; Add to $S$ \COMMENT{Add action needed for goal}
+\ENDIF
+\WHILE{closure not satisfied} \COMMENT{Keep adding until stable}
+    \IF{$\exists a \in S \setminus \mathcal{A}(s)$ without enabling action in $S$}
+        \STATE Pick $a' \in \mathcal{A}_{s \to^* a}$; Add $a'$ to $S$ \COMMENT{Add action to ENABLE $a$}
+    \ENDIF
+    \IF{$\exists a \in S \cap \mathcal{A}(s)$ with interfering $b \notin S$}
+        \STATE Add $b$ to $S$ \COMMENT{Add actions that INTERFERE}
+    \ENDIF
+\ENDWHILE
+\RETURN $S$
+\end{algorithmic}
+
+\textbf{Plain English:}
+\begin{enumerate}[leftmargin=*,nosep]
+\item Start with an action we need to reach the goal
+\item For non-applicable actions in $S$: add something that can enable them
+\item For applicable actions in $S$: add everything that interferes with them
+\item Repeat until nothing new gets added
+\item \textbf{Result:} Only expand actions in $S \cap \mathcal{A}(s)$ --- safely prune the rest!
+\end{enumerate}
+\end{examplebox}
+
+%% ========================================
+%% SECTION 4: ADMISSIBILITY
+%% ========================================
+\section{S3 Admissibility}
+
+\begin{definitionbox}[Main Theorem]
+\textbf{Theorem:} Strong Stubborn Sets are \textbf{admissible}
+
+$\Rightarrow$ A* with S3 pruning finds \textbf{optimal} solutions
+
+\textbf{Proof intuition:}
+\begin{itemize}[leftmargin=*,nosep]
+\item Goal-awareness ensures we can reach goal
+\item Enabling closure ensures we can execute needed actions
+\item Interference closure ensures we don't break dependencies
+\end{itemize}
+\end{definitionbox}
+
+%% ========================================
+%% SECTION 5: QUICK REFERENCE
+%% ========================================
+\section{Quick Reference}
+
+\begin{definitionbox}[Necessary Enabling Sets]
+$\mathcal{A}_{s \to^* a}$ = actions where at least one MUST be used before $a$
+
+$\mathcal{A}_{s \to^* G}$ = actions where at least one MUST be used to reach goal
+
+\textbf{Example:} To do drive(1,B,C), must first do drive(1,A,B) or teleport(1,B)
+\end{definitionbox}
+
+\begin{notebox}[When POR Helps Most]
+\begin{itemize}[leftmargin=*,nosep]
+\item Many independent packages/objects
+\item Actions on different variables are commutative
+\item Gripper, Logistics, Barman domains
+\end{itemize}
+
+\textbf{When POR helps less:} Tightly coupled domains where most actions interfere
+\end{notebox}
+
+\end{document}

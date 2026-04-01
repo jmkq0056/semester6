@@ -1,0 +1,1 @@
+  python3 -m pip install numpy matplotlib scikit-learn torch torchvision tensorflow tensorflow-probability tf_keras requests
