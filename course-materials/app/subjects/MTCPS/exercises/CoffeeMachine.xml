@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd'>
+<nta>
+	<declaration>// Synchronization channels.
+// Urgent to prevent delay.
+urgent chan coin, coffee, pub;</declaration>
+	<template>
+		<name x="5" y="5">Person</name>
+		<declaration>clock y;</declaration>
+		<location id="id0" x="120" y="72">
+			<name x="128" y="40">Go</name>
+		</location>
+		<location id="id1" x="16" y="192">
+			<name x="-48" y="168">WaitCof</name>
+			<label kind="invariant" x="-48" y="184">y&lt;=2</label>
+		</location>
+		<location id="id2" x="16" y="112">
+			<name x="-40" y="88">Ready</name>
+		</location>
+		<location id="id3" x="16" y="32">
+			<name x="-56" y="8">WaitCoin</name>
+			<label kind="invariant" x="-32" y="24">y&lt;=3</label>
+		</location>
+		<location id="id4" x="16" y="-48">
+		</location>
+		<init ref="id4"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="128" y="-32">pub!</label>
+			<nail x="120" y="-48"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="40" y="192">y==2</label>
+			<nail x="120" y="192"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="24" y="128">coffee?</label>
+			<label kind="assignment" x="24" y="144">y=0</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="24" y="56">y==3</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="24" y="-32">coin!</label>
+			<label kind="assignment" x="24" y="-16">y=0</label>
+		</transition>
+	</template>
+	<template>
+		<name>Machine</name>
+		<parameter>const int brewTime, const int timeOut</parameter>
+		<declaration>clock x;</declaration>
+		<location id="id5" x="-232" y="24">
+			<name x="-248" y="32">Ready</name>
+		</location>
+		<location id="id6" x="-232" y="-56">
+			<name x="-304" y="-80">Brewing</name>
+		</location>
+		<location id="id7" x="-232" y="-136">
+			<name x="-272" y="-160">Idle</name>
+		</location>
+		<init ref="id7"/>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<nail x="-360" y="24"/>
+			<nail x="-360" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<nail x="-104" y="24"/>
+			<nail x="-104" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+		</transition>
+	</template>
+	<template>
+		<name>Observer</name>
+		<declaration>clock z;</declaration>
+		<location id="id8" x="-184" y="-168">
+		</location>
+		<init ref="id8"/>
+	</template>
+	<system>machine = Machine(1, 8);
+system Person, machine, Observer;</system>
+</nta>

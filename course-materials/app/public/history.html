@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Course Materials</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="finder-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-title">
+                <span class="toolbar-icon">📚</span>
+                History - Last 60 Days
+            </div>
+            <div class="search-bar-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-bar" id="history-search" placeholder="Search history..."
+                    oninput="filterHistory()">
+            </div>
+            <div class="view-options">
+                <button class="view-btn" onclick="window.location.href='/'">
+                    <span>←</span>
+                    <span>Back to Files</span>
+                </button>
+                <button class="view-btn" onclick="clearAllHistory()">
+                    <span>🗑️</span>
+                    <span>Clear All</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <span class="breadcrumb-item">📁 semester 6</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item" id="breadcrumb-subject">machine intelligence</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item">History</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <!-- History Stats Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">Statistics</div>
+                    <div class="history-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Total Views</div>
+                                <div class="stat-value" id="stat-total-views">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">📄</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Unique PDFs</div>
+                                <div class="stat-value" id="stat-unique-pdfs">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">⚏</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Split Views</div>
+                                <div class="stat-value" id="stat-split-views">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-header">Most Viewed</div>
+                    <div id="most-viewed-list" class="most-viewed-list">
+                        <!-- Most viewed will be populated here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-header">Export</div>
+                    <button class="sidebar-item" onclick="exportHistory()"
+                        style="border: none; background: none; width: 100%; text-align: left;">
+                        <span class="sidebar-icon">💾</span>
+                        <span>Export Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Grid -->
+            <div class="file-list-container">
+                <div id="history-grid" class="history-grid">
+                    <!-- History items will be populated here -->
+                </div>
+                <div id="history-empty" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📂</div>
+                    <div class="empty-state-text">No history found</div>
+                    <div class="empty-state-subtext">Start viewing PDFs to build your history</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/history.js"></script>
+</body>
+
+</html>

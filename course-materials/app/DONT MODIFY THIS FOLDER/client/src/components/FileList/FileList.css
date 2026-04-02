@@ -1,0 +1,36 @@
+/* FileList styles are inherited from main styles.css */
+
+.file-list-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.file-list {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.file-list thead {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 10;
+}
+
+.file-list tbody tr:hover {
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.path-expand-icon {
+  cursor: pointer;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+}
+
+.path-expand-icon:hover {
+  transform: scale(1.2);
+}
+
+.file-path.expanded {
+  word-break: break-all;
+}

@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd'>
+<nta>
+	<declaration>//Insert declarations of global clocks, variables, constants and channels.
+
+bool spo, eco, loc, com;
+clock time;
+</declaration>
+	<template>
+		<name x="5" y="5">Kim</name>
+		<declaration>//Insert local declarations of clocks, variables and constants.
+clock x;</declaration>
+		<location id="id0" x="0" y="32">
+		</location>
+		<location id="id1" x="64" y="160">
+		</location>
+		<location id="id2" x="128" y="32">
+		</location>
+		<location id="id3" x="192" y="160">
+		</location>
+		<location id="id4" x="256" y="32">
+		</location>
+		<location id="id5" x="320" y="160">
+		</location>
+		<location id="id6" x="384" y="32">
+		</location>
+		<location id="id7" x="448" y="160">
+		</location>
+		<location id="id8" x="512" y="32">
+			<name x="502" y="2">Done</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-40" y="48">com==0</label>
+			<label kind="assignment" x="0" y="112">com:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="80" y="128">x&gt;=10</label>
+			<label kind="assignment" x="64" y="48">com:=0</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="guard" x="144" y="48">spo==0</label>
+			<label kind="assignment" x="128" y="120">spo:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="208" y="128">x&gt;=5</label>
+			<label kind="assignment" x="200" y="48">spo:=0</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="272" y="48">loc==0</label>
+			<label kind="assignment" x="264" y="120">loc:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="guard" x="344" y="120">x&gt;=3</label>
+			<label kind="assignment" x="328" y="48">loc:=0</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="guard" x="400" y="48">eco==0</label>
+			<label kind="assignment" x="384" y="120">eco:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="472" y="120">x&gt;=1</label>
+			<label kind="assignment" x="456" y="48">eco:=0</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Juri</name>
+		<declaration>//Insert local declarations of clocks, variables and constants.
+clock x;</declaration>
+		<location id="id9" x="0" y="32">
+		</location>
+		<location id="id10" x="64" y="160">
+		</location>
+		<location id="id11" x="128" y="32">
+		</location>
+		<location id="id12" x="192" y="160">
+		</location>
+		<location id="id13" x="256" y="32">
+		</location>
+		<location id="id14" x="320" y="160">
+		</location>
+		<location id="id15" x="384" y="32">
+		</location>
+		<location id="id16" x="448" y="160">
+		</location>
+		<location id="id17" x="512" y="32">
+			<name x="502" y="2">Done</name>
+		</location>
+		<init ref="id9"/>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="-40" y="48">spo==0</label>
+			<label kind="assignment" x="0" y="112">spo:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="80" y="128">x&gt;=10</label>
+			<label kind="assignment" x="64" y="48">spo:=0</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id12"/>
+			<label kind="guard" x="144" y="48">eco==0</label>
+			<label kind="assignment" x="128" y="120">eco:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="guard" x="208" y="128">x&gt;=20</label>
+			<label kind="assignment" x="200" y="48">eco:=0</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id14"/>
+			<label kind="guard" x="272" y="48">loc==0</label>
+			<label kind="assignment" x="264" y="120">loc:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id15"/>
+			<label kind="guard" x="344" y="120">x&gt;=1</label>
+			<label kind="assignment" x="328" y="48">loc:=0</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="guard" x="400" y="48">com==0</label>
+			<label kind="assignment" x="384" y="120">com:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="472" y="120">x&gt;=1</label>
+			<label kind="assignment" x="456" y="48">com:=0</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Jan</name>
+		<declaration>//Insert local declarations of clocks, variables and constants.
+clock x;</declaration>
+		<location id="id18" x="0" y="32">
+		</location>
+		<location id="id19" x="64" y="160">
+		</location>
+		<location id="id20" x="128" y="32">
+		</location>
+		<location id="id21" x="192" y="160">
+		</location>
+		<location id="id22" x="256" y="32">
+		</location>
+		<location id="id23" x="320" y="160">
+		</location>
+		<location id="id24" x="384" y="32">
+		</location>
+		<location id="id25" x="448" y="160">
+		</location>
+		<location id="id26" x="512" y="32">
+			<name x="502" y="2">Done</name>
+		</location>
+		<init ref="id18"/>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-40" y="48">eco==0</label>
+			<label kind="assignment" x="0" y="112">eco:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="guard" x="80" y="128">x&gt;=13</label>
+			<label kind="assignment" x="64" y="48">eco:=0</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id21"/>
+			<label kind="guard" x="144" y="48">com==0</label>
+			<label kind="assignment" x="128" y="120">com:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id22"/>
+			<label kind="guard" x="208" y="128">x&gt;=11</label>
+			<label kind="assignment" x="200" y="48">com:=0</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="guard" x="272" y="48">loc==0</label>
+			<label kind="assignment" x="264" y="120">loc:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id24"/>
+			<label kind="guard" x="344" y="120">x&gt;=11</label>
+			<label kind="assignment" x="328" y="48">loc:=0</label>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id25"/>
+			<label kind="guard" x="400" y="48">spo==0</label>
+			<label kind="assignment" x="384" y="120">spo:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id26"/>
+			<label kind="guard" x="472" y="120">x&gt;=1</label>
+			<label kind="assignment" x="456" y="48">spo:=0</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Wang</name>
+		<declaration>//Insert local declarations of clocks, variables and constants.
+clock x;</declaration>
+		<location id="id27" x="0" y="32">
+		</location>
+		<location id="id28" x="64" y="160">
+		</location>
+		<location id="id29" x="128" y="32">
+		</location>
+		<location id="id30" x="192" y="160">
+		</location>
+		<location id="id31" x="256" y="32">
+		</location>
+		<location id="id32" x="320" y="160">
+		</location>
+		<location id="id33" x="384" y="32">
+		</location>
+		<location id="id34" x="448" y="160">
+		</location>
+		<location id="id35" x="512" y="32">
+			<name x="502" y="2">Done</name>
+		</location>
+		<init ref="id27"/>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-40" y="48">spo==0</label>
+			<label kind="assignment" x="0" y="112">spo:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id29"/>
+			<label kind="guard" x="80" y="128">x&gt;=1</label>
+			<label kind="assignment" x="64" y="48">spo:=0</label>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="guard" x="144" y="48">eco==0</label>
+			<label kind="assignment" x="128" y="120">eco:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id31"/>
+			<label kind="guard" x="208" y="128">x&gt;=1</label>
+			<label kind="assignment" x="200" y="48">eco:=0</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id32"/>
+			<label kind="guard" x="272" y="48">loc==0</label>
+			<label kind="assignment" x="264" y="120">loc:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id33"/>
+			<label kind="guard" x="344" y="120">x&gt;=1</label>
+			<label kind="assignment" x="328" y="48">loc:=0</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id34"/>
+			<label kind="guard" x="400" y="48">com==0</label>
+			<label kind="assignment" x="384" y="120">com:=1,
+x:=0</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id35"/>
+			<label kind="guard" x="472" y="120">x&gt;=1</label>
+			<label kind="assignment" x="456" y="48">com:=0</label>
+		</transition>
+	</template>
+	<system>//Insert process assignments.
+
+//Edit system definition.
+system Kim, Juri, Jan, Wang;</system>
+</nta>

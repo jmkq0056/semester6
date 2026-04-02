@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF - Course Materials</title>
+    <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="libs/fontawesome/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        .upload-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1d1d1f;
+        }
+        .subtitle {
+            color: #8e8e93;
+            margin-bottom: 30px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e8e8ed;
+            padding: 12px 16px;
+            font-size: 15px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            outline: none;
+        }
+        .btn-upload {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-upload:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+            background: #e8e8ed;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            background: #007AFF;
+            transition: width 0.3s ease;
+        }
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        .lecture-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .lecture-box {
+            aspect-ratio: 1;
+            border: 2px solid #d1d1d6;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            color: #1d1d1f;
+        }
+        .lecture-box:hover {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.05);
+            transform: scale(1.05);
+        }
+        .lecture-box.selected {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        .auto-detected {
+            font-size: 12px;
+            color: #34c759;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        #category-predict-msg {
+            color: #007AFF;
+        }
+
+        /* Batch Upload Styles */
+        .batch-preview {
+            display: none;
+            margin-top: 30px;
+            border-top: 2px solid #e8e8ed;
+            padding-top: 30px;
+        }
+        .batch-preview.active {
+            display: block;
+        }
+        .batch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .batch-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin: 0;
+        }
+        .batch-count {
+            background: #007AFF;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f9f9fb;
+            border-radius: 12px;
+        }
+        .file-card {
+            background: white;
+            border: 2px solid #e8e8ed;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .file-card:hover {
+            border-color: #007AFF;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+        }
+        .file-card.uploading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .file-card.success {
+            border-color: #34c759;
+            background: #f0fdf4;
+        }
+        .file-card.error {
+            border-color: #ff3b30;
+            background: #fff5f5;
+        }
+        .file-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .file-icon {
+            font-size: 24px;
+            color: #ff3b30;
+        }
+        .remove-file-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .remove-file-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        .file-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        .file-size {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-bottom: 12px;
+        }
+        .file-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .meta-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .meta-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8e8e93;
+            min-width: 70px;
+        }
+        .meta-select {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #d1d1d6;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+        .meta-select:focus {
+            border-color: #007AFF;
+            outline: none;
+        }
+        .lecture-mini-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 1;
+        }
+        .lecture-mini-box {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d1d1d6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: white;
+        }
+        .lecture-mini-box:hover {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.05);
+        }
+        .lecture-mini-box.selected {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+        }
+        .auto-predicted {
+            font-size: 11px;
+            color: #34c759;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .file-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
+        .batch-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-batch-upload {
+            flex: 1;
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-batch-upload:hover:not(:disabled) {
+            background: #0051D5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+        .btn-batch-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-clear-all {
+            background: #8e8e93;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-clear-all:hover {
+            background: #6e6e73;
+        }
+        .upload-container.batch-mode {
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.location.href='/'">
+        <i class="fas fa-arrow-left me-2"></i>Back to Files
+    </button>
+
+    <div class="upload-container">
+        <h1><i class="fas fa-upload me-3"></i>Upload PDF</h1>
+        <p class="subtitle">Add study materials to your local collection</p>
+
+        <form id="upload-form">
+            <div class="mb-3">
+                <label class="form-label">Subject *</label>
+                <select class="form-select" id="subject-select" onchange="onSubjectChange()" required>
+                    <!-- Loaded dynamically -->
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category *</label>
+                <select class="form-select" id="category-select" onchange="toggleCustomCategory()">
+                    <option value="notes">Lecture Notes</option>
+                    <option value="slides">Lecture Slides</option>
+                    <option value="exercises">Exercises (With Solutions)</option>
+                    <option value="exercises-no-solutions">Exercises (No Solutions)</option>
+                    <option value="blueprint">Blueprint</option>
+                    <option value="teachers-method">Teachers Method</option>
+                    <option value="__custom__">➕ Create New Category...</option>
+                </select>
+            </div>
+
+            <div class="mb-3" id="custom-category-container" style="display: none;">
+                <label class="form-label">New Category Name *</label>
+                <input type="text" class="form-control" id="custom-category-input" placeholder="e.g., lab-work, assignments, exam-prep">
+                <small class="text-muted">Use lowercase and hyphens (e.g., "lab-work" instead of "Lab Work")</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Lecture Number (Required)</label>
+                <div class="lecture-grid" id="lecture-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <input type="hidden" id="lecture-number" value="">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">PDF File(s) * <span style="font-size: 12px; color: #8e8e93;">(Select up to 14 files)</span></label>
+                <input type="file" class="form-control" id="pdf-file" accept=".pdf" required multiple onchange="handleFileSelection()">
+            </div>
+
+            <div class="mb-4" style="display: none;">
+                <label class="form-label">Custom Filename (Optional)</label>
+                <input type="text" class="form-control" id="custom-name" placeholder="Leave empty to use original filename">
+            </div>
+
+            <button type="submit" class="btn-upload" id="single-upload-btn">
+                <i class="fas fa-cloud-upload-alt me-2"></i>Upload PDF
+            </button>
+        </form>
+
+        <!-- Batch Preview Section -->
+        <div class="batch-preview" id="batch-preview">
+            <div class="batch-header">
+                <h3><i class="fas fa-layer-group me-2"></i>Batch Upload Preview</h3>
+                <span class="batch-count" id="batch-count">0 files</span>
+            </div>
+
+            <div class="file-grid" id="file-grid">
+                <!-- File cards will be generated here -->
+            </div>
+
+            <div class="batch-actions">
+                <button type="button" class="btn-clear-all" onclick="clearAllFiles()">
+                    <i class="fas fa-times me-2"></i>Clear All
+                </button>
+                <button type="button" class="btn-batch-upload" id="batch-upload-btn" onclick="startBatchUpload()">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload All Files
+                </button>
+            </div>
+        </div>
+
+            <div class="progress" id="progress-container">
+                <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+
+            <div class="success-message" id="success-message">
+                <i class="fas fa-check-circle me-2"></i>File uploaded successfully!
+            </div>
+
+            <div class="error-message" id="error-message">
+                <i class="fas fa-exclamation-circle me-2"></i><span id="error-text"></span>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleCustomCategory() {
+            const select = document.getElementById('category-select');
+            const customContainer = document.getElementById('custom-category-container');
+            const customInput = document.getElementById('custom-category-input');
+
+            if (select.value === '__custom__') {
+                customContainer.style.display = 'block';
+                customInput.required = true;
+            } else {
+                customContainer.style.display = 'none';
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
+
+        let subjectsData = []; // Store all subjects data
+
+        async function loadSubjects() {
+            try {
+                const response = await fetch('/api/subjects');
+                const data = await response.json();
+
+                const currentResponse = await fetch('/api/current-subject');
+                const currentData = await currentResponse.json();
+
+                const select = document.getElementById('subject-select');
+                select.innerHTML = '';
+
+                if (data.success && data.subjects.length > 0) {
+                    subjectsData = data.subjects; // Store for later use
+
+                    data.subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.id;
+                        option.dataset.code = subject.code; // Store subject code
+                        option.textContent = `${subject.name} ${subject.semester ? '(' + subject.semester + ')' : ''}`;
+
+                        if (currentData.success && currentData.subject && subject.id === currentData.subject.id) {
+                            option.selected = true;
+                        }
+
+                        select.appendChild(option);
+                    });
+
+                    // Load custom categories for current subject
+                    if (currentData.success && currentData.subject) {
+                        await loadCategoriesForSubject(currentData.subject.code);
+                    }
+                } else {
+                    const option = document.createElement('option');
+                    option.textContent = 'No subjects available - Create one first';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+            }
+        }
+
+        async function onSubjectChange() {
+            const select = document.getElementById('subject-select');
+            const selectedOption = select.options[select.selectedIndex];
+            const subjectCode = selectedOption.dataset.code;
+
+            if (subjectCode) {
+                await loadCategoriesForSubject(subjectCode);
+            }
+        }
+
+        async function loadCategoriesForSubject(subjectCode) {
+            const select = document.getElementById('category-select');
+
+            // Reset to standard categories
+            select.innerHTML = `
+                <option value="notes">Lecture Notes</option>
+                <option value="slides">Lecture Slides</option>
+                <option value="exercises">Exercises (With Solutions)</option>
+                <option value="exercises-no-solutions">Exercises (No Solutions)</option>
+                <option value="blueprint">Blueprint</option>
+                <option value="teachers-method">Teachers Method</option>
+            `;
+
+            // Load and add custom categories for this subject
+            try {
+                const response = await fetch(`/api/custom-categories/${subjectCode}`);
+                const data = await response.json();
+
+                if (data.success && data.categories.length > 0) {
+                    // Add separator
+                    const separator = document.createElement('option');
+                    separator.disabled = true;
+                    separator.textContent = '──────────';
+                    select.appendChild(separator);
+
+                    // Add custom categories
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = '📁 ' + formatCategoryName(category);
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.log('No custom categories or error:', error);
+            }
+
+            // Always add "Create New" option at the end
+            const separator2 = document.createElement('option');
+            separator2.disabled = true;
+            separator2.textContent = '──────────';
+            select.appendChild(separator2);
+
+            const createNewOption = document.createElement('option');
+            createNewOption.value = '__custom__';
+            createNewOption.textContent = '➕ Create New Category...';
+            select.appendChild(createNewOption);
+        }
+
+        function formatCategoryName(category) {
+            // Convert "lab-work" to "Lab Work"
+            return category.split('-').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        // Initialize lecture grid with 14 boxes
+        function initLectureGrid() {
+            const grid = document.getElementById('lecture-grid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 14; i++) {
+                const box = document.createElement('div');
+                box.className = 'lecture-box';
+                box.textContent = i;
+                box.dataset.lecture = i;
+                box.onclick = () => selectLecture(i);
+                grid.appendChild(box);
+            }
+        }
+
+        function selectLecture(num) {
+            // Remove previous selection
+            document.querySelectorAll('.lecture-box').forEach(box => {
+                box.classList.remove('selected');
+            });
+
+            // Select new
+            const box = document.querySelector(`[data-lecture="${num}"]`);
+            if (box) {
+                box.classList.add('selected');
+                document.getElementById('lecture-number').value = num;
+            }
+        }
+
+        // ML-based category prediction
+        function predictCategory(filename) {
+            const lower = filename.toLowerCase();
+
+            // Define keywords and their weights for each category
+            const categoryScores = {
+                'exercises': 0,
+                'exercises-no-solutions': 0,
+                'slides': 0,
+                'notes': 0,
+                'blueprint': 0,
+                'teachers-method': 0
+            };
+
+            // Exercise detection (high confidence keywords)
+            if (/(?:exercise|ex|opgave|opg)[- _]?\d*/i.test(lower)) {
+                categoryScores['exercises-no-solutions'] += 50;
+                categoryScores['exercises'] += 30;
+            }
+
+            // Solution detection (determines with/without solutions)
+            if (/solution|sol|løsning|answer|svar/i.test(lower)) {
+                categoryScores['exercises'] += 60;
+                categoryScores['exercises-no-solutions'] -= 40;
+            }
+
+            // Slides detection - HIGH PRIORITY
+            // Files starting with "lecture" are almost always slides
+            if (/^lecture/i.test(lower)) {
+                categoryScores['slides'] += 90;
+            }
+            // Handouts are slides
+            if (/handout/i.test(lower)) {
+                categoryScores['slides'] += 80;
+            }
+            // Explicit slide keywords
+            if (/slide|presentation|ppt|foil/i.test(lower)) {
+                categoryScores['slides'] += 70;
+            }
+
+            // Notes detection - only if "note" or "summary" is explicitly mentioned
+            if (/note|summary|opsummering/i.test(lower)) {
+                categoryScores['notes'] += 60;
+            }
+
+            // Blueprint detection
+            if (/blueprint|studieplan|plan|exam|eksamen/i.test(lower)) {
+                categoryScores['blueprint'] += 70;
+            }
+
+            // Teacher's method detection
+            if (/teacher|lærer|method|metode|guide/i.test(lower)) {
+                categoryScores['teachers-method'] += 60;
+            }
+
+            // Find the category with highest score
+            let maxScore = 0;
+            let predictedCategory = null;
+            let confidence = 0;
+
+            for (const [category, score] of Object.entries(categoryScores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    predictedCategory = category;
+                }
+            }
+
+            // Calculate confidence percentage (normalize to 0-100)
+            if (maxScore > 0) {
+                confidence = Math.min(100, (maxScore / 90) * 100);
+            }
+
+            return { category: predictedCategory, confidence: Math.round(confidence), score: maxScore };
+        }
+
+        function autoDetectLectureNumber() {
+            const fileInput = document.getElementById('pdf-file');
+            const autoMsg = document.getElementById('auto-detect-msg');
+            const categoryMsg = document.getElementById('category-predict-msg');
+            const categorySelect = document.getElementById('category-select');
+
+            if (!fileInput.files[0]) return;
+
+            const filename = fileInput.files[0].name;
+
+            // Predict category (silent - no visual indicator)
+            const prediction = predictCategory(filename);
+            if (prediction.category && prediction.score > 20) {
+                categorySelect.value = prediction.category;
+            }
+
+            // Try to extract number from filename (Exercise2, lecture-3, lec_4, ex5, etc)
+            const patterns = [
+                /(?:exercise|ex)[- _]?(\d+)/i,
+                /(?:lecture|lec)[- _]?(\d+)/i,
+                /(\d+)[- _]?(?:exercise|ex)/i,
+                /(\d+)[- _]?(?:lecture|lec)/i,
+                /^(\d+)/  // Number at start
+            ];
+
+            let detected = null;
+            for (const pattern of patterns) {
+                const match = filename.match(pattern);
+                if (match && match[1]) {
+                    const num = parseInt(match[1]);
+                    if (num >= 1 && num <= 14) {
+                        detected = num;
+                        break;
+                    }
+                }
+            }
+
+            if (detected) {
+                selectLecture(detected);
+                // Silent detection - no visual indicator
+            }
+        }
+
+        function getCategoryDisplayName(category) {
+            const names = {
+                'notes': 'Lecture Notes',
+                'slides': 'Lecture Slides',
+                'exercises': 'Exercises (With Solutions)',
+                'exercises-no-solutions': 'Exercises (No Solutions)',
+                'blueprint': 'Blueprint',
+                'teachers-method': 'Teachers Method'
+            };
+            return names[category] || category;
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate lecture number is selected
+            const lectureNum = document.getElementById('lecture-number').value;
+            if (!lectureNum) {
+                alert('Please select a lecture number');
+                return;
+            }
+
+            const categorySelect = document.getElementById('category-select');
+            let category = categorySelect.value;
+
+            // Handle custom category
+            if (category === '__custom__') {
+                const customCategory = document.getElementById('custom-category-input').value.trim();
+                if (!customCategory) {
+                    alert('Please enter a category name');
+                    return;
+                }
+                // Validate format (lowercase, hyphens only)
+                if (!/^[a-z0-9-]+$/.test(customCategory)) {
+                    alert('Category name must be lowercase with hyphens only (e.g., "lab-work")');
+                    return;
+                }
+                category = customCategory;
+            }
+
+            const formData = new FormData();
+            formData.append('subject_id', document.getElementById('subject-select').value);
+            formData.append('category', category);
+            formData.append('lecture_number', document.getElementById('lecture-number').value);
+            formData.append('pdf', document.getElementById('pdf-file').files[0]);
+            formData.append('custom_name', document.getElementById('custom-name').value);
+
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const successMessage = document.getElementById('success-message');
+            const errorMessage = document.getElementById('error-message');
+
+            progressContainer.style.display = 'block';
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            progressBar.style.width = '0%';
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percent + '%';
+                }
+            });
+
+            xhr.addEventListener('load', async () => {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        successMessage.style.display = 'block';
+
+                        // Set current subject before navigating back
+                        const selectedSubjectId = parseInt(document.getElementById('subject-select').value);
+                        const selectedSubject = subjectsData.find(s => s.id === selectedSubjectId);
+
+                        if (selectedSubject) {
+                            try {
+                                await fetch('/api/set-current-subject', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ code: selectedSubject.code })
+                                });
+                            } catch (e) {
+                                console.error('Error setting current subject:', e);
+                            }
+                        }
+
+                        document.getElementById('upload-form').reset();
+                        // Clear lecture selection
+                        document.querySelectorAll('.lecture-box').forEach(box => {
+                            box.classList.remove('selected');
+                        });
+                        document.getElementById('lecture-number').value = '';
+                        document.getElementById('auto-detect-msg').style.display = 'none';
+
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        errorMessage.style.display = 'block';
+                        document.getElementById('error-text').textContent = data.error || 'Upload failed';
+                        progressContainer.style.display = 'none';
+                    }
+                } else {
+                    errorMessage.style.display = 'block';
+                    document.getElementById('error-text').textContent = 'Server error';
+                    progressContainer.style.display = 'none';
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                errorMessage.style.display = 'block';
+                document.getElementById('error-text').textContent = 'Network error';
+                progressContainer.style.display = 'none';
+            });
+
+            xhr.open('POST', '/api/upload-pdf');
+            xhr.send(formData);
+        });
+
+        // Batch Upload Functionality
+        let batchFiles = [];
+
+        function handleFileSelection() {
+            const fileInput = document.getElementById('pdf-file');
+            const files = Array.from(fileInput.files);
+
+            // Limit to 14 files
+            if (files.length > 14) {
+                alert('Maximum 14 files allowed. Only the first 14 will be selected.');
+                batchFiles = files.slice(0, 14);
+            } else {
+                batchFiles = files;
+            }
+
+            if (batchFiles.length > 1) {
+                // Multiple files - show batch interface
+                showBatchInterface();
+            } else if (batchFiles.length === 1) {
+                // Single file - use regular auto-detect
+                hideBatchInterface();
+                autoDetectLectureNumber();
+            } else {
+                // No files
+                hideBatchInterface();
+            }
+        }
+
+        function showBatchInterface() {
+            const container = document.querySelector('.upload-container');
+            const batchPreview = document.getElementById('batch-preview');
+            const singleUploadBtn = document.getElementById('single-upload-btn');
+            const lectureGrid = document.getElementById('lecture-grid').parentElement;
+            const categorySelect = document.getElementById('category-select').parentElement;
+
+            // Expand container and hide single upload controls
+            container.classList.add('batch-mode');
+            batchPreview.classList.add('active');
+            singleUploadBtn.style.display = 'none';
+            lectureGrid.style.display = 'none';
+            categorySelect.style.display = 'none';
+
+            // Update count
+            document.getElementById('batch-count').textContent = `${batchFiles.length} file${batchFiles.length > 1 ? 's' : ''}`;
+
+            // Generate file cards
+            renderFileCards();
+        }
+
+        function hideBatchInterface() {
+            const container = document.querySelector('.upload-container');
+            const batchPreview = document.getElementById('batch-preview');
+            const singleUploadBtn = document.getElementById('single-upload-btn');
+            const lectureGrid = document.getElementById('lecture-grid').parentElement;
+            const categorySelect = document.getElementById('category-select').parentElement;
+
+            container.classList.remove('batch-mode');
+            batchPreview.classList.remove('active');
+            singleUploadBtn.style.display = 'block';
+            lectureGrid.style.display = 'block';
+            categorySelect.style.display = 'block';
+        }
+
+        function renderFileCards() {
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '';
+
+            batchFiles.forEach((file, index) => {
+                const prediction = predictFileMetadata(file.name);
+                const card = createFileCard(file, index, prediction);
+                grid.appendChild(card);
+            });
+        }
+
+        function predictFileMetadata(filename) {
+            // Predict category
+            const categoryPred = predictCategory(filename);
+
+            // Predict lecture number
+            const lectureMatch = filename.match(/(?:lec|lecture|l)[- _]?(\d+)/i) ||
+                                filename.match(/(?:exercise|ex)[- _]?(\d+)/i) ||
+                                filename.match(/(\d+)[- _]?(?:exercise|ex)/i) ||
+                                filename.match(/^(\d+)[- _]/);
+            const lectureNum = lectureMatch ? parseInt(lectureMatch[1]) : null;
+
+            return {
+                category: categoryPred.category,
+                lecture: lectureNum,
+                confidence: categoryPred.confidence
+            };
+        }
+
+        function createFileCard(file, index, prediction) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            card.dataset.index = index;
+
+            const sizeKB = (file.size / 1024).toFixed(1);
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            const displaySize = file.size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+            card.innerHTML = `
+                <div class="file-header">
+                    <span class="file-icon"><i class="fas fa-file-pdf"></i></span>
+                    <button class="remove-file-btn" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="file-name">${file.name}</div>
+                <div class="file-size">${displaySize}</div>
+
+                <div class="file-meta">
+                    <div class="meta-row">
+                        <span class="meta-label">Category:</span>
+                        <select class="meta-select" onchange="updateFileMetadata(${index}, 'category', this.value)">
+                            ${generateCategoryOptions(prediction.category)}
+                        </select>
+                    </div>
+
+                    <div class="meta-row">
+                        <span class="meta-label">Lecture:</span>
+                        <div class="lecture-mini-grid" id="lecture-mini-${index}">
+                            ${generateLectureMiniBoxes(index, prediction.lecture)}
+                        </div>
+                    </div>
+                </div>
+
+                <span class="file-status" id="status-${index}"></span>
+            `;
+
+            // Store prediction data
+            card.dataset.category = prediction.category || 'notes';
+            card.dataset.lecture = prediction.lecture || '';
+
+            return card;
+        }
+
+        function generateCategoryOptions(selectedCategory) {
+            const categories = [
+                { value: 'notes', label: 'Lecture Notes' },
+                { value: 'slides', label: 'Lecture Slides' },
+                { value: 'exercises', label: 'Exercises (With Solutions)' },
+                { value: 'exercises-no-solutions', label: 'Exercises (No Solutions)' },
+                { value: 'blueprint', label: 'Blueprint' },
+                { value: 'teachers-method', label: 'Teachers Method' }
+            ];
+
+            return categories.map(cat =>
+                `<option value="${cat.value}" ${cat.value === selectedCategory ? 'selected' : ''}>${cat.label}</option>`
+            ).join('');
+        }
+
+        function generateLectureMiniBoxes(fileIndex, selectedLecture) {
+            let html = '';
+            for (let i = 1; i <= 14; i++) {
+                const selected = i === selectedLecture ? 'selected' : '';
+                html += `<div class="lecture-mini-box ${selected}" onclick="selectFileLecture(${fileIndex}, ${i})">${i}</div>`;
+            }
+            return html;
+        }
+
+        function selectFileLecture(fileIndex, lectureNum) {
+            const grid = document.getElementById(`lecture-mini-${fileIndex}`);
+            const boxes = grid.querySelectorAll('.lecture-mini-box');
+            boxes.forEach(box => box.classList.remove('selected'));
+            boxes[lectureNum - 1].classList.add('selected');
+
+            // Update card data
+            const card = document.querySelector(`[data-index="${fileIndex}"]`);
+            card.dataset.lecture = lectureNum;
+        }
+
+        function updateFileMetadata(fileIndex, field, value) {
+            const card = document.querySelector(`[data-index="${fileIndex}"]`);
+            card.dataset[field] = value;
+        }
+
+        function removeFile(index) {
+            batchFiles.splice(index, 1);
+
+            if (batchFiles.length === 0) {
+                // Clear file input
+                document.getElementById('pdf-file').value = '';
+                hideBatchInterface();
+            } else {
+                // Re-render cards
+                renderFileCards();
+                document.getElementById('batch-count').textContent = `${batchFiles.length} file${batchFiles.length > 1 ? 's' : ''}`;
+            }
+        }
+
+        function clearAllFiles() {
+            if (confirm('Clear all selected files?')) {
+                batchFiles = [];
+                document.getElementById('pdf-file').value = '';
+                hideBatchInterface();
+            }
+        }
+
+        async function startBatchUpload() {
+            const subjectId = document.getElementById('subject-select').value;
+            if (!subjectId) {
+                alert('Please select a subject');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('batch-upload-btn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < batchFiles.length; i++) {
+                const file = batchFiles[i];
+                const card = document.querySelector(`[data-index="${i}"]`);
+                const category = card.dataset.category;
+                const lecture = card.dataset.lecture;
+
+                if (!lecture) {
+                    const statusIcon = document.getElementById(`status-${i}`);
+                    statusIcon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ff3b30;"></i>';
+                    card.classList.add('error');
+                    errorCount++;
+                    continue;
+                }
+
+                // Mark as uploading
+                card.classList.add('uploading');
+                const statusIcon = document.getElementById(`status-${i}`);
+                statusIcon.innerHTML = '<i class="fas fa-spinner fa-spin" style="color: #007AFF;"></i>';
+
+                try {
+                    const success = await uploadSingleFile(file, subjectId, category, lecture);
+
+                    if (success) {
+                        card.classList.remove('uploading');
+                        card.classList.add('success');
+                        statusIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #34c759;"></i>';
+                        successCount++;
+                    } else {
+                        card.classList.remove('uploading');
+                        card.classList.add('error');
+                        statusIcon.innerHTML = '<i class="fas fa-times-circle" style="color: #ff3b30;"></i>';
+                        errorCount++;
+                    }
+                } catch (error) {
+                    card.classList.remove('uploading');
+                    card.classList.add('error');
+                    statusIcon.innerHTML = '<i class="fas fa-times-circle" style="color: #ff3b30;"></i>';
+                    errorCount++;
+                }
+
+                // Small delay between uploads
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // Show results
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i>Upload All Files';
+
+            if (errorCount === 0) {
+                alert(`Successfully uploaded ${successCount} file(s)!`);
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                alert(`Uploaded ${successCount} file(s), ${errorCount} failed. Fix the errors and try again for failed files.`);
+            }
+        }
+
+        function uploadSingleFile(file, subjectId, category, lectureNumber) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('subject_id', subjectId);
+                formData.append('category', category);
+                formData.append('lecture_number', lectureNumber);
+                formData.append('pdf', file);
+                formData.append('custom_name', '');
+
+                const xhr = new XMLHttpRequest();
+
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        resolve(data.success);
+                    } else {
+                        resolve(false);
+                    }
+                });
+
+                xhr.addEventListener('error', () => {
+                    resolve(false);
+                });
+
+                xhr.open('POST', '/api/upload-pdf');
+                xhr.send(formData);
+            });
+        }
+
+        loadSubjects();
+        initLectureGrid();
+    </script>
+</body>
+</html>

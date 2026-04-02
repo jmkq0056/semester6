@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+clock t;
+broadcast chan tik;
+bool press=0;
+</declaration>
+	<template>
+		<name x="5" y="5">Cround</name>
+		<declaration>// Place local declarations here.
+</declaration>
+		<location id="id0" x="0" y="0">
+			<label kind="invariant" x="-34" y="17">t &lt;= 1000</label>
+		</location>
+		<init ref="id0"/>
+		<transition id="id1">
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-34" y="-127">t &gt;= 1000</label>
+			<label kind="synchronisation" x="-17" y="-144">tik!</label>
+			<label kind="assignment" x="-17" y="-102">t = 0</label>
+			<nail x="-42" y="-102"/>
+			<nail x="42" y="-102"/>
+		</transition>
+	</template>
+	<template>
+		<name>User</name>
+		<location id="id2" x="119" y="0">
+			<committed/>
+		</location>
+		<location id="id3" x="0" y="0">
+		</location>
+		<init ref="id3"/>
+		<transition id="id4">
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="25" y="42">press = 1</label>
+			<nail x="59" y="42"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="17" y="-76">press = 0</label>
+			<nail x="59" y="-51"/>
+		</transition>
+		<transition id="id6">
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="42" y="-25">tik?</label>
+		</transition>
+	</template>
+	<template>
+		<name>User3</name>
+		<declaration>int count=0;</declaration>
+		<location id="id7" x="113" y="-102">
+			<committed/>
+		</location>
+		<location id="id8" x="-6" y="-102">
+		</location>
+		<init ref="id8"/>
+		<transition id="id9">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="17" y="-59">count &gt;= 2</label>
+			<label kind="assignment" x="17" y="-34">press := 1,
+count := 0</label>
+			<nail x="53" y="-60"/>
+		</transition>
+		<transition id="id10">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="17" y="-204">count &lt; 2</label>
+			<label kind="assignment" x="-8" y="-187">count := count + 1,
+press := 0</label>
+			<nail x="53" y="-153"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id8"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="36" y="-127">tik?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Switch</name>
+		<declaration>int x=0;</declaration>
+		<location id="id12" x="-425" y="-93">
+			<name x="-433" y="-76">off</name>
+		</location>
+		<location id="id13" x="-178" y="-93">
+			<name x="-187" y="-76">on</name>
+		</location>
+		<init ref="id12"/>
+		<transition id="id14">
+			<source ref="id13"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-238" y="-220">press == 0 &amp;&amp; x &lt; 10</label>
+			<label kind="synchronisation" x="-187" y="-237">tik?</label>
+			<label kind="assignment" x="-204" y="-203">x = x + 1</label>
+			<nail x="-212" y="-178"/>
+			<nail x="-144" y="-178"/>
+		</transition>
+		<transition id="id15">
+			<source ref="id12"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-467" y="-204">press == 0</label>
+			<label kind="synchronisation" x="-442" y="-221">tik?</label>
+			<nail x="-459" y="-178"/>
+			<nail x="-391" y="-178"/>
+		</transition>
+		<transition id="id16">
+			<source ref="id13"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-365" y="-34">press == 1 || x &gt;= 10</label>
+			<label kind="synchronisation" x="-306" y="-51">tik?</label>
+			<label kind="assignment" x="-314" y="-17">x := 0</label>
+			<nail x="-297" y="-59"/>
+		</transition>
+		<transition id="id17">
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-323" y="-153">press == 1</label>
+			<label kind="synchronisation" x="-306" y="-170">tik?</label>
+			<nail x="-297" y="-127"/>
+		</transition>
+	</template>
+	<system>system Cround, User3, Switch;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] Switch.x &lt; 2</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A[] Switch.x &lt;= 2</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment/>
+		</query>
+	</queries>
+</nta>

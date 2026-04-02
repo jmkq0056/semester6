@@ -1,0 +1,627 @@
+/* ============================================================================
+   PDF PAGE SELECTOR - For selecting specific pages from a PDF
+   Used in Study with Claude and TeX Editor Claude references
+   ============================================================================ */
+
+/* Overlay */
+.pdf-page-selector-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 200000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.pdf-page-selector-overlay.open {
+    display: flex;
+    animation: pageSelectorFadeIn 0.25s ease;
+}
+
+@keyframes pageSelectorFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Main Container */
+.pdf-page-selector-container {
+    width: 100%;
+    max-width: 900px;
+    background: linear-gradient(180deg, #1e1e22 0%, #18181b 100%);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+        0 32px 100px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    animation: pageSelectorSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 85vh;
+}
+
+@keyframes pageSelectorSlideUp {
+    from { transform: translateY(30px) scale(0.96); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Header */
+.pdf-page-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pdf-page-selector-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdf-page-selector-header-left i {
+    font-size: 18px;
+    color: #F59E0B;
+}
+
+.pdf-page-selector-header-left h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.pdf-page-selector-file-name {
+    font-size: 12px;
+    color: #8b8b8e;
+    margin-top: 2px;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pdf-page-selector-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #8b8b8e;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.pdf-page-selector-close:hover {
+    background: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+}
+
+/* Mode Toggle */
+.pdf-page-selector-mode {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pdf-page-selector-mode-label {
+    font-size: 12px;
+    color: #6e6e6e;
+    font-weight: 500;
+}
+
+.pdf-page-selector-mode-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.pdf-page-selector-mode-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #8b8b8e;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pdf-page-selector-mode-btn:hover {
+    color: #fff;
+}
+
+.pdf-page-selector-mode-btn.active {
+    background: #F59E0B;
+    color: #000;
+}
+
+.pdf-page-selector-mode-btn i {
+    font-size: 11px;
+}
+
+/* Page Viewer Area */
+.pdf-page-viewer-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    min-height: 400px;
+    position: relative;
+    background: #0d0d0f;
+}
+
+/* Navigation Arrows */
+.pdf-page-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.pdf-page-nav-btn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.3);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.pdf-page-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pdf-page-nav-btn.prev {
+    left: 16px;
+}
+
+.pdf-page-nav-btn.next {
+    right: 16px;
+}
+
+/* Page Canvas Container */
+.pdf-page-canvas-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: calc(100% - 140px);
+}
+
+.pdf-page-canvas {
+    max-height: 380px;
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    background: #fff;
+}
+
+/* Page Selection Overlay */
+.pdf-page-select-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.pdf-page-select-overlay:hover {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.pdf-page-select-overlay.selected {
+    background: rgba(245, 158, 11, 0.25);
+    box-shadow: inset 0 0 0 3px #F59E0B;
+}
+
+.pdf-page-select-overlay .select-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.15s ease;
+}
+
+.pdf-page-select-overlay:hover .select-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.pdf-page-select-overlay.selected .select-icon {
+    opacity: 1;
+    transform: scale(1);
+    background: #F59E0B;
+    color: #000;
+}
+
+/* Page Info Bar */
+.pdf-page-info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pdf-page-counter {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.pdf-page-counter span {
+    color: #F59E0B;
+    font-weight: 600;
+}
+
+.pdf-page-jump {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-page-jump label {
+    font-size: 12px;
+    color: #6e6e6e;
+}
+
+.pdf-page-jump input {
+    width: 60px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 13px;
+    text-align: center;
+}
+
+.pdf-page-jump input:focus {
+    outline: none;
+    border-color: #F59E0B;
+}
+
+/* Selection Summary */
+.pdf-page-selection-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pdf-page-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdf-page-selection-label {
+    font-size: 12px;
+    color: #6e6e6e;
+    font-weight: 500;
+}
+
+.pdf-page-selection-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 500px;
+}
+
+.pdf-page-chip {
+    padding: 4px 10px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    font-size: 11px;
+    color: #F59E0B;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pdf-page-chip .remove {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 9px;
+    transition: all 0.15s ease;
+}
+
+.pdf-page-chip .remove:hover {
+    background: #FF3B30;
+    color: #fff;
+}
+
+.pdf-page-selection-empty {
+    font-size: 12px;
+    color: #4a4a4a;
+    font-style: italic;
+}
+
+/* Quick Select Controls */
+.pdf-page-quick-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-page-quick-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: transparent;
+    color: #8b8b8e;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pdf-page-quick-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Footer Actions */
+.pdf-page-selector-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pdf-page-selector-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdf-page-context-hint {
+    font-size: 11px;
+    color: #4a4a4a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pdf-page-context-hint i {
+    color: #F59E0B;
+}
+
+.pdf-page-selector-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pdf-page-selector-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-page-selector-btn.cancel {
+    background: rgba(255, 255, 255, 0.05);
+    color: #8b8b8e;
+}
+
+.pdf-page-selector-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.pdf-page-selector-btn.use-full {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.pdf-page-selector-btn.use-full:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.pdf-page-selector-btn.confirm {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: #000;
+}
+
+.pdf-page-selector-btn.confirm:hover {
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    transform: translateY(-1px);
+}
+
+.pdf-page-selector-btn.confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Loading State */
+.pdf-page-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: #6e6e6e;
+}
+
+.pdf-page-loading .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(245, 158, 11, 0.2);
+    border-top-color: #F59E0B;
+    border-radius: 50%;
+    animation: pageSelectorSpin 0.8s linear infinite;
+}
+
+@keyframes pageSelectorSpin {
+    to { transform: rotate(360deg); }
+}
+
+.pdf-page-loading span {
+    font-size: 13px;
+}
+
+/* Keyboard Hints */
+.pdf-page-keyboard-hints {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: #4a4a4a;
+}
+
+.pdf-page-keyboard-hints kbd {
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: inherit;
+    color: #6e6e6e;
+    margin: 0 2px;
+}
+
+/* Range Input Mode */
+.pdf-page-range-input {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.pdf-page-range-input.visible {
+    display: flex;
+}
+
+.pdf-page-range-input label {
+    font-size: 12px;
+    color: #8b8b8e;
+}
+
+.pdf-page-range-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 13px;
+}
+
+.pdf-page-range-input input::placeholder {
+    color: #4a4a4a;
+}
+
+.pdf-page-range-input input:focus {
+    outline: none;
+    border-color: #F59E0B;
+}
+
+.pdf-page-range-apply {
+    padding: 8px 16px;
+    background: #F59E0B;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pdf-page-selector-overlay {
+        padding: 20px;
+    }
+
+    .pdf-page-selector-container {
+        max-height: 90vh;
+    }
+
+    .pdf-page-nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .pdf-page-canvas-container {
+        max-width: calc(100% - 100px);
+    }
+
+    .pdf-page-canvas {
+        max-height: 300px;
+    }
+
+    .pdf-page-selection-chips {
+        max-width: 200px;
+    }
+}

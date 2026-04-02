@@ -1,0 +1,42 @@
+.boot-splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.8s ease-out;
+}
+
+.boot-splash.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-splash img {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  animation: splash-pulse 2s ease-in-out;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes splash-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

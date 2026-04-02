@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX Projects - Overleaf-like Editor</title>
+    <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="libs/fontawesome/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- CodeMirror for LaTeX editing -->
+    <link rel="stylesheet" href="libs/codemirror/codemirror.min.css">
+    <link rel="stylesheet" href="libs/codemirror/material-darker.min.css">
+    <link rel="stylesheet" href="libs/codemirror/dialog.min.css">
+    <link rel="stylesheet" href="libs/codemirror/foldgutter.min.css">
+    <link rel="stylesheet" href="css/tex-editor.css">
+    <link rel="stylesheet" href="css/latex-project.css">
+</head>
+
+<body class="latex-app-body">
+    <!-- Main App Container -->
+    <div class="latex-app">
+        <!-- Top Toolbar -->
+        <nav class="latex-toolbar">
+            <div class="toolbar-left">
+                <a href="/" class="back-to-main">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Files</span>
+                </a>
+                <div class="toolbar-divider"></div>
+                <div class="project-selector" id="project-selector">
+                    <select id="project-dropdown" onchange="switchProject(this.value)">
+                        <option value="">Select a project...</option>
+                    </select>
+                    <button class="btn-icon" onclick="openNewProjectModal()" title="Create new project">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="toolbar-center">
+                <span class="project-name" id="project-name">No Project Selected</span>
+            </div>
+            <div class="toolbar-right">
+                <div class="editor-status" id="editor-status">
+                    <i class="fas fa-circle"></i>
+                    <span>Ready</span>
+                </div>
+                <button class="toolbar-btn" onclick="saveCurrentFile()" title="Save (Cmd+S)">
+                    <i class="fas fa-save"></i>
+                    <span>Save</span>
+                </button>
+                <button class="toolbar-btn compile-btn" onclick="compileProject()" title="Compile (Cmd+B)">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Compile</span>
+                </button>
+                <button class="toolbar-btn claude-btn" onclick="toggleClaudePanel()" title="Edit with Claude (Cmd+E)">
+                    <i class="fas fa-magic"></i>
+                    <span>Claude</span>
+                </button>
+                <button class="toolbar-btn git-btn" onclick="toggleVersionPanel()" title="Git Version Control">
+                    <i class="fab fa-git-alt"></i>
+                    <span>Git</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Workspace -->
+        <div class="latex-workspace">
+            <!-- File Tree Sidebar -->
+            <aside class="file-tree-sidebar" id="file-tree-sidebar">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">
+                        <i class="fas fa-folder-tree"></i>
+                        Project Files
+                    </span>
+                    <div class="sidebar-actions">
+                        <button class="btn-icon" onclick="createNewFile()" title="New file">
+                            <i class="fas fa-file-plus"></i>
+                        </button>
+                        <button class="btn-icon" onclick="createNewFolder()" title="New folder">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                        <button class="btn-icon" onclick="refreshFileTree()" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="file-tree" id="file-tree">
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>No project selected</p>
+                        <button class="btn-small" onclick="openNewProjectModal()">Create Project</button>
+                    </div>
+                </div>
+                <!-- TEMP DELETED YouTube References -->
+                
+            </aside>
+
+            <!-- Resizer for sidebar -->
+            <div class="sidebar-resizer" id="sidebar-resizer"></div>
+
+            <!-- Editor Area -->
+            <main class="editor-area">
+                <!-- Editor Tabs -->
+                <div class="editor-tabs" id="editor-tabs">
+                    <!-- Tabs populated dynamically -->
+                </div>
+
+                <!-- Editor Container -->
+                <div class="editor-container">
+                    <!-- Document Outline -->
+                    <div class="outline-panel" id="outline-panel">
+                        <div class="outline-header">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Document Outline</span>
+                            <button class="btn-icon" onclick="toggleOutlinePanel()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="outline-content" id="outline-content">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Code Editor -->
+                    <div class="code-editor-wrapper" id="code-editor-wrapper">
+                        <textarea id="code-editor"></textarea>
+                    </div>
+
+                    <!-- File Viewer (for images, markdown, etc.) -->
+                    <div class="file-viewer-wrapper" id="file-viewer-wrapper" style="display: none;">
+                        <!-- Dynamically populated by file-viewers.js -->
+                    </div>
+                </div>
+
+                <!-- Compile Output -->
+                <div class="compile-output" id="compile-output">
+                    <div class="output-header">
+                        <span><i class="fas fa-terminal"></i> Compilation Output</span>
+                        <button class="btn-icon" onclick="hideCompileOutput()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <pre class="output-content" id="output-content"></pre>
+                </div>
+            </main>
+
+            <!-- Resizer for PDF panel -->
+            <div class="pdf-resizer" id="pdf-resizer"></div>
+
+            <!-- PDF Preview -->
+            <aside class="pdf-preview-panel" id="pdf-preview-panel">
+                <div class="pdf-toolbar">
+                    <span class="pdf-title" id="pdf-title">PDF Preview</span>
+                    <div class="pdf-actions">
+                        <button class="btn-icon" onclick="refreshPdfPreview()" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-icon" onclick="openPdfInNewTab()" title="Open in new tab">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="pdf-container">
+                    <iframe id="pdf-viewer" src="about:blank"></iframe>
+                    <div class="pdf-placeholder" id="pdf-placeholder">
+                        <i class="fas fa-file-pdf"></i>
+                        <p>No PDF yet</p>
+                        <p class="hint">Compile to generate PDF</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Claude AI Panel (Slide-in from right) - Full tex-editor.js style -->
+        <div class="claude-panel" id="claude-panel">
+            <div class="claude-panel-header">
+                <div class="claude-title">
+                    <i class="fas fa-magic"></i>
+                    <span>Edit with Claude</span>
+                </div>
+                <button class="btn-icon" onclick="toggleClaudePanel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Mode Selection -->
+            <div class="claude-mode-tabs">
+                <button class="mode-tab" data-mode="selection" onclick="setClaudeMode('selection')">
+                    <i class="fas fa-text-width"></i> Selection
+                </button>
+                <button class="mode-tab active" data-mode="file" onclick="setClaudeMode('file')">
+                    <i class="fas fa-file-alt"></i> Entire File
+                </button>
+            </div>
+
+            <!-- Current Selection Preview -->
+            <div class="claude-current-selection" id="claude-current-selection">
+                <!-- Shows current selection with add button -->
+            </div>
+
+            <!-- Code Selections (Added selections) -->
+            <div class="claude-selections" id="claude-selections">
+                <!-- Selection chips rendered dynamically -->
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="claude-actions">
+                <div class="actions-label">Quick Actions</div>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="runClaudeAction('improve')">
+                        <i class="fas fa-wand-magic-sparkles"></i> Improve
+                    </button>
+                    <button class="action-btn" onclick="runClaudeAction('fix')">
+                        <i class="fas fa-wrench"></i> Fix Errors
+                    </button>
+                    <button class="action-btn" onclick="runClaudeAction('simplify')">
+                        <i class="fas fa-compress-alt"></i> Simplify
+                    </button>
+                    <button class="action-btn" onclick="runClaudeAction('expand')">
+                        <i class="fas fa-expand-alt"></i> Expand
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="claude-messages" id="claude-messages">
+                <div class="claude-empty-state">
+                    <i class="fas fa-magic"></i>
+                    <p>Select a quick action or type a custom instruction</p>
+                </div>
+            </div>
+
+            <!-- Referenced Files & YouTube -->
+            <div class="claude-refs" id="claude-refs">
+                <!-- Referenced files and YouTube transcripts displayed here -->
+            </div>
+
+            <!-- Image Previews -->
+            <div class="claude-images" id="claude-images">
+                <!-- Pasted images displayed here -->
+            </div>
+
+            <!-- Custom Input with @ autocomplete -->
+            <div class="claude-input-section">
+                <div class="input-wrapper">
+                    <textarea
+                        id="claude-input"
+                        placeholder="Describe what you want Claude to do...&#10;Use @ to reference project files&#10;Paste YouTube URLs for video context"
+                        onkeydown="handleClaudeInputKeydown(event)"
+                        oninput="handleClaudeInputChange(this)"
+                    ></textarea>
+                    <div class="claude-autocomplete" id="claude-autocomplete">
+                        <!-- File autocomplete dropdown -->
+                    </div>
+                </div>
+                <div class="input-actions">
+                    <label class="btn-attach" title="Attach image">
+                        <i class="fas fa-image"></i>
+                        <input type="file" accept="image/*" style="display: none;" onchange="handleClaudeImageSelect(event)">
+                    </label>
+                    <button class="btn-send" onclick="runClaudeAction('custom')">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Claude Terminal Panel (Bottom output) -->
+        <div class="claude-terminal-panel" id="claude-terminal-panel">
+            <div class="claude-terminal-header">
+                <span><i class="fas fa-terminal"></i> Claude Output</span>
+                <div class="terminal-actions">
+                    <button id="claude-stop-btn" class="btn-stop" onclick="stopClaudeProcess()" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button class="btn-close" onclick="closeClaudeTerminal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="claude-terminal-content" id="claude-terminal-content">
+                <!-- Terminal output lines -->
+            </div>
+        </div>
+
+        <!-- Git Version Control Panel -->
+        <div class="version-panel" id="version-panel">
+            <div class="version-panel-header">
+                <div class="version-title">
+                    <i class="fab fa-git-alt"></i>
+                    <span>Git Version Control</span>
+                </div>
+                <button class="btn-icon" onclick="toggleVersionPanel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Git Status Section -->
+            <div class="git-status-section" id="git-status-section">
+                <div class="git-not-initialized" id="git-not-initialized">
+                    <i class="fab fa-github"></i>
+                    <p>Create GitHub Repository</p>
+                    <button class="btn-git-init" onclick="initGit()">
+                        <i class="fas fa-plus"></i> Initialize & Push to GitHub
+                    </button>
+                </div>
+                <div class="git-initialized" id="git-initialized" style="display: none;">
+                    <div class="git-branch">
+                        <i class="fas fa-code-branch"></i>
+                        <span id="git-branch-name">main</span>
+                        <span class="git-status-badge" id="git-status-badge"></span>
+                        <a href="#" id="git-repo-link" class="git-repo-link" target="_blank" style="display: none;" title="Open on GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                    <div class="git-actions">
+                        <button class="btn-git-action" onclick="gitCommit()" title="Create commit">
+                            <i class="fas fa-check"></i> Commit
+                        </button>
+                        <button class="btn-git-action push" onclick="gitPush()" title="Push to GitHub">
+                            <i class="fab fa-github"></i> Push
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commit History -->
+            <div class="git-history-section">
+                <div class="git-history-header">
+                    <span><i class="fas fa-history"></i> Commit History</span>
+                    <button class="btn-refresh-history" onclick="loadGitHistory()" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="git-commit-list" id="git-commit-list">
+                    <!-- Commits populated dynamically -->
+                    <div class="git-empty-state">
+                        <i class="fas fa-code-commit"></i>
+                        <p>No commits yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Git Remote URL Modal -->
+        <div class="modal-overlay" id="git-remote-modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-link"></i> Set Remote Repository</h3>
+                    <button class="btn-icon" onclick="closeRemoteModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Remote URL (HTTPS or SSH)</label>
+                        <input type="text" id="git-remote-url" placeholder="https://github.com/username/repo.git">
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+                        <i class="fas fa-info-circle"></i> For SSH, make sure your SSH keys are configured.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeRemoteModal()">Cancel</button>
+                    <button class="btn-create" onclick="setGitRemote()">
+                        <i class="fas fa-save"></i> Save Remote
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Git Commit Message Modal -->
+        <div class="modal-overlay" id="git-commit-modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-check"></i> Create Commit</h3>
+                    <button class="btn-icon" onclick="closeCommitModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Commit Message</label>
+                        <input type="text" id="git-commit-message" placeholder="Describe your changes...">
+                    </div>
+                    <div class="git-changes-preview" id="git-changes-preview">
+                        <!-- Changed files shown here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeCommitModal()">Cancel</button>
+                    <button class="btn-create" onclick="submitCommit()">
+                        <i class="fas fa-check"></i> Commit Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Git Rollback Confirmation Modal -->
+        <div class="modal-overlay" id="git-rollback-modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-undo"></i> Rollback to Commit</h3>
+                    <button class="btn-icon" onclick="closeRollbackModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="rollback-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>This will restore your project to the selected commit. A backup branch will be created.</p>
+                    </div>
+                    <div class="rollback-commit-info" id="rollback-commit-info">
+                        <!-- Commit info shown here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeRollbackModal()">Cancel</button>
+                    <button class="btn-create" style="background: #e74c3c;" onclick="confirmRollback()">
+                        <i class="fas fa-undo"></i> Rollback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="new-project-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Create New Project</h3>
+                <button class="btn-icon" onclick="closeNewProjectModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="project-name-input">Project Name</label>
+                    <input type="text" id="project-name-input" placeholder="e.g., My Thesis, Math Notes">
+                </div>
+                <div class="form-group">
+                    <label for="project-description-input">Description (optional)</label>
+                    <textarea id="project-description-input" placeholder="Brief description of the project"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project-template-input">Template</label>
+                    <select id="project-template-input">
+                        <option value="basic">Basic Article</option>
+                        <option value="article">Article with Chapters</option>
+                        <option value="thesis">Thesis/Report</option>
+                        <option value="beamer">Beamer Presentation</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeNewProjectModal()">Cancel</button>
+                <button class="btn-create" onclick="createNewProject()">Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New File Modal -->
+    <div class="modal-overlay" id="new-file-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-plus"></i> Create New File</h3>
+                <button class="btn-icon" onclick="closeNewFileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-file-name">File Name</label>
+                    <input type="text" id="new-file-name" placeholder="e.g., chapter1.tex, references.bib">
+                </div>
+                <div class="form-group">
+                    <label for="new-file-folder">Folder (optional)</label>
+                    <select id="new-file-folder">
+                        <option value="">Root</option>
+                        <option value="chapters">chapters/</option>
+                        <option value="figures">figures/</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeNewFileModal()">Cancel</button>
+                <button class="btn-create" onclick="createFileFromModal()">Create File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add YouTube Modal -->
+    <div class="modal-overlay" id="youtube-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fab fa-youtube"></i> Add YouTube Reference</h3>
+                <button class="btn-icon" onclick="closeYoutubeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="youtube-url">YouTube URL</label>
+                    <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                <div class="form-group">
+                    <label for="youtube-note">Note (optional)</label>
+                    <textarea id="youtube-note" placeholder="What is this video about?"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeYoutubeModal()">Cancel</button>
+                <button class="btn-create" onclick="addYoutubeReference()">Add Reference</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu for File Tree -->
+    <div class="context-menu" id="file-context-menu">
+        <div class="context-item" onclick="contextRenameFile()">
+            <i class="fas fa-edit"></i> Rename
+        </div>
+        <div class="context-item" onclick="contextDeleteFile()">
+            <i class="fas fa-trash"></i> Delete
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="contextSetAsMain()">
+            <i class="fas fa-star"></i> Set as Main
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="libs/bootstrap/bootstrap.bundle.min.js"></script>
+    <!-- CodeMirror -->
+    <script src="libs/codemirror/codemirror.min.js"></script>
+    <script src="libs/codemirror/stex.min.js"></script>
+    <script src="libs/codemirror/dialog.min.js"></script>
+    <script src="libs/codemirror/searchcursor.min.js"></script>
+    <script src="libs/codemirror/search.min.js"></script>
+    <script src="libs/codemirror/jump-to-line.min.js"></script>
+    <script src="libs/codemirror/foldcode.min.js"></script>
+    <script src="libs/codemirror/foldgutter.min.js"></script>
+    <script src="libs/codemirror/brace-fold.min.js"></script>
+    <script src="libs/codemirror/comment-fold.min.js"></script>
+    <script src="libs/codemirror/closebrackets.min.js"></script>
+    <script src="libs/codemirror/matchbrackets.min.js"></script>
+    <!-- Project Scripts -->
+    <script src="js/file-viewers.js"></script>
+    <script src="js/latex-file-tree.js"></script>
+    <script src="js/latex-project.js"></script>
+</body>
+
+</html>

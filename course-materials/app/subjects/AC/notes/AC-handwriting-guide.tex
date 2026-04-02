@@ -1,0 +1,408 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+
+\definecolor{writeblue}{RGB}{30,80,160}
+\definecolor{warnred}{RGB}{180,40,40}
+\definecolor{tipgreen}{RGB}{30,120,50}
+\definecolor{lightblue}{RGB}{230,240,255}
+\definecolor{lightyellow}{RGB}{255,250,230}
+\definecolor{lightred}{RGB}{255,235,235}
+
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{writebox}[1]{
+  colback=lightblue, colframe=writeblue, fonttitle=\bfseries,
+  title={HANDWRITE: #1}, breakable
+}
+
+\newtcolorbox{whybox}[1]{
+  colback=lightyellow, colframe=tipgreen!80!black, fonttitle=\bfseries,
+  title={WHY THIS MATTERS: #1}, breakable
+}
+
+\newtcolorbox{dangerbox}[1]{
+  colback=lightred, colframe=warnred, fonttitle=\bfseries,
+  title={DANGER ZONE: #1}, breakable
+}
+
+\titleformat{\section}{\Large\bfseries\color{writeblue}}{Lecture \thesection:}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{AC --- Handwriting Guide}
+\lhead{Jawad M.K. Qayyum}
+\rfoot{\thepage}
+\setlength{\headheight}{14pt}
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries AC Handwriting Guide}\\[0.5em]
+{\large What to write by hand, lecture by lecture}\\[0.3em]
+{\large\color{warnred} The hand is the memory. LaTeX is the map. Paper is the learning.}
+\end{center}
+
+\vspace{0.5em}
+
+\begin{tcolorbox}[colback=lightyellow, colframe=black!50]
+\textbf{How to use this guide:}
+\begin{enumerate}[nosep]
+\item Read the lecture slides first
+\item Open this guide to the matching lecture
+\item \textbf{Handwrite} everything in the blue boxes on paper --- no typing, no copying
+\item After handwriting, attempt the exercise \textbf{without} looking at the solution
+\item Mark what you got wrong in your \texttt{error-catalog/}
+\item Whatever you kept needing to look up $\rightarrow$ candidate for your A4 exam page
+\end{enumerate}
+\end{tcolorbox}
+
+%=============================================================================
+\section{Introduction and Turing Machines}
+%=============================================================================
+
+\begin{whybox}{Foundation of everything}
+This lecture defines \textbf{what computation is}. Every later lecture builds on Turing machines. If you don't internalize the TM definition and how it processes input, nothing else will make sense.
+\end{whybox}
+
+\begin{writebox}{Turing Machine definition}
+Handwrite the full formal definition of a Turing Machine:
+\begin{itemize}[nosep]
+\item $M = (Q, \Sigma, \Gamma, \delta, q_0, q_{accept}, q_{reject})$
+\item What each component means (in your own words)
+\item The transition function: $\delta: Q \times \Gamma \rightarrow Q \times \Gamma \times \{L, R\}$
+\item Draw the tape, head, and state diagram for a simple example
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Key concepts}
+Handwrite definitions and examples for:
+\begin{itemize}[nosep]
+\item \textbf{Configuration}: $(q, tape, head\ position)$ --- draw one
+\item \textbf{Accepting vs.\ rejecting vs.\ looping}: what happens in each case
+\item \textbf{Language of a TM}: $L(M) = \{w \mid M \text{ accepts } w\}$
+\item \textbf{Computable language}: there exists a \textbf{halting} DTM that decides it
+\item \textbf{Computably-enumerable (c.e.)}: there exists a TM that accepts it (may loop on non-members)
+\item The difference: computable $\subset$ c.e.\ --- draw a Venn diagram
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Runtime analysis example}
+Handwrite the primality-testing algorithm from the slides:
+\begin{itemize}[nosep]
+\item Write the code: \texttt{mystery(n)} with the $\sqrt{n}$ loop
+\item Analyze its runtime step by step: why $\mathcal{O}(\sqrt{n})$?
+\item Practice: what if the loop went to $n$ instead of $\sqrt{n}$? What changes?
+\end{itemize}
+\end{writebox}
+
+\begin{dangerbox}{Your gap from Semester 1}
+You scored 4 in Theoretical Foundations. That course covered basic TMs. If the definition above feels unfamiliar, spend extra time here. Draw 3 different TMs by hand --- one that accepts $\{0^n1^n\}$, one that copies a string, one that checks palindromes.
+\end{dangerbox}
+
+\subsection*{Exercise 1: What it tests}
+After handwriting the above, attempt Exercise 1. It likely tests: constructing TMs for specific languages, tracing TM execution, and distinguishing computable vs.\ c.e.
+
+%=============================================================================
+\section{The Church-Turing Thesis}
+%=============================================================================
+
+\begin{whybox}{Why this matters}
+This lecture says: all reasonable models of computation are equivalent. Multi-tape TMs, nondeterministic TMs --- they all recognize the same languages. This is why we can use TMs as \textit{the} model.
+\end{whybox}
+
+\begin{writebox}{Multi-tape Turing Machines}
+Handwrite:
+\begin{itemize}[nosep]
+\item How a multi-tape TM differs from a single-tape TM (draw it)
+\item The simulation theorem: a $k$-tape TM can be simulated by a single-tape TM
+\item The cost: if the $k$-tape TM runs in $t$ steps, the single-tape simulation takes $\mathcal{O}(t^2)$ steps
+\item Why: the single tape must sweep back and forth to simulate multiple tapes
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Nondeterministic Turing Machines (NTMs)}
+Handwrite:
+\begin{itemize}[nosep]
+\item Definition: $\delta: Q \times \Gamma \rightarrow \mathcal{P}(Q \times \Gamma \times \{L,R\})$ (set of possible transitions)
+\item NTM accepts if \textbf{any} computation branch accepts (draw the tree)
+\item Equivalence: NTMs and DTMs recognize the same class of languages
+\item The simulation cost: a NTM running in $t$ steps can be simulated by a DTM in $2^{\mathcal{O}(t)}$ steps
+\item Draw the computation tree: branching paths, one accepting $=$ accept
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{The Church-Turing Thesis}
+Handwrite in your own words:
+\begin{itemize}[nosep]
+\item Statement: ``Every effectively computable function is computable by a Turing machine''
+\item This is a \textbf{thesis}, not a theorem --- it cannot be proven, only supported by evidence
+\item Evidence: every proposed model of computation (lambda calculus, RAM machines, etc.) has been shown equivalent to TMs
+\end{itemize}
+\end{writebox}
+
+\subsection*{Exercise 2: What it tests}
+Likely: simulating multi-tape TMs, tracing NTM computation trees, proving equivalences between models.
+
+%=============================================================================
+\section{Computability}
+%=============================================================================
+
+\begin{whybox}{The hierarchy of languages}
+This lecture maps out what can and cannot be computed. The Venn diagram (regular $\subset$ context-free $\subset$ computable $\subset$ c.e.) is fundamental. You need to know examples in each region.
+\end{whybox}
+
+\begin{writebox}{The language hierarchy}
+Handwrite the full Venn diagram with examples:
+\begin{itemize}[nosep]
+\item \textbf{Regular}: $\{w \mid w \text{ contains } 01\}$ --- recognized by DFA
+\item \textbf{Context-free}: $\{w\#w^R\}$ --- recognized by PDA
+\item \textbf{Computable (decidable)}: $\{w\#w\}$ --- requires TM, but always halts
+\item \textbf{Computably-enumerable}: $A_{TM} = \{\langle M,w \rangle \mid M \text{ accepts } w\}$
+\item \textbf{Not c.e.}: $\overline{A_{TM}}$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{The Halting Problem and undecidability}
+Handwrite the full proof that $A_{TM}$ is undecidable:
+\begin{itemize}[nosep]
+\item Assume $H$ decides $A_{TM}$
+\item Construct $D$: on input $\langle M \rangle$, run $H(\langle M, \langle M \rangle \rangle)$, then do the opposite
+\item Run $D$ on $\langle D \rangle$ --- contradiction (accepts iff rejects)
+\item Therefore no such $H$ exists
+\item \textbf{Write this proof 3 times by hand until you can do it from memory}
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Closure properties}
+Handwrite:
+\begin{itemize}[nosep]
+\item Computable languages are closed under: union, intersection, complement, concatenation, Kleene star
+\item C.e.\ languages are closed under: union, intersection, concatenation, Kleene star
+\item C.e.\ languages are \textbf{NOT} closed under: complement
+\item Key theorem: $L$ is computable $\iff$ both $L$ and $\overline{L}$ are c.e.
+\end{itemize}
+\end{writebox}
+
+\begin{dangerbox}{The diagonalization proof}
+The proof of undecidability of $A_{TM}$ uses diagonalization. This is the hardest concept to internalize. If you cannot reproduce this proof from memory, you are not ready for the exam. Handwrite it repeatedly.
+\end{dangerbox}
+
+\subsection*{Exercise 3: What it tests}
+Proving languages are (un)decidable, closure property arguments, constructing TMs for decidable languages.
+
+%=============================================================================
+\section{Reductions}
+%=============================================================================
+
+\begin{whybox}{The core exam skill}
+Reductions are how you prove new problems are undecidable by relating them to known undecidable problems. This is tested in almost every exam. Master this.
+\end{whybox}
+
+\begin{writebox}{What is a reduction?}
+Handwrite:
+\begin{itemize}[nosep]
+\item $A \leq_m B$ means: there exists a computable function $f$ such that $w \in A \iff f(w) \in B$
+\item Intuition: ``$A$ is no harder than $B$'' --- if you can solve $B$, you can solve $A$
+\item Contrapositive: if $A$ is undecidable and $A \leq_m B$, then $B$ is undecidable
+\item Draw the diagram: input $w \xrightarrow{f} f(w)$, then decide $f(w) \in B$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Key reductions to memorize}
+Handwrite the full reduction for each:
+\begin{itemize}[nosep]
+\item $A_{TM} \leq_m HALT_{TM}$: prove the halting problem is undecidable
+\item $A_{TM} \leq_m E_{TM}$: prove emptiness testing is undecidable ($E_{TM} = \{\langle M \rangle \mid L(M) = \emptyset\}$)
+\item $A_{TM} \leq_m EQ_{TM}$: prove equivalence testing is undecidable
+\item For each: write the mapping function $f$, explain why $w \in A_{TM} \iff f(w) \in B$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Rice's Theorem}
+Handwrite:
+\begin{itemize}[nosep]
+\item Statement: every non-trivial property of c.e.\ languages is undecidable
+\item ``Non-trivial'' means: some TMs have the property and some don't
+\item Examples of properties: ``$L(M) = \emptyset$'', ``$L(M)$ is finite'', ``$L(M)$ is regular''
+\item All undecidable by Rice's theorem
+\item Proof sketch: reduction from $A_{TM}$
+\end{itemize}
+\end{writebox}
+
+\subsection*{Exercise 4: What it tests}
+Constructing reductions between problems, applying Rice's theorem, determining if a language property is decidable.
+
+%=============================================================================
+\section{Complexity Theory (P and NP)}
+%=============================================================================
+
+\begin{whybox}{From ``can we compute it?'' to ``can we compute it fast?''}
+Lectures 1--4 asked what is computable. Now we ask: among computable problems, which ones can be solved \textbf{efficiently}? This is where P, NP, and NP-completeness live.
+\end{whybox}
+
+\begin{writebox}{Complexity classes}
+Handwrite definitions:
+\begin{itemize}[nosep]
+\item $\text{TIME}(t(n))$: languages decidable by a DTM in $\mathcal{O}(t(n))$ steps
+\item $\textbf{P} = \bigcup_{k \geq 1} \text{TIME}(n^k)$: polynomial time on a DTM
+\item $\text{NTIME}(t(n))$: languages decidable by a NTM in $\mathcal{O}(t(n))$ steps
+\item $\textbf{NP} = \bigcup_{k \geq 1} \text{NTIME}(n^k)$: polynomial time on a NTM
+\item $\textbf{P} \subseteq \textbf{NP}$ (every DTM is trivially a NTM)
+\item The big open question: $\textbf{P} \stackrel{?}{=} \textbf{NP}$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{NP via verifiers}
+Handwrite the equivalent definition:
+\begin{itemize}[nosep]
+\item $L \in \textbf{NP}$ $\iff$ there exists a polynomial-time verifier $V$ such that:
+\item $w \in L \iff \exists$ certificate $c$ with $|c| \leq p(|w|)$ and $V(w,c)$ accepts
+\item Example: SAT --- certificate is an assignment, verifier checks it in polynomial time
+\item Example: CLIQUE --- certificate is a set of $k$ vertices, verifier checks edges
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Examples in P and NP}
+Handwrite 3 problems in P and 3 in NP with brief justification:
+\begin{itemize}[nosep]
+\item \textbf{In P}: PATH (graph reachability), 2-SAT, sorting
+\item \textbf{In NP (not known in P)}: SAT, CLIQUE, HAMPATH, VERTEX-COVER, SUBSET-SUM
+\end{itemize}
+\end{writebox}
+
+\subsection*{Exercise 5: What it tests}
+Classifying problems into P/NP, constructing verifiers, understanding certificates.
+
+%=============================================================================
+\section{NP-Completeness}
+%=============================================================================
+
+\begin{dangerbox}{The most exam-critical lecture}
+NP-completeness and polynomial reductions are the heart of AC exams. You must be able to both \textbf{prove} a problem is NP-complete and \textbf{construct} a reduction.
+\end{dangerbox}
+
+\begin{writebox}{Polynomial-time reduction}
+Handwrite:
+\begin{itemize}[nosep]
+\item $A \leq_p B$: there exists a \textbf{polynomial-time} computable function $f$ such that $w \in A \iff f(w) \in B$
+\item If $A \leq_p B$ and $B \in \textbf{P}$, then $A \in \textbf{P}$
+\item If $A \leq_p B$ and $A$ is NP-hard, then $B$ is NP-hard
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{NP-complete definition}
+Handwrite:
+\begin{itemize}[nosep]
+\item $L$ is \textbf{NP-hard} if $\forall A \in \textbf{NP}: A \leq_p L$
+\item $L$ is \textbf{NP-complete} if $L \in \textbf{NP}$ AND $L$ is NP-hard
+\item To prove NP-completeness: (1) show $L \in$ NP, (2) reduce a known NP-complete problem to $L$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{The Cook-Levin Theorem}
+Handwrite:
+\begin{itemize}[nosep]
+\item Statement: SAT is NP-complete
+\item This is the ``first'' NP-complete problem --- proved directly, not by reduction
+\item Once SAT is NP-complete, we can prove others by reducing FROM SAT
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{The reduction chain --- MEMORIZE THIS}
+Handwrite the full chain:
+\begin{center}
+SAT $\leq_p$ 3-SAT $\leq_p$ CLIQUE $\leq_p$ VERTEX-COVER $\leq_p$ \ldots
+\end{center}
+For each reduction, handwrite:
+\begin{itemize}[nosep]
+\item The mapping: how do you transform an instance of $A$ into an instance of $B$?
+\item The proof: why does $w \in A \iff f(w) \in B$?
+\item Draw a small example for each
+\end{itemize}
+\end{writebox}
+
+\subsection*{Exercise 6: What it tests}
+Proving NP-completeness via reduction, constructing polynomial-time mappings, showing both directions of the iff.
+
+%=============================================================================
+\section{More NP-Completeness and Beyond}
+%=============================================================================
+
+\begin{writebox}{Additional NP-complete problems}
+Handwrite a reduction proof for each:
+\begin{itemize}[nosep]
+\item SUBSET-SUM is NP-complete
+\item HAMPATH (Hamiltonian Path) is NP-complete
+\item 3-COLORING is NP-complete
+\item For each: what known NP-complete problem do you reduce FROM? What is the mapping?
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{coNP and the complexity landscape}
+Handwrite:
+\begin{itemize}[nosep]
+\item $\textbf{coNP} = \{\overline{L} \mid L \in \textbf{NP}\}$
+\item $\textbf{P} \subseteq \textbf{NP} \cap \textbf{coNP}$
+\item Draw the Venn diagram: P inside NP, P inside coNP, NP-complete at the boundary
+\item If any NP-complete problem is in P, then $\textbf{P} = \textbf{NP}$
+\end{itemize}
+\end{writebox}
+
+\begin{writebox}{Space complexity (if covered)}
+Handwrite:
+\begin{itemize}[nosep]
+\item PSPACE: problems solvable with polynomial space
+\item $\textbf{P} \subseteq \textbf{NP} \subseteq \textbf{PSPACE} \subseteq \textbf{EXPTIME}$
+\item PSPACE-complete examples: TQBF, generalized games
+\item Savitch's theorem: $\text{NSPACE}(f(n)) \subseteq \text{DSPACE}(f(n)^2)$
+\end{itemize}
+\end{writebox}
+
+\subsection*{Exercise 7: What it tests}
+More complex reductions, possibly space complexity, understanding the full complexity landscape.
+
+%=============================================================================
+\vspace{1em}
+\section*{Your A4 Page --- What Goes On It}
+%=============================================================================
+
+\begin{tcolorbox}[colback=lightred, colframe=warnred, fonttitle=\bfseries, title={After handwriting all 7 lectures, these are A4 candidates}]
+Only put on the A4 what you \textbf{cannot hold in memory} after handwriting everything above:
+\begin{enumerate}[nosep]
+\item TM formal definition ($M = (Q, \Sigma, \Gamma, \delta, q_0, q_{acc}, q_{rej})$)
+\item The reduction chain: SAT $\leq_p$ 3-SAT $\leq_p$ CLIQUE $\leq_p$ VERTEX-COVER $\leq_p$ \ldots
+\item Complexity class inclusions: P $\subseteq$ NP $\subseteq$ PSPACE $\subseteq$ EXPTIME
+\item Rice's Theorem statement
+\item Closure properties table (computable vs.\ c.e.)
+\item Key reduction mappings you keep forgetting
+\item NTM simulation costs ($2^{\mathcal{O}(t)}$ for DTM, $\mathcal{O}(t^2)$ for multi-tape)
+\item The diagonalization proof skeleton (if you still can't reproduce it)
+\end{enumerate}
+If you can reproduce all of the above from memory after handwriting --- your A4 page is free for edge cases.
+\end{tcolorbox}
+
+%=============================================================================
+\section*{Error Catalog Template}
+%=============================================================================
+
+\begin{tcolorbox}[colback=lightyellow, colframe=black!50]
+After each exercise, add entries to \texttt{AC/error-catalog/} in this format:
+\begin{verbatim}
+Exercise: 3, Question: 2b
+What I got wrong: forgot that c.e. is NOT closed under complement
+Why: confused computable closure with c.e. closure
+Fix: computable = closed under everything, c.e. = NOT complement
+A4 candidate: YES - add closure properties table
+\end{verbatim}
+\end{tcolorbox}
+
+\end{document}

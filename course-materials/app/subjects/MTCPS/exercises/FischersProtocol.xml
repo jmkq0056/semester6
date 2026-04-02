@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+
+const int N=2;
+typedef int[1,N] id_t;
+
+int Turn;
+
+const int D1=1;
+const int D2=2;</declaration>
+	<template>
+		<name x="5" y="5">Process</name>
+		<parameter>const id_t myID</parameter>
+		<declaration>// Place local declarations here.
+
+clock x;</declaration>
+		<location id="id0" x="-34" y="-34">
+			<name x="-44" y="-68">Idle</name>
+		</location>
+		<location id="id1" x="136" y="-34">
+			<name x="126" y="-68">Test</name>
+		</location>
+		<location id="id2" x="306" y="-34">
+			<name x="296" y="-68">Set</name>
+			<label kind="invariant" x="296" y="-17">x&lt;=D1</label>
+		</location>
+		<location id="id3" x="306" y="102">
+			<name x="296" y="68">Delay</name>
+		</location>
+		<location id="id4" x="136" y="102">
+			<committed/>
+		</location>
+		<location id="id5" x="-34" y="102">
+			<name x="-59" y="68">Crit</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id1"/>
+			<label kind="guard" x="119" y="-102">Turn&gt;0</label>
+			<nail x="178" y="-76"/>
+			<nail x="102" y="-76"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id0"/>
+			<label kind="assignment" x="-34" y="34">Turn=0</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="17" y="76">Turn==myID</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id1"/>
+			<label kind="guard" x="93" y="42">! (Turn==myID)</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="238" y="102">x&gt;=D2</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="306" y="34">Turn=myID,
+x=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="153" y="-34">Turn==0</label>
+			<label kind="assignment" x="246" y="-34">x=0</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+		</transition>
+	</template>
+	<system>
+system Process;
+    </system>
+	<queries>
+	</queries>
+</nta>

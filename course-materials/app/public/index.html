@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Materials - Local PDF Organizer</title>
+    <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="libs/fontawesome/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- CodeMirror for LaTeX editing -->
+    <link rel="stylesheet" href="libs/codemirror/codemirror.min.css">
+    <link rel="stylesheet" href="libs/codemirror/material-darker.min.css">
+    <link rel="stylesheet" href="libs/codemirror/dialog.min.css">
+    <link rel="stylesheet" href="libs/codemirror/foldgutter.min.css">
+    <link rel="stylesheet" href="css/tex-editor.css">
+    <style>
+        /* Boot Splash Screen */
+        #boot-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+        #boot-splash.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #boot-splash img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+            animation: splash-pulse 2s ease-in-out;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        @keyframes splash-pulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Boot Splash Screen (shows max 2 times) -->
+    <div id="boot-splash" style="display: none;">
+        <img src="assets/erdetdetduvil.jpg" alt="Loading...">
+    </div>
+
+    <div class="finder-container">
+        <!-- Toolbar -->
+        <nav class="navbar navbar-expand-lg toolbar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="font-size: 11px; color: #8e8e93; padding: 0 12px; border-right: 1px solid #e8e8ed;">
+                        <i class="fas fa-laptop"></i> Local Study Materials
+                    </div>
+                    <a href="/subjects.html" class="btn btn-sm btn-outline-secondary toolbar-action-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>Manage Subjects</span>
+                    </a>
+                    <button onclick="openCategoryManager()" class="btn btn-sm btn-outline-secondary toolbar-action-btn">
+                        <i class="fas fa-folder-plus"></i>
+                        <span>Manage Categories</span>
+                    </button>
+                    <a href="/upload.html" class="btn btn-sm btn-outline-secondary toolbar-action-btn">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload PDF Locally </span>
+                    </a>
+                    <a href="/latex" class="btn btn-sm btn-outline-secondary toolbar-action-btn">
+                        <i class="fas fa-file-code"></i>
+                        <span>LaTeX Projects</span>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+                    <div class="search-bar-container">
+                        <span class="search-icon"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control search-bar shadow-sm" id="main-search"
+                            placeholder="Filter files by name..." oninput="filterMainFiles()">
+                    </div>
+                    <div class="btn-group view-options shadow-sm" role="group">
+                        <button type="button" class="btn btn-sm btn-primary view-btn active"
+                            onclick="setView('all')">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary view-btn"
+                            onclick="setView('notes')">Notes</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary view-btn"
+                            onclick="setView('slides')">Slides</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary view-btn"
+                            onclick="setView('exercises')">Exercises</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Local Path Display -->
+        <div style="background: #f5f5f7; border-bottom: 1px solid #e8e8ed; padding: 6px 20px; font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 11px; color: #666;">
+            <i class="fas fa-hdd" style="margin-right: 6px; color: #007AFF;"></i>
+            <span id="local-path-display">~/Documents/GitHub/Semester6/course-materials/app/subjects/</span>
+        </div>
+
+        <!-- Interactive Breadcrumb Navigation -->
+        <div class="breadcrumb">
+            <button class="breadcrumb-item breadcrumb-btn" onclick="window.location.href='/'">
+                <i class="fas fa-folder"></i>
+                <span>semester 6</span>
+            </button>
+            <span class="breadcrumb-separator">›</span>
+
+            <div class="breadcrumb-dropdown">
+                <button class="breadcrumb-item breadcrumb-btn breadcrumb-dropdown-trigger" id="breadcrumb-subject-btn">
+                    <i class="fas fa-book" id="breadcrumb-subject-icon"></i>
+                    <span id="breadcrumb-subject">machine intelligence</span>
+                    <i class="fas fa-chevron-down breadcrumb-chevron"></i>
+                </button>
+                <div class="breadcrumb-dropdown-menu" id="breadcrumb-subjects-menu">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <span class="breadcrumb-separator">›</span>
+
+            <div class="breadcrumb-dropdown">
+                <button class="breadcrumb-item breadcrumb-btn breadcrumb-dropdown-trigger" id="current-location-btn">
+                    <i class="fas fa-list"></i>
+                    <span id="current-location">All Files</span>
+                    <i class="fas fa-chevron-down breadcrumb-chevron"></i>
+                </button>
+                <div class="breadcrumb-dropdown-menu" id="breadcrumb-view-menu">
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('all'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>All Files</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('notes'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Lecture Notes</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('slides'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Lecture Slides</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('exercises'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-pencil-alt"></i>
+                        <span>Exercises</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('exercises-no-solutions'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Exercises (No Solutions)</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('blueprint'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-ruler-combined"></i>
+                        <span>Blueprint</span>
+                    </a>
+                    <a href="#" class="breadcrumb-menu-item" onclick="event.preventDefault(); filterByCategory('teachers-method'); closeBreadcrumbDropdowns();">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Teachers Method</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <div class="sidebar shadow-lg">
+                <!-- LECTURES FIRST - MOST USED -->
+                <div class="sidebar-section" id="lectures-section">
+                    <div class="sidebar-header text-uppercase fw-bold">
+                        <i class="fas fa-book-open text-primary me-1"></i>Lectures
+                    </div>
+                    <div id="lectures-list" class="list-group list-group-flush">
+                        <!-- Lectures will be dynamically populated here -->
+                    </div>
+                </div>
+
+                <!-- RECENT - COMPACT -->
+                <div class="sidebar-section compact-recent" id="history-section">
+                    <div class="sidebar-header text-uppercase fw-bold d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-clock text-info me-1"></i>Recent</span>
+                        <button class="btn btn-sm btn-link clear-history-btn p-0" onclick="clearHistory()"
+                            title="Clear history">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div id="history-list" class="history-list">
+                        <!-- History items will be dynamically populated here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-header text-uppercase fw-bold">
+                        <i class="fas fa-star text-warning me-1"></i>Favorites
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item active"
+                            onclick="event.preventDefault(); filterByCategory('all');">
+                            <span class="sidebar-icon"><i class="fas fa-clipboard-list"></i></span>
+                            <span>All Files</span>
+                            <span class="badge bg-primary rounded-pill sidebar-count" id="count-all">0</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-header text-uppercase fw-bold">
+                        <i class="fas fa-folder text-success me-1"></i>Categories
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('notes');">
+                            <span class="sidebar-icon"><i class="fas fa-file-alt"></i></span>
+                            <span>Lecture Notes</span>
+                            <span class="badge bg-success rounded-pill sidebar-count" id="count-notes">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('slides');">
+                            <span class="sidebar-icon"><i class="fas fa-graduation-cap"></i></span>
+                            <span>Lecture Slides</span>
+                            <span class="badge bg-info rounded-pill sidebar-count" id="count-slides">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('exercises');">
+                            <span class="sidebar-icon"><i class="fas fa-pencil-alt"></i></span>
+                            <span>Exercises</span>
+                            <span class="badge bg-warning rounded-pill sidebar-count" id="count-exercises">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('exercises-no-solutions');">
+                            <span class="sidebar-icon"><i class="fas fa-clipboard-list"></i></span>
+                            <span>Ex (No Sol)</span>
+                            <span class="badge bg-secondary rounded-pill sidebar-count"
+                                id="count-exercises-no-solutions">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('blueprint');">
+                            <span class="sidebar-icon"><i class="fas fa-ruler-combined"></i></span>
+                            <span>Blueprint</span>
+                            <span class="badge bg-danger rounded-pill sidebar-count" id="count-blueprint">0</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action sidebar-item"
+                            onclick="event.preventDefault(); filterByCategory('teachers-method');">
+                            <span class="sidebar-icon"><i class="fas fa-bullseye"></i></span>
+                            <span>Teachers</span>
+                            <span class="badge bg-dark rounded-pill sidebar-count" id="count-teachers-method">0</span>
+                        </a>
+                    </div>
+                    <!-- Dynamic Custom Categories -->
+                    <div id="custom-categories-list" class="list-group list-group-flush">
+                        <!-- Custom categories will be dynamically populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="file-list-container">
+                <div class="file-list-actions">
+                    <button class="new-tex-btn" onclick="createNewTexFile()" title="Create new LaTeX file">
+                        <i class="fas fa-plus"></i> New TeX File
+                    </button>
+                </div>
+                <table class="file-list">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Path</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="file-list-body">
+                        <!-- Files will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div id="pdf-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                 <div class="modal-controls">
+                    <button class="close-btn" onclick="closePDF()"><i class="fas fa-times"></i> Close</button>
+                </div>
+                <div class="modal-title-section">
+                    
+                    <div class="modal-title" id="modal-title"></div>
+                    <div class="modal-subtitle" id="modal-subtitle"></div>
+                </div>
+                <div class="modal-controls">
+                    <button class="control-btn" id="replace-pdf-btn" onclick="toggleReplacePDF()">
+                        <span><i class="fas fa-sync-alt"></i></span>
+                        <span>Replace PDF</span>
+                    </button>
+                    <button class="control-btn" id="split-btn" onclick="toggleSplitView()">
+                        <span><i class="fas fa-columns"></i></span>
+                        <span>Split View</span>
+                    </button>
+                    <button class="control-btn" id="show-left-btn" onclick="showLeftPane()" style="display: none;">
+                        <span><i class="fas fa-arrow-left"></i></span>
+                        <span>Show Left</span>
+                    </button>
+                    <button class="control-btn" id="show-right-btn" onclick="showRightPane()" style="display: none;">
+                        <span><i class="fas fa-arrow-right"></i></span>
+                        <span>Show Right</span>
+                    </button>
+                   
+                </div>
+            </div>
+            <div class="viewer-container">
+                <!-- Left/Primary Viewer Pane -->
+                <div class="viewer-pane" id="pane-left">
+                    <div class="pane-header" id="pane-left-header" style="display: none;">
+                        <span class="pane-title" id="pane-left-title"></span>
+                        
+                        <div class="pane-controls">
+                            <button class="pane-close" onclick="hideLeftPane()"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <iframe id="pdf-viewer-left" class="pdf-viewer"></iframe>
+                </div>
+
+                <!-- Resizable Divider -->
+                <div class="divider" id="divider" style="display: none;"></div>
+
+                <!-- Right Viewer Pane -->
+                <div class="viewer-pane" id="pane-right" style="display: none;">
+                    <div class="pane-header" id="pane-right-header">
+                        <span class="pane-title" id="pane-right-title"></span>
+                      
+                        <div class="pane-controls">
+                            <button class="pane-close" onclick="hideRightPane()"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <iframe id="pdf-viewer-right" class="pdf-viewer"></iframe>
+                </div>
+
+                <!-- PDF Selector Sidebar -->
+                <div class="pdf-selector" id="pdf-selector">
+                    <div class="selector-header">
+                        <h3>Select PDF for Split View</h3>
+                        <div class="selector-search-container">
+                            <div class="search-wrapper">
+                                <span class="search-icon-small"><i class="fas fa-search"></i></span>
+                                <input type="text" class="selector-search" id="selector-search"
+                                    placeholder="Search PDFs..." oninput="filterSelectorPDFs()">
+                            </div>
+                            <button class="header-icon-btn" id="quick-duplicate-btn"
+                                onclick="duplicateCurrentPDFQuick()" title="Duplicate Current PDF">
+                                <i class="fas fa-clone"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="selector-divider"></div>
+
+                    <!-- Fast Search Section -->
+                    <div class="selector-fast-search">
+                        <button class="fast-search-sidebar-btn" onclick="openFastSearchFromSidebar()">
+                            <i class="fas fa-search"></i>
+                            <span>Text Search</span>
+                        </button>
+                        <p class="fast-search-hint">Find text across your study materials</p>
+                    </div>
+
+                    <div class="selector-divider"></div>
+
+                    <!-- Split Resize Controls -->
+                    <div class="split-resize-controls" id="split-resize-controls" style="display: none;">
+                        <div class="resize-controls-header" onclick="toggleResizeControls()">
+                            <span>Adjust Split Ratio</span>
+                            <span class="resize-toggle-icon">▼</span>
+                        </div>
+                        <div class="resize-buttons-container" id="resize-buttons-container" style="display: none;">
+                            <div class="resize-buttons">
+                                <button class="resize-btn" onclick="setSplitRatio(25)">25% | 75%</button>
+                                <button class="resize-btn" onclick="setSplitRatio(33)">33% | 67%</button>
+                                <button class="resize-btn" onclick="setSplitRatio(50)">50% | 50%</button>
+                                <button class="resize-btn" onclick="setSplitRatio(67)">67% | 33%</button>
+                                <button class="resize-btn" onclick="setSplitRatio(75)">75% | 25%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="selector-divider"></div>
+
+                    <div class="selector-content" id="selector-content">
+                        <!-- PDF list will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Management Popover - Compact Finder Style -->
+    <div id="file-manage-modal" class="file-popover-overlay" style="display: none;" onclick="if(event.target === this) closeFileManageModal()">
+        <div class="file-popover" id="file-popover">
+            <!-- Compact Header -->
+            <div class="popover-header">
+                <div class="popover-file-info">
+                    <i class="fas fa-file-pdf popover-icon"></i>
+                    <span id="manage-file-name" class="popover-filename">Document.pdf</span>
+                </div>
+                <button class="popover-close" onclick="closeFileManageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Compact Form Grid -->
+            <div class="popover-content">
+                <!-- Row 1: Category and Lecture -->
+                <div class="popover-row">
+                    <div class="popover-field">
+                        <label><i class="fas fa-folder"></i> Category</label>
+                        <div class="popover-input-group">
+                            <select id="move-category" class="popover-select">
+                                <option value="notes">Notes</option>
+                                <option value="slides">Slides</option>
+                                <option value="exercises">Exercises</option>
+                                <option value="exercises-no-solutions">Ex (No Sol)</option>
+                                <option value="blueprint">Blueprint</option>
+                                <option value="teachers-method">Teachers</option>
+                            </select>
+                            <button class="popover-add-btn" onclick="showAddCategoryDialog()" title="Add Category">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="popover-field popover-field-small">
+                        <label><i class="fas fa-hashtag"></i> Lec #</label>
+                        <input type="number" id="lecture-number" class="popover-input" placeholder="1-99" min="1" max="99">
+                    </div>
+                </div>
+
+                <!-- Row 2: Filename -->
+                <div class="popover-row">
+                    <div class="popover-field popover-field-full">
+                        <label><i class="fas fa-signature"></i> File Name</label>
+                        <div class="popover-input-group">
+                            <input type="text" id="new-filename" class="popover-input" placeholder="Enter filename">
+                            <span class="popover-extension">.pdf</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Row -->
+                <div class="popover-actions">
+                    <button class="popover-btn popover-btn-delete" onclick="showDeleteConfirmModal()" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <div class="popover-actions-right">
+                        <button class="popover-btn popover-btn-cancel" onclick="closeFileManageModal()">Cancel</button>
+                        <button class="popover-btn popover-btn-apply" onclick="moveFile()">
+                            <i class="fas fa-check"></i> Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Custom Category Dialog -->
+    <div id="add-category-dialog" class="modal" style="display: none;">
+        <div class="category-dialog-wrapper">
+            <div class="category-dialog-header">
+                <h3>
+                    <i class="fas fa-folder-plus"></i>
+                    <span>Add Custom Category</span>
+                </h3>
+                <button class="dialog-close-btn" onclick="closeAddCategoryDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="category-dialog-content">
+                <div class="category-input-section">
+                    <label class="category-label">Category Name</label>
+                    <input type="text" id="custom-category-name" class="category-input"
+                           placeholder="e.g., Quizzes, Assignments..." maxlength="30">
+                </div>
+                <div class="category-input-section">
+                    <label class="category-label">Color</label>
+                    <div class="color-selector">
+                        <button class="color-option active" data-color="#007AFF" onclick="selectColor('#007AFF')" style="background: #007AFF;"></button>
+                        <button class="color-option" data-color="#34C759" onclick="selectColor('#34C759')" style="background: #34C759;"></button>
+                        <button class="color-option" data-color="#FF9500" onclick="selectColor('#FF9500')" style="background: #FF9500;"></button>
+                        <button class="color-option" data-color="#FF3B30" onclick="selectColor('#FF3B30')" style="background: #FF3B30;"></button>
+                        <button class="color-option" data-color="#AF52DE" onclick="selectColor('#AF52DE')" style="background: #AF52DE;"></button>
+                        <button class="color-option" data-color="#FF2D55" onclick="selectColor('#FF2D55')" style="background: #FF2D55;"></button>
+                        <button class="color-option" data-color="#5AC8FA" onclick="selectColor('#5AC8FA')" style="background: #5AC8FA;"></button>
+                        <button class="color-option" data-color="#FFCC00" onclick="selectColor('#FFCC00')" style="background: #FFCC00;"></button>
+                    </div>
+                </div>
+                <div class="category-input-section">
+                    <label class="category-label">Icon</label>
+                    <div class="icon-selector">
+                        <button class="icon-option active" data-icon="fa-folder" onclick="selectIcon('fa-folder')">
+                            <i class="fas fa-folder"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-book" onclick="selectIcon('fa-book')">
+                            <i class="fas fa-book"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-bookmark" onclick="selectIcon('fa-bookmark')">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-clipboard-check" onclick="selectIcon('fa-clipboard-check')">
+                            <i class="fas fa-clipboard-check"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-tasks" onclick="selectIcon('fa-tasks')">
+                            <i class="fas fa-tasks"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-file-alt" onclick="selectIcon('fa-file-alt')">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-star" onclick="selectIcon('fa-star')">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-graduation-cap" onclick="selectIcon('fa-graduation-cap')">
+                            <i class="fas fa-graduation-cap"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-pencil-alt" onclick="selectIcon('fa-pencil-alt')">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-lightbulb" onclick="selectIcon('fa-lightbulb')">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-brain" onclick="selectIcon('fa-brain')">
+                            <i class="fas fa-brain"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-calculator" onclick="selectIcon('fa-calculator')">
+                            <i class="fas fa-calculator"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-flask" onclick="selectIcon('fa-flask')">
+                            <i class="fas fa-flask"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-chart-line" onclick="selectIcon('fa-chart-line')">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-code" onclick="selectIcon('fa-code')">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-desktop" onclick="selectIcon('fa-desktop')">
+                            <i class="fas fa-desktop"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-database" onclick="selectIcon('fa-database')">
+                            <i class="fas fa-database"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-project-diagram" onclick="selectIcon('fa-project-diagram')">
+                            <i class="fas fa-project-diagram"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-trophy" onclick="selectIcon('fa-trophy')">
+                            <i class="fas fa-trophy"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-certificate" onclick="selectIcon('fa-certificate')">
+                            <i class="fas fa-certificate"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-clock" onclick="selectIcon('fa-clock')">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-bell" onclick="selectIcon('fa-bell')">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-flag" onclick="selectIcon('fa-flag')">
+                            <i class="fas fa-flag"></i>
+                        </button>
+                        <button class="icon-option" data-icon="fa-fire" onclick="selectIcon('fa-fire')">
+                            <i class="fas fa-fire"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="category-dialog-actions">
+                    <button class="category-btn category-btn-cancel" onclick="closeAddCategoryDialog()">
+                        Cancel
+                    </button>
+                    <button class="category-btn category-btn-create" onclick="createCustomCategory()">
+                        <i class="fas fa-plus-circle"></i>
+                        Create Category
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; margin: 200px auto;">
+            <div style="padding: 30px; text-align: center;">
+                <div style="font-size: 48px; color: #ff3b30; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 style="font-size: 24px; margin-bottom: 15px; color: #1d1d1f;">Delete File?</h2>
+                <p style="color: #666; margin-bottom: 10px; font-size: 15px;">Are you sure you want to delete:</p>
+                <p id="delete-file-name" style="color: #1d1d1f; font-weight: 600; margin-bottom: 20px; font-size: 15px;"></p>
+                <p style="color: #ff3b30; font-size: 14px; margin-bottom: 30px;">This action cannot be undone!</p>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="closeDeleteConfirmModal()" class="btn" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #d1d1d6; background: white; color: #1d1d1f; font-weight: 600; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button onclick="deleteFileConfirmed()" class="btn btn-danger" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ff3b30; color: white; font-weight: 600; cursor: pointer;">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boot Splash Script (shows max 2 times) -->
+    <script>
+        (function() {
+            const SPLASH_KEY = 'bootSplashCount';
+            const MAX_SHOWS = 2;
+
+            // Get current count from localStorage
+            let splashCount = parseInt(localStorage.getItem(SPLASH_KEY) || '0');
+
+            // Only show if count < MAX_SHOWS
+            if (splashCount < MAX_SHOWS) {
+                const splash = document.getElementById('boot-splash');
+
+                // Show the splash
+                splash.style.display = 'flex';
+
+                // Increment counter
+                splashCount++;
+                localStorage.setItem(SPLASH_KEY, splashCount.toString());
+
+                // Fade out after 2.5 seconds
+                setTimeout(() => {
+                    splash.classList.add('fade-out');
+
+                    // Remove from DOM after fade completes
+                    setTimeout(() => {
+                        splash.remove();
+                    }, 800);
+                }, 2500);
+            } else {
+                // Remove splash element if not showing
+                document.getElementById('boot-splash')?.remove();
+            }
+        })();
+    </script>
+
+    <script src="libs/bootstrap/bootstrap.bundle.min.js"></script>
+    <!-- CodeMirror for LaTeX editing -->
+    <script src="libs/codemirror/codemirror.min.js"></script>
+    <script src="libs/codemirror/stex.min.js"></script>
+    <script src="libs/codemirror/matchbrackets.min.js"></script>
+    <script src="libs/codemirror/closebrackets.min.js"></script>
+    <script src="libs/codemirror/dialog.min.js"></script>
+    <script src="libs/codemirror/searchcursor.min.js"></script>
+    <script src="libs/codemirror/search.min.js"></script>
+    <script src="libs/codemirror/jump-to-line.min.js"></script>
+    <script src="libs/codemirror/foldcode.min.js"></script>
+    <script src="libs/codemirror/foldgutter.min.js"></script>
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <!-- Marked.js for markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/sql.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/latex.min.js"></script>
+    <!-- Mermaid.js for diagrams and flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- Anime.js for smooth step visualizer animations -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#374151',
+                primaryTextColor: '#ffffff',
+                primaryBorderColor: '#F59E0B',
+                lineColor: '#9CA3AF',
+                secondaryColor: '#F59E0B',
+                secondaryTextColor: '#1a1a2e',
+                tertiaryColor: '#10B981',
+                tertiaryTextColor: '#1a1a2e',
+                background: '#111827',
+                mainBkg: '#374151',
+                nodeBorder: '#F59E0B',
+                clusterBkg: '#1F2937',
+                clusterBorder: '#F59E0B',
+                titleColor: '#F59E0B',
+                edgeLabelBackground: '#1F2937',
+                nodeTextColor: '#ffffff',
+                textColor: '#e0e0e0',
+                fontFamily: 'inherit'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                nodeSpacing: 50,
+                rankSpacing: 50
+            }
+        });
+    </script>
+    <style>
+        /* Mermaid diagram text color fix for light backgrounds */
+        .mermaid-diagram .node rect[style*="fill: rgb(249"],
+        .mermaid-diagram .node rect[style*="fill: rgb(245"],
+        .mermaid-diagram .node rect[style*="fill: rgb(251"],
+        .mermaid-diagram .node rect[style*="fill:#f"],
+        .mermaid-diagram .node rect[style*="fill: #f"],
+        .mermaid-diagram .node polygon[style*="fill: rgb(249"],
+        .mermaid-diagram .node polygon[style*="fill:#f"],
+        .mermaid-diagram .node rect[style*="fill: rgb(16"],
+        .mermaid-diagram .node rect[style*="fill:#10"],
+        .mermaid-diagram .node rect[style*="fill: rgb(144"],
+        .mermaid-diagram .node rect[style*="fill:#90"] {
+            /* Light backgrounds detected */
+        }
+        .mermaid-diagram .node .nodeLabel {
+            fill: #1a1a2e !important;
+            color: #1a1a2e !important;
+        }
+        .mermaid-diagram .node rect[style*="fill: rgb(55"],
+        .mermaid-diagram .node rect[style*="fill: rgb(31"],
+        .mermaid-diagram .node rect[style*="fill:#374"],
+        .mermaid-diagram .node rect[style*="fill:#1F2"] {
+            /* Dark backgrounds - keep white text */
+        }
+        .mermaid-diagram .node rect[style*="fill: rgb(55"] ~ .nodeLabel,
+        .mermaid-diagram .node rect[style*="fill:#374"] ~ .nodeLabel {
+            fill: #ffffff !important;
+            color: #ffffff !important;
+        }
+        /* Force dark text on all light colored nodes */
+        .mermaid svg .node foreignObject div,
+        .mermaid svg .nodeLabel {
+            color: #1a1a2e !important;
+        }
+        .mermaid svg .edgeLabel {
+            color: #e0e0e0 !important;
+            background-color: #1F2937 !important;
+        }
+    </style>
+    <script src="js/script.js"></script>
+    <script src="js/subject-management.js"></script>
+    <script src="js/breadcrumb.js"></script>
+    <script src="js/file-manager.js"></script>
+    <script src="js/tex-editor.js"></script>
+
+    <!-- Rename File Modal -->
+    <div class="rename-modal" id="rename-modal">
+        <div class="rename-modal-overlay" onclick="closeRenameModal()"></div>
+        <div class="rename-modal-content">
+            <div class="rename-modal-header">
+                <h3>Rename File</h3>
+                <button class="rename-modal-close" onclick="closeRenameModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="rename-modal-body">
+                <label for="rename-input">Enter new file name:</label>
+                <input type="text" id="rename-input" class="rename-input" placeholder="Enter file name">
+                <p class="rename-hint">The .pdf extension will be added automatically</p>
+            </div>
+            <div class="rename-modal-footer">
+                <button class="rename-btn rename-btn-cancel" onclick="closeRenameModal()">
+                    Cancel
+                </button>
+                <button class="rename-btn rename-btn-submit" onclick="submitRename()">
+                    Rename
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Manager Modal -->
+    <div id="category-manager-modal" class="modal" style="display: none;">
+        <div class="modal-backdrop" onclick="closeCategoryManager()"></div>
+        <div class="category-manager-wrapper">
+            <div class="category-manager-header">
+                <h3>
+                    <i class="fas fa-folder-tree"></i>
+                    <span>Manage Categories</span>
+                </h3>
+                <button class="dialog-close-btn" onclick="closeCategoryManager()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="category-manager-content">
+                <div class="category-manager-list" id="category-manager-list">
+                    <!-- Categories will be populated here -->
+                </div>
+                <button class="category-btn category-btn-create" onclick="showAddCategoryDialog()" style="width: 100%; margin-top: 16px;">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Category
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New TeX File Modal -->
+    <div class="new-tex-modal-overlay" id="new-tex-modal">
+        <div class="new-tex-modal">
+            <div class="new-tex-modal-header">
+                <h3>Create New LaTeX File</h3>
+                <p>Create a new .tex file in your subject folder</p>
+            </div>
+            <div class="new-tex-modal-body">
+                <div class="new-tex-form-group">
+                    <label for="new-tex-filename">Filename</label>
+                    <input type="text" id="new-tex-filename" placeholder="e.g., lecture-notes, cheatsheet" autocomplete="off">
+                    <div class="hint">Use lowercase letters, numbers, and hyphens only</div>
+                </div>
+                <div class="new-tex-form-group">
+                    <label for="new-tex-category">Category</label>
+                    <select id="new-tex-category">
+                        <!-- Will be populated dynamically from subject folders -->
+                    </select>
+                </div>
+                <div class="new-tex-form-group">
+                    <label for="new-tex-lecture-number">Lecture Number <span style="color: #888; font-weight: normal;">(optional)</span></label>
+                    <input type="number" id="new-tex-lecture-number" placeholder="e.g., 1, 2, 3..." min="1" autocomplete="off">
+                    <div class="hint">If set, filename will be prefixed with lec-{number}-</div>
+                </div>
+            </div>
+            <div class="new-tex-modal-footer">
+                <button class="new-tex-modal-btn cancel" onclick="closeNewTexModal()">Cancel</button>
+                <button class="new-tex-modal-btn create" id="new-tex-create-btn" onclick="submitNewTexFile()">Create File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Fast Search Feature -->
+    <link rel="stylesheet" href="css/pdf-search-styles.css">
+    <script src="js/pdf-search-engine-advanced.js"></script>
+    <script src="js/pdf-search-ui.js"></script>
+
+    <!-- PDF Page Selector - For selecting specific pages from PDFs -->
+    <link rel="stylesheet" href="css/pdf-page-selector.css">
+    <script src="js/pdf-page-selector.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,258 @@
+\documentclass[9pt,landscape]{article}
+\usepackage[landscape,margin=0.5cm,top=0.35cm,bottom=0.35cm]{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{calc}
+\usepackage{array}
+\usepackage{colortbl}
+
+% ── Colors ──────────────────────────────────────────────────────────────────
+\definecolor{accolor}{RGB}{180,40,40}
+\definecolor{aclight}{RGB}{255,228,228}
+\definecolor{mtcolor}{RGB}{40,100,180}
+\definecolor{mtlight}{RGB}{220,235,255}
+\definecolor{seccolor}{RGB}{140,90,20}
+\definecolor{seclight}{RGB}{255,243,218}
+\definecolor{bufcolor}{RGB}{60,130,60}
+\definecolor{buflight}{RGB}{225,245,225}
+\definecolor{offgray}{RGB}{245,245,245}
+\definecolor{weekendbg}{RGB}{238,238,238}
+\definecolor{weekhead}{RGB}{50,50,50}
+\definecolor{dayhead}{RGB}{80,80,80}
+\definecolor{gridline}{RGB}{175,175,175}
+\definecolor{examred}{RGB}{190,30,30}
+\definecolor{holcolor}{RGB}{120,80,160}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{1.2pt}
+\arrayrulecolor{gridline}
+\setlength{\arrayrulewidth}{0.3pt}
+
+\begin{document}
+
+% ── Title + Legend (single line) ───────────────────────────────────────────
+\begin{center}
+{\Large\bfseries Semester 6 Study Calendar}%
+\quad{\small Apr 1 -- Jun 5, 2026}%
+\quad
+\tikz[baseline=-0.5ex]{\fill[aclight,draw=accolor,line width=0.4pt,rounded corners=1.5pt](0,0)rectangle(1.8,0.28);
+  \node[font=\tiny\bfseries,text=accolor]at(0.9,0.14){AC (13 lec)};}%
+\;\tikz[baseline=-0.5ex]{\fill[mtlight,draw=mtcolor,line width=0.4pt,rounded corners=1.5pt](0,0)rectangle(2.1,0.28);
+  \node[font=\tiny\bfseries,text=mtcolor]at(1.05,0.14){mtcps (11 lec)};}%
+\;\tikz[baseline=-0.5ex]{\fill[seclight,draw=seccolor,line width=0.4pt,rounded corners=1.5pt](0,0)rectangle(2.1,0.28);
+  \node[font=\tiny\bfseries,text=seccolor]at(1.05,0.14){Security (12 lec)};}%
+\;\tikz[baseline=-0.5ex]{\fill[buflight,draw=bufcolor,line width=0.4pt,rounded corners=1.5pt](0,0)rectangle(1.4,0.28);
+  \node[font=\tiny\bfseries,text=bufcolor]at(0.7,0.14){Buffer};}%
+\;\tikz[baseline=-0.5ex]{\fill[offgray,draw=gridline,line width=0.4pt,rounded corners=1.5pt](0,0)rectangle(1.0,0.28);
+  \node[font=\tiny\bfseries,text=dayhead]at(0.5,0.14){Off};}%
+\;\,{\tiny\textcolor{holcolor}{\textbf{Hol.}}=Holiday (study from home)}%
+\end{center}
+
+\vspace{-2pt}
+
+% ── Column types ───────────────────────────────────────────────────────────
+\newcolumntype{W}{>{\centering\arraybackslash\columncolor{weekhead}}p{1.7cm}}
+\newcolumntype{D}{p{3.42cm}}
+
+% ── Cell macros ────────────────────────────────────────────────────────────
+% #1=bg, #2=date, #3=content
+\newcommand{\C}[3]{\cellcolor{#1}\scriptsize\textbf{\textcolor{dayhead}{#2}}\newline\tiny #3}
+\newcommand{\CH}[3]{\cellcolor{#1}\scriptsize\textbf{\textcolor{dayhead}{#2}}\,{\tiny\textcolor{holcolor}{\textbf{Hol.}}}\newline\tiny #3}
+\newcommand{\Off}[1]{\cellcolor{offgray}\scriptsize\textbf{\textcolor{dayhead}{#1}}\newline\tiny\textcolor{black!40}{Off}}
+\newcommand{\WE}[1]{\cellcolor{weekendbg}\scriptsize\textbf{\textcolor{dayhead}{#1}}\newline\tiny\textcolor{black!35}{Weekend}}
+\newcommand{\WK}[1]{\cellcolor{weekendbg}\scriptsize\textbf{\textcolor{dayhead}{#1}}}
+\newcommand{\EX}[2]{\cellcolor{aclight!50!mtlight}\scriptsize\textbf{\textcolor{dayhead}{#1}}\newline\tiny\bfseries\textcolor{examred}{#2}}
+\newcommand{\blank}[1]{\cellcolor{white}\scriptsize\textbf{\textcolor{dayhead}{#1}}}
+
+\renewcommand{\arraystretch}{0}
+
+\noindent
+\begin{tabular}{|W|D|D|D|D|D|D|D|}
+\hline
+\rowcolor{weekhead}
+\scriptsize\bfseries\textcolor{white}{Phase} &
+\centering\scriptsize\bfseries\textcolor{white}{Monday} &
+\centering\scriptsize\bfseries\textcolor{white}{Tuesday} &
+\centering\scriptsize\bfseries\textcolor{white}{Wednesday} &
+\centering\scriptsize\bfseries\textcolor{white}{Thursday} &
+\centering\scriptsize\bfseries\textcolor{white}{Friday} &
+\centering\scriptsize\bfseries\textcolor{white}{Saturday} &
+\centering\scriptsize\bfseries\textcolor{white}{Sunday}\tabularnewline
+\hline
+
+%═══════════════ WEEK 1: Mar 31 – Apr 6 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{AC\newline\tiny Hackathon\newline Wk 1} &
+\blank{Mar 30} &
+\blank{Mar 31} &
+\Off{Apr 1} &
+\C{aclight}{Apr 2}{%
+\textbf{AC L1}: Intro +\newline Turing Machines} &
+\C{aclight}{Apr 3}{%
+\textbf{AC L2}: Church-\newline Turing Thesis} &
+\C{aclight}{Apr 4}{%
+\textcolor{black!50}{Work day}} &
+\C{aclight}{Apr 5}{\textbf{AC L3}: Computability}
+\tabularnewline\hline
+
+%═══════════════ WEEK 2: Apr 6 – 12 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{AC\newline\tiny Hackathon\newline Wk 2} &
+\CH{aclight}{Apr 6}{%
+\textbf{AC L4}: Reductions} &
+\C{aclight}{Apr 7}{%
+\textbf{AC L5}: P and NP} &
+\Off{Apr 8} &
+\C{aclight}{Apr 9}{%
+\textbf{AC L6}:\newline NP-Completeness} &
+\C{aclight}{Apr 10}{%
+\textbf{AC L7}: More\newline NP-Completeness} &
+\WE{Apr 11} &
+\WK{Apr 12}
+\tabularnewline\hline
+
+%═══════════════ WEEK 3: Apr 13 – 19 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{AC\newline\tiny Hackathon\newline Wk 3} &
+\C{aclight}{Apr 13}{%
+\textbf{AC L8}: DPLL +\newline Backtracking} &
+\C{aclight}{Apr 14}{%
+\textbf{AC L9}: Advanced\newline Graph Algorithms} &
+\Off{Apr 15} &
+\C{aclight}{Apr 16}{%
+\textbf{AC L10}: Linear\newline Programming} &
+\C{aclight}{Apr 17}{%
+\textbf{AC L11}: Integer\newline Linear Programming} &
+\WE{Apr 18} &
+\WK{Apr 19}
+\tabularnewline\hline
+
+%═══════════════ WEEK 4: Apr 20 – 26 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{AC\newline\tiny Hackathon\newline Wk 4} &
+\C{aclight}{Apr 20}{%
+\textbf{AC L12}: Amortized\newline Analysis} &
+\C{aclight}{Apr 21}{%
+\textbf{AC Review}: Exercises\newline + weak topics L1--12} &
+\Off{Apr 22} &
+\C{aclight}{Apr 23}{%
+\textcolor{black!50}{L13 uploaded by prof}} &
+\C{aclight}{Apr 24}{%
+\textbf{AC L13}: Dynamic\newline Programming} &
+\WE{Apr 25} &
+\WK{Apr 26}
+\tabularnewline\hline
+
+%═══════════════ WEEK 5: Apr 27 – May 3 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{mtcps\newline\tiny Hackathon\newline Wk 1} &
+\C{mtlight}{Apr 27}{%
+\textbf{mtcps L1+L2}:\newline UPPAAL Tool + Intro} &
+\C{mtlight}{Apr 28}{%
+\textbf{mtcps L3}:\newline Synchronous Model} &
+\Off{Apr 29} &
+\C{mtlight}{Apr 30}{%
+\textbf{mtcps L4}: Safety\newline Requirements} &
+\C{mtlight}{May 1}{%
+\textbf{mtcps L5}:\newline Asynchronous Model} &
+\WE{May 2} &
+\WK{May 3}
+\tabularnewline\hline
+
+%═══════════════ WEEK 6: May 4 – 10 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{mtcps\newline\tiny Hackathon\newline Wk 2} &
+\C{mtlight}{May 4}{%
+\textbf{mtcps L6}:\newline Timed Model} &
+\C{mtlight}{May 5}{%
+\textbf{mtcps L7}:\newline UPPAAL (deep)} &
+\Off{May 6} &
+\C{mtlight}{May 7}{%
+\textbf{mtcps L8}: Real-Time\newline Scheduling} &
+\C{mtlight}{May 8}{%
+\textbf{mtcps L9}: Buzzing\newline Boys (Mini Project)} &
+\WE{May 9} &
+\WK{May 10}
+\tabularnewline\hline
+
+%═══════════════ WEEK 7: May 11 – 17 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{mtcps\newline\tiny Hackathon\newline Wk 3} &
+\C{mtlight}{May 11}{%
+\textbf{mtcps L10}:\newline Dynamical Systems} &
+\C{mtlight}{May 12}{%
+\textbf{mtcps L11}: Prev-Exam\newline Walkthrough} &
+\Off{May 13} &
+\EX{May 14}{\textcolor{holcolor}{Hol.} PREV-EXAM 2023\newline Timed: 4 hours} &
+\EX{May 15}{PREV-EXAM 2024\newline Timed: 4 hours} &
+\WE{May 16} &
+\WK{May 17}
+\tabularnewline\hline
+
+%═══════════════ WEEK 8: May 18 – 24 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{Security\newline\tiny Sprint\newline Wk 1} &
+\CH{seclight}{May 18}{%
+\textbf{Sec L1}: CIA Model\newline + \textbf{L2}: Access Control} &
+\C{seclight}{May 19}{%
+\textbf{Sec L3}: Secure Dev\newline + \textbf{L4}: Lang Security} &
+\Off{May 20} &
+\C{seclight}{May 21}{%
+\textbf{Sec L5}: Info Flow\newline + \textbf{L6}: Network Sec} &
+\C{seclight}{May 22}{%
+\textbf{Sec L7}: Attack Tools\newline + \textbf{L8}: Reverse Eng.} &
+\WE{May 23} &
+\WK{May 24}
+\tabularnewline\hline
+
+%═══════════════ WEEK 9: May 25 – 31 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{Sec Wk 2\newline\tiny +\newline Buffer} &
+\CH{seclight}{May 25}{%
+\textbf{Sec L9}: Hacking\newline + \textbf{L10}: Sec Analysis} &
+\C{seclight}{May 26}{%
+\textbf{Sec L11}: Counter-\newline measures + \textbf{L12}: Review} &
+\Off{May 27} &
+\C{buflight}{May 28}{%
+\textbf{Buffer}: restudy\newline course w/ earliest exam} &
+\C{buflight}{May 29}{%
+\textbf{Buffer}: restudy\newline same course} &
+\WE{May 30} &
+\WK{May 31}
+\tabularnewline\hline
+
+%═══════════════ WEEK 10: Jun 1 – 7 ═══════════════
+\cellcolor{weekhead}\scriptsize\bfseries\textcolor{white}{Buffer\newline\tiny +\newline Exams} &
+\C{buflight}{Jun 1}{%
+\textbf{Buffer}: restudy\newline course w/ 2nd exam} &
+\C{buflight}{Jun 2}{%
+\textbf{Buffer}: restudy\newline same course} &
+\Off{Jun 3} &
+\C{buflight}{Jun 4}{%
+\textbf{Buffer}: restudy\newline course w/ 3rd exam} &
+\C{buflight}{Jun 5}{%
+\textbf{Buffer}: restudy\newline same course} &
+\WE{Jun 6} &
+\WK{Jun 7}
+\tabularnewline\hline
+
+\end{tabular}
+
+\vspace{3pt}
+
+% ── Summary strip ──────────────────────────────────────────────────────────
+\begin{center}
+\begin{tikzpicture}
+  % Phase bars
+  \fill[aclight, draw=accolor, line width=0.5pt, rounded corners=2pt] (0,0) rectangle (8.5,0.38);
+  \node[font=\tiny\bfseries, text=accolor] at (4.25,0.19) {%
+    AC Hackathon: Apr 2--24 (13 lec, 4 wk) $\vert$ 1 lec/day $\vert$ A4 at exam};
+
+  \fill[mtlight, draw=mtcolor, line width=0.5pt, rounded corners=2pt] (8.7,0) rectangle (17.2,0.38);
+  \node[font=\tiny\bfseries, text=mtcolor] at (12.95,0.19) {%
+    mtcps Hackathon: Apr 27--May 15 (11 lec + 2 prev-exams) $\vert$ Open-book};
+
+  \fill[seclight, draw=seccolor, line width=0.5pt, rounded corners=2pt] (17.4,0) rectangle (22.4,0.38);
+  \node[font=\tiny\bfseries, text=seccolor] at (19.9,0.19) {%
+    Security: May 18--26 (2 lec/day)};
+
+  \fill[buflight, draw=bufcolor, line width=0.5pt, rounded corners=2pt] (22.6,0) rectangle (26.2,0.38);
+  \node[font=\tiny\bfseries, text=bufcolor] at (24.4,0.19) {%
+    Buffer: May 28 $\to$ Exams};
+\end{tikzpicture}\\[-2pt]
+{\tiny\textcolor{dayhead}{Pattern: Mon--Tue--Thu--Fri study \,$\cdot$\, Wed always off \,$\cdot$\, Buffer = 2 days/course before each exam \,$\cdot$\, Jawad M.K. Qayyum}}
+\end{center}
+
+\end{document}

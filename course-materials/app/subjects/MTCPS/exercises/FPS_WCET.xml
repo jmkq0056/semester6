@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>const int 	N = 3;         // # tasks
+typedef int[0,N-1] id_t;
+
+broadcast chan		    free[N], ready[N], stop;
+urgent broadcast chan 	run[N];
+
+chan priority ready &lt; default &lt; free;
+
+clock 		time;
+    
+const int T[N] = { 80, 40, 20};	   // Periods
+const int D[N] = { 80, 40, 20};	   // Deadlines
+const int C[N] = { 40, 10,  5};     // Computation Times
+const int P[N] = {  1,  2,  3};	   // Priorities
+
+
+
+</declaration>
+	<template>
+		<name x="40" y="16">Task</name>
+		<parameter>const id_t id</parameter>
+		<declaration>clock c, t,u;
+</declaration>
+		<location id="id0" x="34" y="416" color="#ff00ff">
+			<name x="24" y="386">Blocked</name>
+			<label kind="invariant" x="10" y="432">c'==0</label>
+		</location>
+		<location id="id1" x="32" y="64">
+			<name x="-8" y="34">Idle</name>
+			<label kind="invariant" x="48" y="40">t&lt;=T[id] &amp;&amp; u'==0</label>
+		</location>
+		<location id="id2" x="32" y="192" color="#ffa500">
+			<name x="42" y="161">Ready</name>
+		</location>
+		<location id="id3" x="32" y="320" color="#00ff00">
+			<name x="8" y="288">Running</name>
+			<label kind="invariant" x="0" y="328">c&lt;=C[id]</label>
+		</location>
+		<location id="id4" x="192" y="320">
+			<name x="176" y="288">Error</name>
+		</location>
+		<init ref="id2"/>
+		<transition id="id5">
+			<source ref="id0"/>
+			<target ref="id4"/>
+			<label kind="guard" x="120" y="392">t&gt;D[id]</label>
+			<nail x="192" y="416"/>
+		</transition>
+		<transition id="id6">
+			<source ref="id0"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="104" y="360">run[id]?</label>
+			<nail x="96" y="416"/>
+			<nail x="96" y="360"/>
+		</transition>
+		<transition id="id7">
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-24" y="360">stop?</label>
+			<nail x="-32" y="360"/>
+			<nail x="-32" y="416"/>
+		</transition>
+		<transition id="id8">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="45" y="82">t==T[id]</label>
+			<label kind="synchronisation" x="48" y="104">ready[id]!</label>
+			<label kind="assignment" x="48" y="128">t=0, u=0</label>
+		</transition>
+		<transition id="id9">
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="40" y="232">run[id]?</label>
+			<label kind="assignment" x="40" y="256">c=0</label>
+		</transition>
+		<transition id="id10">
+			<source ref="id3"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-104" y="192">c==C[id]</label>
+			<label kind="synchronisation" x="-109" y="166">free[id]!</label>
+			<nail x="-32" y="320"/>
+			<nail x="-32" y="64"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id2"/>
+			<target ref="id4"/>
+			<label kind="guard" x="112" y="168">t&gt;D[id]</label>
+			<nail x="192" y="192"/>
+		</transition>
+		<transition id="id12">
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="112" y="296">t&gt;D[id]</label>
+		</transition>
+	</template>
+	<template>
+		<name x="40" y="16">Scheduler</name>
+		<declaration>id_t list[N] = { 2, 1, 0};
+int[0,N] len = N;
+
+// Put an element at the end of the queue
+void enqueue(id_t element)
+{
+int tmp=0;
+list[len++] = element;
+if (len&gt;0)
+{
+	int i=len-1;
+	while (i&gt;0 &amp;&amp; P[list[i]]&gt;P[list[i-1]])
+	{
+		tmp = list[i-1];
+		list[i-1] = list[i];
+		list[i] = tmp;
+		i--;
+	}		
+}
+}
+
+// Remove the front element of the queue
+void dequeue()
+{
+        int i = 0;
+        len -= 1;
+        while (i &lt; len)
+        {
+                list[i] = list[i + 1];
+                i++;
+        }
+        list[i] = 0;
+}
+
+// Returns the front element of the queue
+id_t front()
+{
+   return list[0];
+}
+
+// Returns the last element of the queue
+id_t tail()
+{
+   return list[len - 1];
+}</declaration>
+		<location id="id13" x="256" y="400">
+			<committed/>
+		</location>
+		<location id="id14" x="128" y="400">
+			<committed/>
+		</location>
+		<location id="id15" x="192" y="256">
+			<committed/>
+		</location>
+		<location id="id16" x="192" y="320">
+			<name x="208" y="320">Occ</name>
+		</location>
+		<location id="id17" x="192" y="128">
+			<name x="208" y="96">Free</name>
+		</location>
+		<init ref="id15"/>
+		<transition id="id18">
+			<source ref="id13"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="240" y="352">run[front()]!</label>
+		</transition>
+		<transition id="id19">
+			<source ref="id14"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="184" y="376">stop!</label>
+		</transition>
+		<transition id="id20">
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="200" y="272">run[front()]!</label>
+		</transition>
+		<transition id="id21">
+			<source ref="id16"/>
+			<target ref="id14"/>
+			<label kind="select" x="88" y="328">e : id_t</label>
+			<label kind="synchronisation" x="80" y="344">ready[e]?</label>
+			<label kind="assignment" x="64" y="360">enqueue(e)</label>
+		</transition>
+		<transition id="id22">
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="select" x="296" y="152">e : id_t</label>
+			<label kind="guard" x="296" y="168">e == front()</label>
+			<label kind="synchronisation" x="296" y="184">free[e]?</label>
+			<label kind="assignment" x="296" y="200">dequeue()</label>
+			<nail x="288" y="320"/>
+			<nail x="288" y="128"/>
+		</transition>
+		<transition id="id23">
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="guard" x="104" y="168">len &gt; 0</label>
+			<label kind="synchronisation" x="104" y="184">run[front()]!</label>
+			<nail x="96" y="128"/>
+			<nail x="96" y="320"/>
+		</transition>
+		<transition id="id24">
+			<source ref="id17"/>
+			<target ref="id15"/>
+			<label kind="select" x="200" y="160">e : id_t</label>
+			<label kind="synchronisation" x="200" y="176">ready[e]?</label>
+			<label kind="assignment" x="200" y="192">enqueue(e)</label>
+		</transition>
+	</template>
+	<system>Task0=Task( 0 );
+Task1=Task( 1 );
+Task2=Task( 2 );
+
+
+system 
+       Task0, Task1, Task2, Scheduler;
+
+gantt {
+    Task0 :  Task0.Ready -&gt; 5, Task0.Running -&gt; 1, Task0.Blocked -&gt;3, Task0.Error-&gt;6; 
+    Task1 :  Task1.Ready -&gt; 5, Task1.Running -&gt; 1, Task1.Blocked -&gt;3, Task1.Error-&gt;6; 
+    Task2 :  Task2.Ready -&gt; 5, Task2.Running -&gt; 1, Task2.Blocked -&gt;3, Task2.Error-&gt;6; 
+}
+</system>
+	<queries>
+		<query>
+			<formula>sup:Task0.u, Task1.u, Task2.u</formula>
+			<comment/>
+			<result outcome="maybe_true" type="quantity" value="80, 15, 5" timestamp="2025-03-24 14:05:41 +0100">
+				<details>80, 15, 5</details>
+			</result>
+		</query>
+		<query>
+			<formula>A[] not (Task0.Error)</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A[] not (Task1.Error)</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A[] not (Task2.Error)</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A[] not (Task0.Error or Task1.Error or Task2.Error)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2025-03-24 14:05:25 +0100">
+			</result>
+		</query>
+	</queries>
+</nta>

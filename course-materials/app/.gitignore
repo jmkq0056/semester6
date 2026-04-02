@@ -1,0 +1,29 @@
+.vercel
+
+# Node modules
+node_modules/
+
+# Database files
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# System files
+.DS_Store
+
+# Electron build artifacts
+dist/
+.electron-pid
+*.dmg
+*.zip
+*.exe
+*.AppImage
+*.deb
+*.rpm
+
+# Electron cache
+*.cache/
+electron-builder.env
+
+# Environment variables
+.env

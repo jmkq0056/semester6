@@ -1,0 +1,43 @@
+/* PDFViewer styles are inherited from main styles.css */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-selector {
+  position: absolute;
+  right: -400px;
+  top: 0;
+  width: 400px;
+  height: 100%;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.pdf-selector.visible {
+  right: 0;
+}
+
+.control-btn.active {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}

@@ -1,0 +1,41 @@
+\contentsline {section}{\numberline {1}The Big Picture --- Why This Course Exists}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Story 1: An Algorithm --- Primality Testing (slides 1--2)}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Story 2: A Thief --- The Knapsack Problem (slide 3)}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Story 3: Collatz --- The Unsolvable (slide 4)}{4}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Course Overview --- The Three-Part Structure (slides 5--6)}{5}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Course Formalities (slides 7--9)}{6}{subsection.1.5}%
+\contentsline {section}{\numberline {2}Setting the Stage: Problems = Languages (slides 10--17)}{7}{section.2}%
+\contentsline {subsection}{\numberline {2.1}The Motivating Question (slide 11)}{7}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}What is a Problem? --- Decision Problems (slide 12)}{7}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}The Abstraction: Everything is a String (slide 13)}{8}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Formal Languages --- Complete Refresher (slide 14)}{8}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Operations on Languages (slide 15)}{11}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}From Problems to Languages (slide 16) --- The Core Translation}{11}{subsection.2.6}%
+\contentsline {subsection}{\numberline {2.7}Solving Problems = Language Membership (slide 17)}{12}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Reminder: Finite Automata (slide 18)}{12}{subsection.2.8}%
+\contentsline {section}{\numberline {3}Turing Machines --- Conceptual View (slides 19--22)}{14}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Alan Turing's Original Vision (slide 20)}{14}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}The Five Components (slide 21, first builds)}{14}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Complete Worked Example: The Slides' TM on Input ``101\#11'' (slide 21)}{15}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}DFA as Turing Machine --- Full Trace (slide 22)}{18}{subsection.3.4}%
+\contentsline {section}{\numberline {4}The Formal Definition (slide 23)}{20}{section.4}%
+\contentsline {section}{\numberline {5}Running a Turing Machine: Intuition (slide 24)}{23}{section.5}%
+\contentsline {section}{\numberline {6}Configurations (slides 25--27)}{24}{section.6}%
+\contentsline {subsection}{\numberline {6.1}What is a Configuration? (slide 25)}{24}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Shorthand for Tape Contents (slide 26)}{25}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Special Types of Configurations (slide 27)}{26}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Runs (slide 28)}{28}{section.7}%
+\contentsline {section}{\numberline {8}Accepting, Rejecting, and Looping (slide 29)}{30}{section.8}%
+\contentsline {section}{\numberline {9}Classes of Languages (slides 30--31)}{32}{section.9}%
+\contentsline {subsection}{\numberline {9.1}The Four Key Definitions}{32}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Side-by-Side Comparison}{33}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}The Hierarchy of Language Classes (slide 31)}{34}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}A Note on Terminology (slide 32)}{35}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}The Conclusion Slide (slide 33)}{35}{subsection.9.5}%
+\contentsline {section}{\numberline {10}How to Build a Turing Machine}{36}{section.10}%
+\contentsline {subsection}{\numberline {10.1}The General Strategy}{36}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}The Key Technique: Using States as Memory}{36}{subsection.10.2}%
+\contentsline {section}{\numberline {11}Summary --- Key Concepts Quick Reference}{37}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Common Pitfalls}{37}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}What to Handwrite After Reading This}{38}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Reading (slide 34)}{38}{subsection.11.3}%
