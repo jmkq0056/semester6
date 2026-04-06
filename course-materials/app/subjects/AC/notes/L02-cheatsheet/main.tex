@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows.meta}
+\usepackage{listings}
+\usepackage{adjustbox}
+
+\tcbuselibrary{breakable,skins}
+
+% ── Prevent math overflow in boxes ──────────────────────────────────────────
+\newcommand{\fitmath}[1]{\begin{adjustbox}{max width=\linewidth}$\displaystyle #1$\end{adjustbox}}
+
+% ── Listings config ─────────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  columns=fullflexible,
+  keepspaces=true,
+  xleftmargin=0pt,
+  xrightmargin=0pt,
+  aboveskip=4pt,
+  belowskip=4pt,
+  frame=none,
+  commentstyle=\color{gray},
+}
+
+% ── Box definitions ─────────────────────────────────────────────────────────
+\newtcolorbox{definitionbox}[1]{colback=blue!5, colframe=blue!60!black,
+  fonttitle=\bfseries, title=#1, breakable, enhanced jigsaw}
+
+\newtcolorbox{conceptbox}[1]{colback=red!5, colframe=red!60!black,
+  fonttitle=\bfseries, title=#1, breakable, enhanced jigsaw}
+
+\newtcolorbox{examplebox}[1]{colback=green!5, colframe=green!50!black,
+  fonttitle=\bfseries, title=#1, breakable, enhanced jigsaw}
+
+\newtcolorbox{notebox}[1]{colback=orange!5, colframe=orange!60!black,
+  fonttitle=\bfseries, title=#1, breakable, enhanced jigsaw}
+
+\newcommand{\kemark}{\textcolor{red!70!black}{\textbf{[EXAM-RELEVANT]}}}
+\newcommand{\kbg}{\textcolor{gray}{\textbf{[BACKGROUND]}}}
+\newcommand{\kt}[1]{\par\vspace{0.3em}\colorbox{yellow!60}{\parbox{\dimexpr\linewidth-2\fboxsep}{#1}}\vspace{0.3em}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{AC Lecture 2 --- Cheatsheet}
+\rhead{Jawad M.K. Qayyum}
+\rfoot{\thepage}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries AC Lecture 2}\\[0.5em]
+{\LARGE The Church-Turing Thesis}\\[0.3em]
+{\large The Complete Guide to ``Why Turing Machines Are Enough''}\\[1em]
+{\normalsize Algorithms and Computability --- Semester 6}\\
+{\normalsize Cheatsheet for split-view study with slides}\\[0.5em]
+{\normalsize April 2026}
+\end{center}
+
+\vspace{1em}
+\tableofcontents
+\newpage
+
+\input{sec1-big-picture}
+\newpage
+\input{sec2-church-turing}
+\newpage
+\input{sec3-robustness-stay}
+\newpage
+\input{sec4-multi-tape}
+\newpage
+\input{sec5-ntm}
+\newpage
+\input{sec6-doubly-infinite}
+\newpage
+\input{sec7-summary}
+
+\end{document}

@@ -1,0 +1,266 @@
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Big Picture --- Why Turing Machines Are Enough}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{conceptbox}{What This Lecture Is Really About}
+Last lecture, we built our first Turing machine. It worked. But it was \textbf{painfully slow}. You might have thought: ``If only I had a better machine --- more tapes, the ability to guess, a tape that goes both directions --- I could solve more problems.''
+
+This lecture answers one of the deepest questions in computer science: \textbf{does a fancier machine let you solve problems that were impossible before, or does it just let you solve the same problems faster?}
+
+Spoiler: fancier machines NEVER add power. Every problem solvable by a multi-tape TM, a nondeterministic TM, or any ``reasonable'' extension is \textbf{also solvable by our plain, single-tape, deterministic TM}. The fancy machine might be faster, but it can't solve anything new. That is the Church-Turing Thesis.
+\end{conceptbox}
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Where We've Been (Lecture 1 Recap)}
+%───────────────────────────────────────────────────────────────────────────────
+
+Before we move forward, here is the essential toolkit from Lecture 1 in compressed form. If any of these are fuzzy, re-read the L01 cheatsheet --- every concept below is built on these.
+
+\begin{notebox}{Lecture 1 in Six Bullets}
+\begin{enumerate}[nosep]
+\item \textbf{Problems = formal languages.} A ``yes/no'' decision problem is a language $L \subseteq \Sigma^*$. The question ``is $w$ in $L$?'' is the problem. Example: ``is this string a palindrome?'' corresponds to $L_{\text{pal}} = \{w \in \{0,1\}^* \mid w = w^R\}$.
+
+\item \textbf{Algorithms = Turing machines (DTMs).} A deterministic Turing machine is a 7-tuple:
+\fitmath{M = (Q,\; \Sigma,\; \Gamma,\; s,\; t,\; r,\; \delta)}
+where $Q$ = states, $\Sigma$ = input alphabet, $\Gamma$ = tape alphabet ($\Sigma \cup \{\sqcup\} \subseteq \Gamma$), $s$ = start state, $t$ = accept state, $r$ = reject state, $\delta$ = transition function.
+
+\item \textbf{The transition function} tells the machine exactly what to do at each step:
+\fitmath{\delta \colon (Q \setminus \{t, r\}) \times \Gamma \;\to\; Q \times \Gamma \times \{-1, +1\}}
+Read: ``In state $q$, reading symbol $a$, go to state $q'$, write $b$, move left ($-1$) or right ($+1$).'' Deterministic means exactly ONE rule for each (state, symbol) pair.
+
+\item \textbf{Computable} = a \textit{halting} DTM recognizes $L$ (always says yes or no, never loops). \textbf{Computably-enumerable} = some DTM recognizes $L$ (says yes for members, but might loop forever on non-members).
+
+\item \textbf{We built a TM for} $\{w\#w \mid w \in \{0,1\}^*\}$ --- the language of strings of the form ``$w$ followed by \# followed by $w$ again.'' The technique: \textit{mark, scan, match}. The machine zigzags back and forth across the tape, matching symbols one by one.
+
+\item \textbf{That TM was painfully slow:} $O(n^2)$ steps on an input of length $n$, because for \textit{each} symbol it must traverse the entire input to find its match on the other side of the \#.
+\end{enumerate}
+\end{notebox}
+
+That last bullet --- the slowness --- is exactly what motivates this entire lecture.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Problem This Lecture Solves}
+\label{subsec:motivation}
+%───────────────────────────────────────────────────────────────────────────────
+
+Let's feel the problem before we name it.
+
+\begin{examplebox}{The Pain of Single-Tape $w\#w$}
+
+\textbf{The setup.} We have our single-tape DTM for $L = \{w\#w \mid w \in \{0,1\}^*\}$. The input is $011\#011$ (length 7).
+
+\textbf{How the single-tape machine works} (the ``zigzag'' technique from Lecture 1):
+\begin{enumerate}[nosep]
+\item Read the first unmarked symbol on the left of \# (it's a \texttt{0}). Remember it in your state ($q_{\text{carry0}}$).
+\item Scan right, past \#, past any already-marked symbols, to find the first unmarked symbol on the right.
+\item Check: does it match what you're carrying? If yes, mark it. If no, reject.
+\item Scan all the way back left, past \#, to the next unmarked symbol.
+\item Repeat from step 1.
+\end{enumerate}
+
+\textbf{Let's count the steps for $011\#011$:}
+
+\begin{center}
+\begin{tabular}{clc}
+\toprule
+\textbf{Round} & \textbf{What happens} & \textbf{Steps} \\
+\midrule
+1 & Read \texttt{0} at pos 1, scan right to pos 5 (\texttt{0}), match, scan back to pos 2 & $\sim$8 \\
+2 & Read \texttt{1} at pos 2, scan right to pos 6 (\texttt{1}), match, scan back to pos 3 & $\sim$8 \\
+3 & Read \texttt{1} at pos 3, scan right to pos 7 (\texttt{1}), match, scan back to pos 4 & $\sim$8 \\
+4 & Verify all symbols are marked, accept & $\sim$4 \\
+\midrule
+& \textbf{Total} & $\mathbf{\sim 28}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each round requires traversing most of the input \textit{twice} (once right, once left). With $n$ symbols, we do roughly $n/2$ rounds of roughly $n$ steps each. That's $O(n^2)$.
+
+For $n = 7$, that's tolerable. For $n = 1{,}000$, it's ${\sim}500{,}000$ steps. For $n = 1{,}000{,}000$, it's ${\sim}500{,}000{,}000{,}000$ steps. The zigzagging is killing us.
+\end{examplebox}
+
+Now here's the key insight. Imagine we gave this machine a second tape.
+
+\begin{examplebox}{Two Tapes Make $w\#w$ Trivial}
+
+\textbf{The setup.} Same language $L = \{w\#w \mid w \in \{0,1\}^*\}$, same input $011\#011$. But now we have \textbf{two tapes}, each with its own read/write head that moves independently.
+
+\textbf{The 2-tape algorithm:}
+\begin{enumerate}[nosep]
+\item \textbf{Copy phase:} Scan tape 1 from left to right. Copy every symbol \textit{before} the \# onto tape 2. Stop when you see \#.
+
+After this step:
+\begin{lstlisting}
+    Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                              ^
+                        head 1 (just past #)
+
+    Tape 2: [ 0 | 1 | 1 | _ | ... ]
+              ^
+        head 2 (rewound to start)
+\end{lstlisting}
+
+\item \textbf{Compare phase:} Move head 1 forward on tape 1 (past the \#) and head 2 forward on tape 2 simultaneously, comparing symbol by symbol:
+\begin{lstlisting}
+    Step 1: Tape 1 reads 0, Tape 2 reads 0. Match! Move both right.
+    Step 2: Tape 1 reads 1, Tape 2 reads 1. Match! Move both right.
+    Step 3: Tape 1 reads 1, Tape 2 reads 1. Match! Move both right.
+    Step 4: Tape 1 reads blank, Tape 2 reads blank. Both done. ACCEPT!
+\end{lstlisting}
+\end{enumerate}
+
+\textbf{Total steps:} Copy takes $\sim n/2$ steps. Compare takes $\sim n/2$ steps. Total: $\sim n$ steps. That's $O(n)$.
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Machine} & \textbf{Steps for $n=7$} & \textbf{Steps for $n=1{,}000{,}000$} \\
+\midrule
+1-tape DTM & $\sim$28 & $\sim$500{,}000{,}000{,}000 \\
+2-tape DTM & $\sim$7 & $\sim$1{,}000{,}000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The 2-tape machine is not just a little faster --- it's a \textbf{quadratic-to-linear} improvement. The zigzagging is completely eliminated because you can read from two places at once.
+\end{examplebox}
+
+\begin{conceptbox}{The Question That Changes Everything}
+
+The 2-tape machine is dramatically faster. But here is the question that this entire lecture exists to answer:
+
+\textbf{Does having 2 tapes let you solve problems that were IMPOSSIBLE with 1 tape? Or does it just let you solve the same problems faster?}
+
+Think about it. Both machines solve $w\#w$. The 2-tape version is faster, but they both get the job done. Is there \textit{any} language that a 2-tape machine can recognize but a 1-tape machine cannot?
+
+And while we're at it: what about nondeterminism (the ability to ``guess'' the right path)? What about tapes that extend infinitely in both directions? What about allowing the head to \textit{stay put} instead of always moving?
+
+\kt{The central question of Lecture 2: Do extensions to the basic TM model add \textbf{computational power} (ability to recognize new languages), or do they only add \textbf{speed} (fewer steps for the same languages)?}
+\end{conceptbox}
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Bicycle and the Ferrari}
+\label{subsec:analogy}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy --- Bicycle vs.\ Ferrari}
+Imagine you live in a city. You own a bicycle. Your rich friend owns a Ferrari. Think about two different questions:
+
+\textbf{Question 1: Reachability.} Is there any location in the city your friend can reach in their Ferrari that you \textit{cannot} reach on your bicycle?
+
+\textbf{Answer:} No. Every road, every address, every parking lot --- you can get there on a bicycle. It'll take longer, but you'll get there. The Ferrari and the bicycle can reach \textbf{exactly the same set of destinations}.
+
+\textbf{Question 2: Speed.} Can your friend get to those destinations faster?
+
+\textbf{Answer:} Obviously yes. The Ferrari is way faster. A trip that takes you 2 hours on the bicycle takes your friend 15 minutes.
+
+Now here's the crucial distinction:
+\begin{itemize}[nosep]
+\item \textbf{Power} = which destinations are reachable at all. Bicycle and Ferrari are \textbf{equal in power}.
+\item \textbf{Speed} = how long it takes to get there. Ferrari is \textbf{faster}. But it doesn't unlock new destinations.
+\end{itemize}
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Bicycle = single-tape deterministic Turing machine (our basic DTM)
+\item Ferrari = multi-tape TM, or nondeterministic TM, or any ``enhanced'' TM variant
+\item Destination = a language $L \subseteq \Sigma^*$
+\item ``Can reach destination'' = the machine recognizes / decides $L$
+\item ``Speed'' = number of computation steps
+\item \textbf{Power}: the set of languages recognizable by a Ferrari (multi-tape TM) $=$ the set of languages recognizable by a bicycle (single-tape DTM). \textbf{Exactly the same.}
+\item \textbf{Speed}: the Ferrari (multi-tape TM) can solve $w\#w$ in $O(n)$ steps; the bicycle (single-tape DTM) needs $O(n^2)$. Faster, but \textbf{not more powerful}.
+\end{itemize}
+\end{notebox}
+
+This is the deepest insight of this lecture, and one of the deepest in all of computer science. Let's now see the two running examples we'll use to make this concrete.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Running Examples}
+\label{subsec:running-examples}
+%───────────────────────────────────────────────────────────────────────────────
+
+This lecture covers three main extensions to the basic DTM. We thread two specific languages through the lecture so you can see each extension in action on something concrete:
+
+\begin{definitionbox}{Running Example 1: $w\#w$ (Multi-Tape Sections)}
+\fitmath{L_1 = \{w\#w \mid w \in \{0,1\}^*\}}
+
+\textbf{Plain English:} The set of all strings where the same binary word appears on both sides of a \# separator.
+
+\textbf{Examples:}
+\begin{itemize}[nosep]
+\item $0\#0 \in L_1$ \quad (both sides are ``0'')
+\item $011\#011 \in L_1$ \quad (both sides are ``011'')
+\item $\#\  \in L_1$ \quad (both sides are $\varepsilon$, the empty string)
+\item $01\#10 \notin L_1$ \quad (``01'' $\neq$ ``10'')
+\item $011\#01 \notin L_1$ \quad (different lengths)
+\item $0110 \notin L_1$ \quad (no \# at all)
+\end{itemize}
+
+\textbf{Why this example:} We already built a single-tape TM for this in Lecture 1 (the zigzag machine). We know it takes $O(n^2)$. We'll build a \textbf{2-tape version} that does it in $O(n)$, and then prove that any 2-tape machine can be \textbf{simulated} by a single-tape machine. This is the poster child for ``more tapes = more speed, not more power.''
+\end{definitionbox}
+
+\begin{definitionbox}{Running Example 2: ``contains 110'' (Nondeterminism Sections)}
+\fitmath{L_2 = \{w \in \{0,1\}^* \mid w \text{ contains 110 as a substring}\}}
+
+\textbf{Plain English:} The set of all binary strings that have ``110'' appearing somewhere inside them.
+
+\textbf{Examples:}
+\begin{itemize}[nosep]
+\item $110 \in L_2$ \quad (it IS ``110'')
+\item $01100 \in L_2$ \quad (``110'' appears starting at position 2)
+\item $00011011 \in L_2$ \quad (``110'' appears starting at position 4)
+\item $111 \notin L_2$ \quad (no ``0'' after ``11'')
+\item $0100 \notin L_2$ \quad (never see ``11'' followed by ``0'')
+\item $\varepsilon \notin L_2$ \quad (empty string contains nothing)
+\end{itemize}
+
+\textbf{Why this example:} A deterministic TM for this needs to carefully track partial matches (``I've seen one 1, now I need another 1, then a 0...''). A \textbf{nondeterministic} TM can simply ``guess'' where the 110 starts and verify. The nondeterministic design is \textit{dramatically} simpler. But again: the NTM can't solve any problem the DTM can't --- it just makes the machine easier to \textbf{design}.
+\end{definitionbox}
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{This Lecture's Answer}
+\label{subsec:lecture-answer}
+%───────────────────────────────────────────────────────────────────────────────
+
+Here is the roadmap for everything that follows. By the end of this cheatsheet, you will understand each of these claims and the proof technique behind them.
+
+\begin{conceptbox}{The Church-Turing Thesis and the Robustness Theorem}
+
+\textbf{The Church-Turing Thesis} (informal --- not a theorem, a \textit{thesis}):
+
+\begin{quote}
+\textit{Every function that can be computed by any ``reasonable'' mechanical process can be computed by a Turing machine.}
+\end{quote}
+
+This is not something we prove --- it's a claim about the real world. It says: if you can imagine any physical device, any programming language, any algorithm, any process that computes something, then a plain old Turing machine can compute the same thing. Nobody has ever found a counterexample.
+
+\textbf{The Robustness Theorem} (this IS provable --- and we prove it):
+
+The class of languages recognized by TMs does not change when we add any of the following extensions:
+\begin{enumerate}[nosep]
+\item \textbf{Stay direction} (Section 3): Allow the head to stay put ($\{-1, 0, +1\}$ instead of $\{-1, +1\}$)
+\item \textbf{Multiple tapes} (Section 4): $k$ tapes with $k$ independent heads instead of 1
+\item \textbf{Nondeterminism} (Section 5): The transition function returns a \textit{set} of possible moves instead of exactly one
+\end{enumerate}
+
+Exercise 2 adds a fourth extension:
+\begin{enumerate}[nosep, start=4]
+\item \textbf{Doubly-infinite tape} (Section 6): The tape extends infinitely to the \textit{left} as well as the right
+\end{enumerate}
+
+\textbf{The key technique for ALL of these proofs:} \textbf{Simulation.}
+
+For each extension, we build a standard single-tape DTM that \textit{mimics} the fancy machine step by step. The simulator is slower (sometimes \textit{much} slower), but it always gets the same answer. If the fancy machine accepts, the simulator accepts. If the fancy machine rejects, the simulator rejects. If the fancy machine loops, the simulator loops.
+
+\kt{This lecture's one-line summary: We can add tapes, nondeterminism, stay moves, or doubly-infinite tapes to a Turing machine. Each extension makes machines easier to design or faster to run, but \textbf{none of them let you solve any new problems}. The proof technique is always the same: build a standard DTM that simulates the fancy machine.}
+\end{conceptbox}
+
+\begin{notebox}{Reading Guide --- What to Focus On}
+\begin{itemize}[nosep]
+\item \textbf{Sections 3--5} are \kemark{} --- the three robustness proofs (stay, multi-tape, NTM) are the core examinable content.
+\item \textbf{Section 6} (doubly-infinite tape) is tested in \textbf{Exercise 2} --- you need to construct the simulation yourself.
+\item \textbf{Section 2} (Church-Turing Thesis itself) is \kbg{} --- important for understanding \textit{why} we care, but the exercises test the \textit{simulation constructions}, not the philosophical thesis.
+\item The pattern is always: (1) define the extension, (2) show it's convenient with an example, (3) prove a standard DTM can simulate it. Learn this pattern once and you can apply it to any variant.
+\end{itemize}
+\end{notebox}

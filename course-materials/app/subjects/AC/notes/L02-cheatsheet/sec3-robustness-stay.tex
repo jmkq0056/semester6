@@ -1,0 +1,533 @@
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Robustness in Action: The Stay Direction (slide 14, Tutorial 2 Exercise 1)}
+%═══════════════════════════════════════════════════════════════════════════════
+
+This is the first concrete robustness proof you will do in this course. \kemark{} --- Tutorial 2, Exercise 1 directly asks you to prove that adding a ``stay'' option to Turing machines does not increase their power. The technique you learn here is the \textbf{template} for every robustness proof in this course: multi-tape (Section 4), non-deterministic (Section 5), doubly-infinite tape (Section 6). Master this one, and the rest follow the same pattern.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Extension: What Does ``Stay'' Mean?}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: Reading a Book}
+Imagine you are reading a physical book. At the end of every page, you \textbf{must} do one of two things: turn to the next page, or turn to the previous page. You cannot just \textit{stay} on the current page and re-read it. That's how a standard Turing machine works --- the head \textbf{must} move left or right after every step. There is no ``stay put'' option.
+
+Now imagine a fancier book where, after reading each page, you are allowed a third option: \textbf{stay on the current page}. You can re-read it, think about it, and then decide what to do. Does this let you read books you couldn't read before? \textbf{Obviously not.} Every book that's readable with the ``stay'' option is also readable without it --- you could just flip to the next page and immediately flip back. Two page-turns instead of zero, but you end up on the same page, having read the same content.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Turning pages = moving the TM head ($+1$ for right, $-1$ for left)
+\item Staying on the current page = direction $0$ (the new option)
+\item Reading the same books = computing the same languages
+\item Flipping right then immediately left = simulating ``stay'' with two moves
+\end{itemize}
+
+The question is: can we \textbf{prove} that the ``stay'' option adds no computational power?
+\end{notebox}
+
+\subsubsection{The Standard DTM (What We Defined in Lecture 1)}
+
+Recall from Lecture 1: a deterministic Turing machine has a transition function that, for each non-halting state and tape symbol, says what to do:
+
+\begin{definitionbox}{Standard DTM Transition Function (Recap from L01)}
+\textbf{Plain English:} At every step, the machine reads the current cell, then it \textbf{must} (1) change its state, (2) write a symbol, and (3) move the head \textbf{either left or right}. It cannot stay put. The head moves every single step.
+
+\textbf{Formal:}
+\fitmath{\delta \colon (Q \setminus \{t, r\}) \times \Gamma \longrightarrow Q \times \Gamma \times \{-1, +1\}}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $Q \setminus \{t, r\}$ --- only non-halting states have transitions (once in $t$ or $r$, the machine stops)
+\item $\Gamma$ --- the tape alphabet (all symbols that can appear on the tape, including blank $\sqcup$)
+\item $Q$ --- the output state (which state to go to next)
+\item $\Gamma$ --- the symbol to write on the current cell (replacing what was there)
+\item $\{-1, +1\}$ --- the direction to move: $-1$ means left, $+1$ means right. \textbf{No other option.}
+\end{itemize}
+\end{definitionbox}
+
+\subsubsection{The Extended DTM (Adding ``Stay'')}
+
+\begin{definitionbox}{Extended DTM with Stay Direction \kemark}
+\textbf{Plain English:} Everything is the same as a standard DTM, except now the head has \textbf{three} options after each step: move left, move right, \textbf{or stay where it is}. We add direction $0$ to mean ``don't move the head.''
+
+\textbf{Formal:}
+\fitmath{\delta \colon (Q \setminus \{t, r\}) \times \Gamma \longrightarrow Q \times \Gamma \times \{-1, 0, +1\}}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item Everything is the same as the standard DTM, except:
+\item $\{-1, 0, +1\}$ --- the direction set now includes $0$. Direction $0$ means ``stay'': the head does not move.
+\end{itemize}
+
+\textbf{What this means in practice:} A transition $\delta(q, a) = (q', b, 0)$ says: ``When in state $q$ reading symbol $a$, write $b$, change to state $q'$, and \textbf{keep the head exactly where it is}.''
+\end{definitionbox}
+
+\subsubsection{Why Would You Want ``Stay''?}
+
+\begin{notebox}{Concrete Motivation: Why ``Stay'' Is Convenient}
+Sometimes, when designing a Turing machine, you want to \textbf{write a symbol and immediately process it} without leaving the cell. For example:
+
+\textbf{Without stay:} Suppose you want to mark a cell with $X$ and then immediately check what you just wrote. You'd need:
+\begin{enumerate}[nosep]
+\item $\delta(q, a) = (q_{\text{temp}}, X, +1)$ --- write $X$, move right to some dummy cell
+\item $\delta(q_{\text{temp}}, \text{anything}) = (q', \text{anything}, -1)$ --- immediately go back left
+\end{enumerate}
+Two steps, an extra state, and you had to worry about what was in the cell to the right (you must not accidentally overwrite it).
+
+\textbf{With stay:} You just write:
+\begin{enumerate}[nosep]
+\item $\delta(q, a) = (q', X, 0)$ --- write $X$, stay, change state. Done. One step.
+\end{enumerate}
+
+Stay is \textbf{syntactic sugar} --- it doesn't let you compute anything new, but it makes your TM designs cleaner and simpler. The point of this section is to \textbf{prove} this rigorously.
+\end{notebox}
+
+\kt{The stay direction ($0$) is like a keyboard shortcut --- it doesn't let you type new characters, but it makes you faster. We need to \textbf{prove} it adds no computational power before we can freely use it.}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+& \textbf{Standard DTM} & \textbf{Extended DTM (with stay)} \\
+\midrule
+\textbf{Directions} & $\{-1, +1\}$ & $\{-1, 0, +1\}$ \\
+\textbf{Head moves every step?} & Yes, always & Not necessarily \\
+\textbf{Languages recognized} & RE & RE (same!) \\
+\textbf{Languages decided} & R & R (same!) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Simulation Construction \kemark}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{The Big Idea: Simulate ``Stay'' with ``Right Then Left''}
+If you can't stay on a page, what do you do? You turn to the next page, then immediately turn back. You end up on the same page. Two moves instead of zero, but the result is identical.
+
+That's the entire trick:
+\begin{center}
+\textbf{Stay (direction 0)} $\;\longrightarrow\;$ \textbf{Go right (+1), then immediately go left ($-1$)}
+\end{center}
+
+The technical challenge: after going right, you land on a cell that belongs to the original computation. You must not disturb it. So you need a \textbf{special auxiliary state} that says ``I'm in the middle of simulating a stay --- just go back left without changing anything.''
+\end{notebox}
+
+\begin{definitionbox}{{The Simulation Construction (Full Formal Detail) \kemark}}
+\textbf{Plain English:} Given an extended TM $M$ (with stay), we build a standard TM $M'$ (without stay) that does exactly the same computation. We keep all the left/right transitions unchanged and replace each stay transition with a ``go right, then come back left'' two-step maneuver using a fresh auxiliary state.
+
+\textbf{Given:} An extended DTM
+\fitmath{M = (Q, \Sigma, \Gamma, s, t, r, \delta) \quad\text{with}\quad \delta \colon (Q \setminus \{t,r\}) \times \Gamma \to Q \times \Gamma \times \{-1, 0, +1\}}
+
+\textbf{Construct:} A standard DTM
+\fitmath{M' = (Q', \Sigma, \Gamma, s, t, r, \delta') \quad\text{with}\quad \delta' \colon (Q' \setminus \{t,r\}) \times \Gamma \to Q \times \Gamma \times \{-1, +1\}}
+
+\textbf{Step 1 --- New state set:} For every state $q \in Q$, create an auxiliary state $q_L$. These auxiliary states encode ``I just went right to simulate a stay; now I need to go back left.''
+\fitmath{Q' = Q \cup \{q_L \mid q \in Q\}}
+
+\textbf{Step 2 --- Define the transition function $\delta'$:} For each $q \in Q \setminus \{t,r\}$ and $a \in \Gamma$, look at what $\delta(q, a)$ does:
+
+\textbf{Case 1: $\delta(q, a) = (q', b, +1)$} --- original moves right.
+\fitmath{\delta'(q, a) = (q', b, +1)}
+No change needed. Already a valid standard DTM transition.
+
+\textbf{Case 2: $\delta(q, a) = (q', b, -1)$} --- original moves left.
+\fitmath{\delta'(q, a) = (q', b, -1)}
+No change needed. Already a valid standard DTM transition.
+
+\textbf{Case 3: $\delta(q, a) = (q', b, 0)$} --- original \textbf{stays}. This is the interesting case!
+\fitmath{\delta'(q, a) = (q'_L, b, +1)}
+\begin{itemize}[nosep]
+\item Write $b$ (same as the original).
+\item Move \textbf{right} (instead of staying) --- we overshoot by one cell.
+\item Enter auxiliary state $q'_L$ (this remembers that we need to go back to reach state $q'$).
+\end{itemize}
+
+\textbf{Step 3 --- Define transitions for auxiliary states:} For each $q_L \in Q'$ and every $a \in \Gamma$:
+\fitmath{\delta'(q_L, a) = (q, a, -1)}
+\begin{itemize}[nosep]
+\item \textbf{Write $a$} --- the same symbol that's already there! We do not change this cell. (We overshot into this cell and must leave it untouched.)
+\item Move \textbf{left} --- go back to where we were supposed to be.
+\item Enter state $q$ --- the state the original machine wanted to reach.
+\end{itemize}
+
+\textbf{Important subtlety:} If $q' = t$ or $q' = r$ in Case 3, we still create $t_L$ and $r_L$ as auxiliary states. The transition $\delta'(t_L, a) = (t, a, -1)$ means: go left, then enter $t$ and halt. Similarly for $r_L$. The halting happens \textbf{after} the left move. This means $M'$ halts one step later than $M$, but it still halts and gives the same answer. The construction works \textbf{uniformly} --- no special cases for halting states.
+\end{definitionbox}
+
+Let us walk through each case in plain English to make sure we understand what is happening physically on the tape:
+
+\begin{examplebox}{{What Happens Step by Step in Each Case}}
+
+\textbf{Case 1 (Right --- no change):}
+\begin{lstlisting}
+Original M:  State q, reading a. Writes b, moves RIGHT, enters q'.
+Simulated M': State q, reading a. Writes b, moves RIGHT, enters q'.
+              Identical. Nothing to simulate.
+\end{lstlisting}
+
+\textbf{Case 2 (Left --- no change):}
+\begin{lstlisting}
+Original M:  State q, reading a. Writes b, moves LEFT, enters q'.
+Simulated M': State q, reading a. Writes b, moves LEFT, enters q'.
+              Identical. Nothing to simulate.
+\end{lstlisting}
+
+\textbf{Case 3 (Stay --- the interesting case):}
+\begin{lstlisting}
+Original M (one step):
+  State q, reading a.
+  Writes b, STAYS, enters q'.
+  Head still on the same cell. Done.
+
+Simulated M' (two steps):
+  Step A: State q, reading a.
+          Writes b, moves RIGHT, enters q'_L.
+          Head is now one cell to the right (overshot!).
+  Step B: State q'_L, reading whatever is in this cell (call it c).
+          Writes c (same symbol -- no change!), moves LEFT, enters q'.
+          Head is back on the original cell. Done.
+\end{lstlisting}
+
+After these two steps, $M'$ is in state $q'$, the head is on the same cell as $M$'s head, and the tape is identical (cell to the right was read and re-written with the same symbol). The only difference: $M$ took 1 step, $M'$ took 2 steps.
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Full Worked Trace --- THE DEEP PART}
+%───────────────────────────────────────────────────────────────────────────────
+
+Now we design a small Turing machine that \textbf{uses} the stay direction, then show how the simulation construction produces a standard TM that does the same thing. We trace both machines step by step on the same input.
+
+\subsubsection{The Original Machine $M$ (with Stay)}
+
+\begin{notebox}{What Does $M$ Do?}
+$M$ scans right across a binary input, looking for a $1$. If it finds a $1$, it marks it with $X$ and \textbf{stays} to process the mark. If it reaches the end of the input (blank $\sqcup$) without finding a $1$, it rejects.
+
+\textbf{In plain English:} $M$ accepts if and only if the input contains at least one $1$.
+\end{notebox}
+
+\begin{definitionbox}{Machine $M$ --- Formal Definition}
+\fitmath{M = (\{q_0, q_f, t, r\},\; \{0, 1\},\; \{0, 1, X, \sqcup\},\; q_0,\; t,\; r,\; \delta)}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $Q = \{q_0, q_f, t, r\}$ --- four states:
+  \begin{itemize}[nosep]
+  \item $q_0$: scanning right, looking for a $1$
+  \item $q_f$: found a $1$ and marked it, about to accept
+  \item $t$: accept (halt)
+  \item $r$: reject (halt)
+  \end{itemize}
+\item $\Sigma = \{0, 1\}$ --- input alphabet (binary strings)
+\item $\Gamma = \{0, 1, X, \sqcup\}$ --- tape alphabet (includes the marker $X$ and blank)
+\item $s = q_0$ --- start state
+\item $t$ --- accept state, $r$ --- reject state
+\end{itemize}
+
+\textbf{Transition function $\delta$:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Transition} & \textbf{Rule} & \textbf{Plain English} \\
+\midrule
+$\delta(q_0, 0) = (q_0, 0, +1)$ & Right & Scanning: see a 0, skip it, keep going right \\
+$\delta(q_0, 1) = (q_f, X, 0)$  & \textbf{Stay!} & Found a 1! Mark it with $X$, \textbf{stay} to process \\
+$\delta(q_0, \sqcup) = (r, \sqcup, 0)$ & \textbf{Stay!} & Reached end without finding 1, reject \\
+$\delta(q_f, X) = (t, X, 0)$    & \textbf{Stay!} & After marking, accept immediately \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note: $M$ uses three stay transitions. This machine is designed to be a clear illustration --- every stay will be simulated.
+\end{definitionbox}
+
+\begin{center}
+\textbf{State diagram of $M$:}
+
+\begin{tikzpicture}[->, >=Stealth, node distance=3cm, every state/.style={thick, minimum size=1cm}]
+    \node[state, initial, fill=blue!8]          (q0) {$q_0$};
+    \node[state, fill=orange!12]                (qf) [right of=q0] {$q_f$};
+    \node[state, accepting, fill=green!12]      (t)  [right of=qf] {$t$};
+    \node[state, fill=red!10]                   (r)  [below of=q0] {$r$};
+
+    \path (q0) edge [loop above]  node {\scriptsize $0/0,\!+\!1$} ()
+          (q0) edge               node [above] {\scriptsize $1/X,\,0$} (qf)
+          (q0) edge               node [left]  {\scriptsize $\sqcup/\sqcup,\,0$} (r)
+          (qf) edge               node [above] {\scriptsize $X/X,\,0$} (t);
+\end{tikzpicture}
+\end{center}
+
+\textit{Blue = scanning phase, orange = found-and-marked phase, green = accept, red = reject. The labels show read/write, direction. Note the ``$0$'' directions --- those are the stay moves we need to eliminate.}
+
+\subsubsection{The Simulated Machine $M'$ (without Stay)}
+
+Now we apply the construction from the previous subsection to build $M'$.
+
+\begin{definitionbox}{Machine $M'$ --- Applying the Construction}
+\textbf{Step 1 --- New state set:}
+\fitmath{Q' = \{q_0, q_f, t, r\} \cup \{q_{0,L}, q_{f,L}, t_L, r_L\}}
+
+We added four auxiliary states. (In practice, $q_{0,L}$ is never reached because $q_0$ is only ever the target of right-moving transitions. But the construction adds it uniformly.)
+
+\textbf{Step 2 --- Transform each transition:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Original $\delta$} & \textbf{Case} & \textbf{New $\delta'$} \\
+\midrule
+$\delta(q_0, 0) = (q_0, 0, +1)$ & Right & $\delta'(q_0, 0) = (q_0, 0, +1)$ \quad (unchanged) \\
+$\delta(q_0, 1) = (q_f, X, 0)$  & \textbf{Stay} & $\delta'(q_0, 1) = (q_{f,L}, X, +1)$ \\
+$\delta(q_0, \sqcup) = (r, \sqcup, 0)$ & \textbf{Stay} & $\delta'(q_0, \sqcup) = (r_L, \sqcup, +1)$ \\
+$\delta(q_f, X) = (t, X, 0)$    & \textbf{Stay} & $\delta'(q_f, X) = (t_L, X, +1)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Step 3 --- Auxiliary state transitions} (for every symbol $a \in \Gamma$):
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Auxiliary transition} & \textbf{Plain English} \\
+\midrule
+$\delta'(q_{f,L}, a) = (q_f, a, -1)$ & Go back left, enter $q_f$, don't change the cell \\
+$\delta'(r_L, a) = (r, a, -1)$ & Go back left, enter $r$ (reject and halt) \\
+$\delta'(t_L, a) = (t, a, -1)$ & Go back left, enter $t$ (accept and halt) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These hold for \textbf{every} $a \in \{0, 1, X, \sqcup\}$. The auxiliary state doesn't care what it reads --- it always writes back the same symbol and goes left.
+\end{definitionbox}
+
+\begin{center}
+\textbf{State diagram of $M'$:}
+
+\begin{tikzpicture}[->, >=Stealth, node distance=2.8cm, every state/.style={thick, minimum size=0.9cm}]
+    \node[state, initial, fill=blue!8]          (q0)  {$q_0$};
+    \node[state, fill=yellow!15]                (qfL) [right of=q0] {$q_{f,L}$};
+    \node[state, fill=orange!12]                (qf)  [right of=qfL] {$q_f$};
+    \node[state, fill=yellow!15]                (tL)  [right of=qf] {$t_L$};
+    \node[state, accepting, fill=green!12]      (t)   [above of=tL] {$t$};
+    \node[state, fill=yellow!15]                (rL)  [below of=q0] {$r_L$};
+    \node[state, fill=red!10]                   (r)   [right of=rL] {$r$};
+
+    \path (q0)  edge [loop above]  node {\scriptsize $0/0,\!+\!1$} ()
+          (q0)  edge               node [above] {\scriptsize $1/X,\!+\!1$} (qfL)
+          (qfL) edge               node [above] {\scriptsize $a/a,\!-\!1$} (qf)
+          (qf)  edge               node [above] {\scriptsize $X/X,\!+\!1$} (tL)
+          (tL)  edge               node [right] {\scriptsize $a/a,\!-\!1$} (t)
+          (q0)  edge               node [left]  {\scriptsize $\sqcup/\sqcup,\!+\!1$} (rL)
+          (rL)  edge               node [above] {\scriptsize $a/a,\!-\!1$} (r);
+\end{tikzpicture}
+\end{center}
+
+\textit{Yellow states = auxiliary ``bounce-back'' states. Every stay transition from $M$ became a two-step detour: right into a yellow state, then left back to the real state. The ``$a/a$'' label means ``read any symbol $a$, write it back unchanged.''}
+
+\subsubsection{Tracing $M$ (with Stay) on Input ``01''}
+
+\begin{examplebox}{Trace of $M$ on Input ``01'' --- With Stay}
+\textbf{Setup:} Input is the string $01$. The tape initially contains $0$, $1$, then blanks forever. Head starts at position 1 in state $q_0$.
+
+\textbf{Step 0 (Initial configuration):}
+\begin{lstlisting}
+    Tape: [ 0 | 1 | _ | _ | _ | ... ]
+            ^
+    State: q_0    Head at position: 1
+\end{lstlisting}
+Configuration: $[q_0, 01, 1]$
+
+\textbf{Step 1:} Apply $\delta(q_0, 0) = (q_0, 0, +1)$ --- read $0$, write $0$, move right, stay in $q_0$.
+\begin{lstlisting}
+    Tape: [ 0 | 1 | _ | _ | _ | ... ]
+                ^
+    State: q_0    Head at position: 2
+\end{lstlisting}
+Configuration: $[q_0, 01, 2]$. The tape didn't change (we wrote $0$ over $0$). Head moved right.
+
+\textbf{Step 2:} Apply $\delta(q_0, 1) = (q_f, X, 0)$ --- read $1$, write $X$, \textbf{STAY}, enter $q_f$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                ^
+    State: q_f    Head at position: 2
+\end{lstlisting}
+Configuration: $[q_f, 0X, 2]$. The $1$ at position 2 was replaced by $X$. Head \textbf{did not move} (direction $0$).
+
+\textbf{Step 3:} Apply $\delta(q_f, X) = (t, X, 0)$ --- read $X$, write $X$, \textbf{STAY}, enter $t$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                ^
+    State: t    Head at position: 2    *** ACCEPT ***
+\end{lstlisting}
+Configuration: $[t, 0X, 2]$. Machine halts in accept state $t$.
+
+\textbf{Result: $M$ accepts ``01'' in 3 steps.}
+\end{examplebox}
+
+\subsubsection{Tracing $M'$ (without Stay) on the Same Input ``01''}
+
+\begin{examplebox}{Trace of $M'$ on Input ``01'' --- Without Stay}
+\textbf{Setup:} Same input $01$. Same initial tape. But now we use $M'$, which has no stay transitions.
+
+\textbf{Step 0 (Initial configuration):}
+\begin{lstlisting}
+    Tape: [ 0 | 1 | _ | _ | _ | ... ]
+            ^
+    State: q_0    Head at position: 1
+\end{lstlisting}
+Configuration: $[q_0, 01, 1]$
+
+\textbf{Step 1:} Apply $\delta'(q_0, 0) = (q_0, 0, +1)$ --- \textit{same as original}. Read $0$, write $0$, move right.
+\begin{lstlisting}
+    Tape: [ 0 | 1 | _ | _ | _ | ... ]
+                ^
+    State: q_0    Head at position: 2
+\end{lstlisting}
+Configuration: $[q_0, 01, 2]$. Identical to $M$ so far.
+
+\textbf{Step 2:} Apply $\delta'(q_0, 1) = (q_{f,L}, X, +1)$ --- this is the \textbf{simulation of the stay}. Read $1$, write $X$, move \textbf{RIGHT} (not stay!), enter auxiliary state $q_{f,L}$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                    ^
+    State: q_{f,L}    Head at position: 3
+\end{lstlisting}
+Configuration: $[q_{f,L}, 0X, 3]$. The $1$ was replaced by $X$ (same as $M$), but the head \textbf{overshot} to position 3. We are now in the auxiliary state $q_{f,L}$, which will take us back.
+
+\textbf{Step 3:} Apply $\delta'(q_{f,L}, \sqcup) = (q_f, \sqcup, -1)$ --- the ``bounce back.'' Read $\sqcup$ (what happens to be at position 3), write $\sqcup$ back (no change!), move \textbf{LEFT}, enter $q_f$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                ^
+    State: q_f    Head at position: 2
+\end{lstlisting}
+Configuration: $[q_f, 0X, 2]$. Now compare with $M$ after Step 2: \textbf{same state} ($q_f$), \textbf{same tape} ($0X\sqcup\ldots$), \textbf{same head position} (2). We are back in sync!
+
+\textbf{Step 4:} Apply $\delta'(q_f, X) = (t_L, X, +1)$ --- another stay simulation. Read $X$, write $X$, move \textbf{RIGHT}, enter auxiliary state $t_L$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                    ^
+    State: t_L    Head at position: 3
+\end{lstlisting}
+Configuration: $[t_L, 0X, 3]$. Head overshot again.
+
+\textbf{Step 5:} Apply $\delta'(t_L, \sqcup) = (t, \sqcup, -1)$ --- bounce back. Read $\sqcup$, write $\sqcup$ (no change), move \textbf{LEFT}, enter $t$.
+\begin{lstlisting}
+    Tape: [ 0 | X | _ | _ | _ | ... ]
+                ^
+    State: t    Head at position: 2    *** ACCEPT ***
+\end{lstlisting}
+Configuration: $[t, 0X, 2]$. Machine halts in accept state $t$.
+
+\textbf{Result: $M'$ accepts ``01'' in 5 steps.}
+\end{examplebox}
+
+\subsubsection{Side-by-Side Comparison}
+
+\begin{examplebox}{$M$ vs.\ $M'$ --- Step-by-Step Comparison on Input ``01''}
+
+\begin{center}
+\begin{tabular}{clcclc}
+\toprule
+\textbf{$M$ step} & \textbf{State} & \textbf{Head} & \textbf{$M'$ step} & \textbf{State} & \textbf{Head} \\
+\midrule
+0 & $q_0$ & 1 & 0 & $q_0$ & 1 \\
+1 & $q_0$ & 2 & 1 & $q_0$ & 2 \\
+2 & $q_f$ & 2 (stay) & 2 & $q_{f,L}$ & 3 (overshoot) \\
+  &       &          & 3 & $q_f$ & 2 (bounce back) \\
+3 & $t$ (accept) & 2 (stay) & 4 & $t_L$ & 3 (overshoot) \\
+  &              &            & 5 & $t$ (accept) & 2 (bounce back) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Observations:}
+\begin{itemize}[nosep]
+\item Right-move steps (step 1) are \textbf{identical} in both machines.
+\item Each stay step in $M$ becomes \textbf{two steps} in $M'$: overshoot right, then bounce back left.
+\item After each bounce-back, the configurations are \textbf{synchronized}: same state, same tape, same head position.
+\item The tape at the end is identical: $[0 \mid X \mid \sqcup \mid \ldots]$ in both cases.
+\item $M$ took \textbf{3 steps}. $M'$ took \textbf{5 steps}. Same result.
+\end{itemize}
+\end{examplebox}
+
+\subsubsection{Second Trace: Rejecting Input ``00''}
+
+To be thorough, let us also trace a rejecting input to see that the simulation works for rejection too.
+
+\begin{examplebox}{Trace on Input ``00'' --- Both Machines Reject}
+
+\textbf{Machine $M$ (with stay):}
+\begin{lstlisting}
+    Step 0: [ 0 | 0 | _ | _ | ... ]    Head: 1, State: q_0
+                                         ^
+    Step 1: delta(q_0, 0) = (q_0, 0, +1)
+            [ 0 | 0 | _ | _ | ... ]    Head: 2, State: q_0
+    Step 2: delta(q_0, 0) = (q_0, 0, +1)
+            [ 0 | 0 | _ | _ | ... ]    Head: 3, State: q_0
+    Step 3: delta(q_0, _) = (r, _, 0)   <-- STAY, reject
+            [ 0 | 0 | _ | _ | ... ]    Head: 3, State: r  *** REJECT ***
+\end{lstlisting}
+$M$ rejects ``$00$'' in 3 steps.
+
+\textbf{Machine $M'$ (without stay):}
+\begin{lstlisting}
+    Step 0: [ 0 | 0 | _ | _ | ... ]    Head: 1, State: q_0
+    Step 1: delta'(q_0, 0) = (q_0, 0, +1)        (same)
+            [ 0 | 0 | _ | _ | ... ]    Head: 2, State: q_0
+    Step 2: delta'(q_0, 0) = (q_0, 0, +1)        (same)
+            [ 0 | 0 | _ | _ | ... ]    Head: 3, State: q_0
+    Step 3: delta'(q_0, _) = (r_L, _, +1)         (overshoot!)
+            [ 0 | 0 | _ | _ | ... ]    Head: 4, State: r_L
+    Step 4: delta'(r_L, _) = (r, _, -1)           (bounce back)
+            [ 0 | 0 | _ | _ | ... ]    Head: 3, State: r  *** REJECT ***
+\end{lstlisting}
+$M'$ rejects ``$00$'' in 4 steps. Same tape, same final state, same head position.
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Why the Simulation Is Correct}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{conceptbox}{Correctness Argument \kemark}
+We need to show: $M$ and $M'$ accept (and reject, and loop on) exactly the same inputs. Here is the argument:
+
+\textbf{Case 1: Left/Right transitions.} If $\delta(q, a) = (q', b, d)$ with $d \in \{-1, +1\}$, then $\delta'(q, a) = (q', b, d)$. The transition is \textbf{identical}. Same state, same write, same move. Nothing changes.
+
+\textbf{Case 2: Stay transitions.} If $\delta(q, a) = (q', b, 0)$, then in $M'$:
+\begin{enumerate}[nosep]
+\item $\delta'(q, a) = (q'_L, b, +1)$: write $b$, move right, enter auxiliary state.
+\item $\delta'(q'_L, c) = (q', c, -1)$: write $c$ back (no change to cell), move left, enter $q'$.
+\end{enumerate}
+
+After these two steps, $M'$ is in state $q'$, the head is back at the original position, and the tape is identical to what $M$ would have produced. The cell to the right was read and re-written with its own symbol --- untouched.
+
+\textbf{Therefore:} After every ``real'' transition of $M$ (counting each stay as one logical step), there is a corresponding point in $M'$'s execution where the configuration matches exactly (same state, same tape, same head position). The auxiliary states are just ``in transit'' --- they never affect the tape and never persist.
+
+\textbf{Consequences:}
+\begin{itemize}[nosep]
+\item \textbf{If $M$ halts in $t$} $\Rightarrow$ $M'$ also reaches $t$ (via possibly $t_L$ first). Same for $r$.
+\item \textbf{If $M$ loops forever} $\Rightarrow$ $M'$ also loops (each step of $M$ becomes 1 or 2 steps of $M'$, so $M'$ never halts either).
+\item \textbf{$M'$ uses at most $2n$ steps} for $n$ steps of $M$ (each stay costs 2 steps, each left/right costs 1). So $M'$ is at most twice as slow.
+\end{itemize}
+
+\kt{$L(M) = L(M')$. The extended DTM with stay recognizes and decides exactly the same languages as the standard DTM. The stay direction is ``free to use'' --- it's syntactic sugar.}
+\end{conceptbox}
+
+\begin{notebox}{The Lecture Says: ``We Will Use Direction 0 From Now On''}
+Slide 14 concludes with a license: \textit{``We will use direction 0 from now on in our Turing machines (whenever convenient).''}
+
+This is the power of a robustness proof. Once you have proven that the extension doesn't change what the machine can compute, you can \textbf{freely use the extension} in all future TM designs without worrying about whether it ``counts.'' It's like proving that a shortcut through the park gets you to the same destination as the main road --- once proven, you can take the shortcut whenever you want.
+
+Every robustness proof in this lecture follows the same logic:
+\begin{enumerate}[nosep]
+\item Define the extension (what new feature are we adding?)
+\item Build a simulation (how does a standard TM mimic the extension?)
+\item Trace a concrete example (does the simulation actually work?)
+\item Argue correctness (same language, same halting behavior)
+\end{enumerate}
+
+We will repeat this exact four-step pattern for multi-tape TMs (Section 4), non-deterministic TMs (Section 5), and doubly-infinite tape TMs (Section 6).
+\end{notebox}
+
+\kt{Template for ALL robustness proofs: (1) define the extension, (2) build a simulation with auxiliary states/encoding, (3) trace it on a concrete example, (4) argue correctness. Master this template now --- you will use it at least three more times in this lecture alone.}

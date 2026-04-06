@@ -1,0 +1,525 @@
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Church-Turing Thesis (slides 10--18)} \kemark
+%═══════════════════════════════════════════════════════════════════════════════
+
+This section is the \textbf{philosophical backbone} of the entire course.
+Everything we prove about Turing machines from now on --- every impossibility
+result, every complexity bound --- only matters because of what this section
+establishes: Turing machines capture \emph{all} computation.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Big Claim (slides 10--11)}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: The Speed of Light of Computation}
+Imagine physicists trying to measure the speed of light. They try from every
+direction, with every instrument, in every reference frame. Every single time
+they get the same number: $c = 299{,}792{,}458$ m/s. After enough experiments
+from enough independent angles, they conclude: this isn't a coincidence ---
+this is a \textbf{fundamental boundary of nature}.
+
+Now replace ``speed of light'' with ``what can be computed.'' In the 1930s,
+three brilliant mathematicians --- G\"odel ($\mu$-recursive functions), Church
+($\lambda$-calculus), and Turing (Turing machines) --- each independently
+formalized the idea of ``what an algorithm can do.'' They used completely
+different approaches. And yet, all three formalizations turned out to define
+\textbf{exactly the same class of computable functions} (this equivalence is a
+proven theorem). After enough independent formalizations all hitting the same
+boundary, the conclusion is:
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Measurement = trying a new formalization of ``algorithm''
+\item Same answer every time = same class of computable languages
+\item Speed of light = the boundary of Turing-computable functions
+\end{itemize}
+
+No matter how clever your new model of computation, you will hit the same wall
+that Turing machines hit. Just like no rocket escapes the speed of light, no
+algorithm escapes Turing-computability.
+\end{notebox}
+
+\begin{definitionbox}{The Church-Turing Thesis}
+\textbf{Plain English:}
+``Everything that can be computed by any reasonable procedure can also be
+computed by a Turing machine.''
+
+Put differently: if you can write an algorithm to solve a problem --- in
+\emph{any} programming language, on \emph{any} hardware, using \emph{any}
+computational model --- then a Turing machine can solve it too.
+
+\textbf{Formal statement:}
+
+\kt{The class of functions computable by any ``effective procedure'' (algorithm)
+is exactly the class of Turing-computable functions.}
+
+\textbf{Breaking it down --- what each word means:}
+\begin{itemize}[nosep]
+\item \textbf{``Everything that can be computed''} --- any function or decision
+  problem that \emph{some} algorithm solves, no matter what kind of algorithm
+\item \textbf{``by a Turing machine''} --- specifically a standard single-tape
+  deterministic TM as defined in Lecture 1
+\item \textbf{``Thesis'' not ``Theorem''} --- this is NOT a proven mathematical
+  statement. It \emph{cannot} be proven, because ``effective procedure'' is an
+  informal concept (you can't prove something about an undefined thing).
+  Instead, it's an empirical claim supported by overwhelming evidence: every
+  formalization ever tried (and there have been dozens) computes exactly the
+  Turing-computable functions. Nobody has ever found a counterexample.
+\end{itemize}
+
+\textbf{What the thesis does NOT say:}
+\begin{itemize}[nosep]
+\item It says \textbf{nothing about speed}. A TM might take $2^{2^{2^n}}$ steps
+  where your Python script takes $n^2$ steps. The thesis only claims the TM
+  can \emph{eventually} get the same answer --- not that it's fast.
+\item It does \textbf{not} say TMs are the best model. They're the
+  \emph{universal} model --- a common reference point, not the tool you'd
+  actually use.
+\item It does \textbf{not} say quantum computers are useless. Quantum computers
+  might solve certain problems \emph{faster}, but they cannot solve problems
+  that TMs cannot solve at all. They speed things up within the same boundary.
+\end{itemize}
+\end{definitionbox}
+
+\begin{conceptbox}{Why the Church-Turing Thesis Matters for THIS Course}
+\textbf{The Core Insight:}
+
+Later in this course (Lectures 3--4), we will prove that certain problems have
+\textbf{no} Turing machine that solves them. Without the Church-Turing Thesis,
+that would only mean ``no TM solves it'' --- maybe some other kind of machine
+could. The thesis closes that loophole:
+
+\begin{center}
+\textbf{No TM solves problem $X$}
+$\;\;\Rightarrow{\text{Church-Turing Thesis}}\;\;$
+\textbf{No algorithm of ANY kind solves $X$}
+\end{center}
+
+\textbf{Why This Matters:}
+Without the thesis, every impossibility proof would be fragile --- someone
+could always say ``but what about a fancier machine?'' The thesis transforms
+TM impossibility into \emph{absolute} impossibility.
+
+\textbf{Concrete connection to our running example (w\#w):}
+
+In Lecture 1, we built a single-tape DTM that decides the language
+$L_{w\#w} = \{w\#w \mid w \in \{0,1\}^*\}$. The Church-Turing Thesis tells us:
+\begin{itemize}[nosep]
+\item Any Python program that decides $L_{w\#w}$ is computing something a TM
+  can also compute (and we showed it can)
+\item Any quantum computer deciding $L_{w\#w}$ is also within TM capability
+\item Conversely, if some problem $X$ had NO TM, then no Python program, no
+  quantum computer, no future technology could solve $X$ either
+\end{itemize}
+
+\kt{The Church-Turing Thesis is the bridge from ``no Turing machine'' to ``no
+algorithm whatsoever.'' It's what makes our impossibility proofs universal, not
+just statements about one specific machine model.}
+\end{conceptbox}
+
+\begin{examplebox}{Thesis vs.\ Theorem --- A Concrete Comparison}
+Students often confuse these. Here's a side-by-side:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{p{3.5cm}p{5.5cm}p{5.5cm}}
+\toprule
+& \textbf{Church-Turing Thesis} & \textbf{A Theorem (e.g., ``TMs = $\lambda$-calculus'')} \\
+\midrule
+\textbf{Status} & Empirical hypothesis & Mathematically proven \\
+\textbf{Can it be proven?} & No --- ``effective procedure'' is informal & Yes --- both sides are formally defined \\
+\textbf{Can it be disproven?} & In principle yes: find a ``natural'' algorithm no TM can run & Yes, by finding a flaw in the proof \\
+\textbf{Evidence} & Every formalization tried gives the same class & Rigorous proof via simulation \\
+\textbf{Role in this course} & Lets us say ``no algorithm solves $X$'' & Lets us say ``TMs = $\lambda$-calculus'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\kt{The equivalence of specific models (TM = $\lambda$-calculus = $\mu$-recursive
+functions) is a \textbf{theorem} (proven). The claim that these capture ALL
+computation is a \textbf{thesis} (unprovable but universally believed).}
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Turing-Completeness (slide 12)}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: The Universal Power Adapter}
+When you travel internationally, you bring a universal power adapter. It
+doesn't matter whether the wall socket is Type A (US), Type G (UK), or Type C
+(EU) --- the adapter converts any plug format to work with your device. The
+adapter is ``universally compatible.''
+
+A Turing-complete system is the computational equivalent. No matter what Turing
+machine you describe, the system can simulate it --- it's a universal adapter
+for computation. If your system is Turing-complete, it can run any algorithm
+that any TM can run (given enough time and memory).
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Universal adapter = a Turing-complete system
+\item Wall socket formats = different Turing machines (each solving a different problem)
+\item ``Works with any plug'' = ``can simulate any TM''
+\item Your device getting power = the computation producing the correct answer
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{Turing-Complete}
+\textbf{Plain English:}
+A system is Turing-complete if it can do everything a Turing machine can do.
+Specifically, you can write a program in that system that \emph{simulates} any
+given Turing machine step by step.
+
+\textbf{Formal:}
+A computational system $S$ is \textbf{Turing-complete} if for every Turing
+machine $M$, there exists a program in $S$ that simulates $M$ --- i.e., given
+the same input, produces the same output (accept/reject/loop).
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item \textbf{``For every TM $M$''} --- not just some TMs, but ALL possible TMs.
+  This is the universal quantifier that makes it powerful
+\item \textbf{``There exists a program in $S$''} --- you must be able to
+  actually \emph{write} the simulator in $S$, not just imagine it
+\item \textbf{``Simulates $M$''} --- on every input $w$, the $S$-program gives
+  the same accept/reject answer as $M$ would (we'll formalize ``simulation''
+  precisely in Section 2.4)
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}{What ``Python is Turing-Complete'' Actually Means}
+When someone says ``Python is Turing-complete,'' they mean this concretely:
+
+You can write a Python program --- let's call it \texttt{tm\_simulator.py} ---
+that takes as input:
+\begin{enumerate}[nosep]
+\item A description of \emph{any} TM $M$ (its states $Q$, alphabet $\Gamma$,
+  transition function $\delta$, start/accept/reject states)
+\item An input string $w$
+\end{enumerate}
+and then simulates $M$ on $w$ step by step: reading the tape, looking up the
+transition, writing, moving the head, repeating --- until $M$ halts (or running
+forever if $M$ loops).
+
+\textbf{Sketch of \texttt{tm\_simulator.py}:}
+\begin{lstlisting}
+def simulate_tm(Q, Sigma, Gamma, delta, s, t, r, w):
+    tape = list(w) + ['_']  # Initialize tape with input + blank
+    head = 0                # Head starts at position 0
+    state = s               # Start in start state
+    while state not in (t, r):        # Run until accept or reject
+        symbol = tape[head]           # Read current symbol
+        if (state, symbol) not in delta:
+            return "reject"           # Undefined transition = reject
+        new_state, write, move = delta[(state, symbol)]
+        tape[head] = write            # Write new symbol
+        state = new_state             # Transition to new state
+        if move == 'R':               # Move head
+            head += 1
+            if head == len(tape):     # Extend tape if needed
+                tape.append('_')
+        elif move == 'L':
+            head = max(0, head - 1)   # Don't go past left end
+    return "accept" if state == t else "reject"
+\end{lstlisting}
+
+This program can simulate \textbf{any} TM. That's what makes Python
+Turing-complete. The same exercise could be done in Java, C, Haskell, or
+any other general-purpose language.
+
+\textbf{Surprisingly Turing-complete systems:}
+\begin{itemize}[nosep]
+\item $\lambda$-calculus (Church's original formalism, 1936)
+\item Conway's Game of Life (a cellular automaton --- patterns can encode TMs!)
+\item Excel spreadsheets (with iterative calculation enabled)
+\item \LaTeX\ (the typesetting system you're reading right now)
+\item Minecraft (using redstone circuits)
+\item Magic: The Gathering (the card game --- proven in 2019!)
+\end{itemize}
+
+Each of these can, in principle, simulate any Turing machine. They'd be
+absurdly slow and impractical, but the Church-Turing Thesis doesn't care about
+speed --- only about what's \emph{possible}.
+\end{examplebox}
+
+\begin{conceptbox}{Connection: Turing-Completeness as Evidence for the Thesis}
+Every time someone discovers that a new system is Turing-complete, it
+strengthens the Church-Turing Thesis. The argument goes like this:
+
+\begin{enumerate}[nosep]
+\item We define a completely new computational model (say, cellular automata)
+\item We prove it can simulate every TM (so it's at least as powerful)
+\item We prove every TM can simulate it (so it's at most as powerful)
+\item Conclusion: the new model computes \emph{exactly} the same class of
+  functions as TMs
+\end{enumerate}
+
+This has happened with \textbf{every reasonable model ever proposed}. The class
+of computable functions never changes. That's the ``speed of light'' from our
+analogy --- a boundary that no formalization can cross.
+
+\kt{Turing-completeness means ``can simulate every TM.'' Every
+general-purpose programming language is Turing-complete. This is why our
+results about TMs automatically apply to Python, Java, C++, and any other
+language you'll ever use.}
+\end{conceptbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Robustness --- The Key Concept of This Lecture (slide 13)}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: Upgrading Your Kitchen}
+You're a chef and you can cook 500 different dishes in your current kitchen
+(one oven, one stove, one countertop). Your restaurant invests in upgrades:
+
+\begin{itemize}[nosep]
+\item \textbf{Second oven:} Now you can bake two things at once. You finish
+  dinner service faster. But can you cook any \emph{new dish} that was
+  impossible before? \textbf{No.} Everything the second oven bakes, the first
+  oven could have baked (just one at a time).
+\item \textbf{Bigger countertop:} You can prep more ingredients simultaneously.
+  Faster prep. New dishes possible? \textbf{No.}
+\item \textbf{Convection upgrade:} Even heat distribution. Faster, more
+  consistent. New dishes? \textbf{No.}
+\end{itemize}
+
+Each upgrade makes you \emph{faster} but doesn't let you cook anything
+\emph{new}. The set of possible dishes stays at 500. The kitchen is
+\textbf{robust} under upgrades --- the upgrades improve speed, not capability.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Kitchen = the basic single-tape DTM
+\item Upgrades = extensions (extra tapes, nondeterminism, stay option,
+  doubly-infinite tape)
+\item What you can cook = the set of decidable/recognizable languages
+\item ``No new dishes'' = no new languages become decidable
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{Robustness of Turing Machines}
+\textbf{Plain English:}
+The Turing machine model is ``robust'' because you can add bells and whistles
+to it --- extra tapes, nondeterminism, a tape that extends in both directions,
+the ability for the head to stay put --- and \textbf{none of these additions
+let you decide any new languages}. The fancy machines can do exactly what the
+plain single-tape DTM can do. They might be faster or more convenient, but they
+aren't more powerful.
+
+\textbf{Formal:}
+The class of languages decided (or recognized) by Turing machines is unchanged
+when the TM model is extended with any of the following features:
+\begin{enumerate}[nosep]
+\item A ``stay'' option for the head (can stay in place instead of moving L/R)
+\item Multiple tapes (each with its own head)
+\item Nondeterminism (multiple possible transitions from a single configuration)
+\item A doubly-infinite tape (extends infinitely in both directions)
+\end{enumerate}
+
+\textbf{How we prove robustness:}
+The proof technique is always the same: \textbf{simulation}. For each
+extension, we build a standard single-tape DTM that step-by-step mimics what
+the fancy machine does. If the standard DTM can produce the same
+accept/reject/loop behavior on every input, then the extension didn't add any
+real power.
+\end{definitionbox}
+
+\begin{conceptbox}{Why Robustness Matters --- The Deeper Point}
+\textbf{The Core Insight:}
+
+Robustness is evidence for the Church-Turing Thesis. Every time we try to make
+TMs more powerful by adding a feature, we fail --- the standard TM can always
+simulate the enhanced version. This is exactly the ``speed of light'' phenomenon:
+every direction we push, we hit the same boundary.
+
+\textbf{Why This Matters for the rest of the lecture:}
+
+The entire rest of Lecture 2 (Sections 3--6) is dedicated to proving robustness
+for four specific extensions. Each proof follows the same template:
+
+\begin{enumerate}[nosep]
+\item \textbf{Define the extension:} What does the fancy machine look like?
+  (e.g., ``a TM with $k$ tapes'')
+\item \textbf{Build a simulation:} Construct a standard single-tape DTM $M'$
+  that mimics the fancy machine $M$
+\item \textbf{Argue correctness:} Show that $M'$ accepts, rejects, and loops on
+  exactly the same inputs as $M$
+\end{enumerate}
+
+\textbf{The four proofs ahead:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{clll}
+\toprule
+\textbf{Section} & \textbf{Extension} & \textbf{What it adds} & \textbf{Difficulty} \\
+\midrule
+3 & Stay option & Head can stay put & Warm-up (easy) \\
+4 & Multi-tape & $k$ independent tapes & Main event (medium) \\
+5 & Nondeterminism & Multiple transitions & The big one (hard) \\
+6 & Doubly-infinite tape & Tape extends left too & Cool trick (medium) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\kt{Robustness = ``upgrades don't add power.'' The rest of this lecture is four
+robustness proofs. Each one uses the same template: define the extension, build
+a simulation, argue correctness. If you understand the template, you understand
+the lecture.}
+\end{conceptbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Outcome-Simulation --- The Formal Tool (slide 18)}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: The Flight Simulator}
+A flight simulator and a real airplane are completely different machines. The
+simulator is a box with screens; the airplane has engines, wings, and fuel. But
+from the \emph{pilot's perspective}, the outcomes are the same:
+\begin{itemize}[nosep]
+\item Pull back on the stick $\to$ the horizon drops (both machines)
+\item Push the throttle $\to$ speed increases (both machines)
+\item Fly into a storm $\to$ turbulence (both machines)
+\end{itemize}
+
+The \emph{mechanism} is completely different (pixels vs.\ aerodynamics), but
+the \emph{outcomes} match for every possible input (every possible flight
+maneuver). That's what outcome-simulation means for Turing machines: two
+machines with completely different internals that produce the same
+accept/reject/loop behavior on every input.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Real airplane = the fancy machine $M$ (multi-tape, nondeterministic, etc.)
+\item Flight simulator = the standard DTM $M'$ that we construct
+\item Pilot's inputs = the input string $w$
+\item Same outcomes = same accept/reject/loop on every $w$
+\item Different mechanism = $M'$ might use different states, different tape
+  contents, different number of steps --- that's all fine
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{Outcome-Simulation}
+\textbf{Plain English:}
+Machine $M'$ ``outcome-simulates'' machine $M$ if they always agree on the
+final verdict. For every possible input string: if $M$ accepts, $M'$ accepts.
+If $M$ rejects, $M'$ rejects. If $M$ loops forever, $M'$ is allowed to loop
+forever too. The two machines might work completely differently on the inside
+--- different states, different tape contents, different speeds --- but the
+final answer is always the same.
+
+\textbf{Formal definition:}
+
+We say that $M'$ \textbf{outcome-simulates} $M$ if for every input $w$:
+\begin{enumerate}[nosep]
+\item If $M$ halts on $w$, then $M'$ also halts on $w$
+\item $M$ accepts $w$ $\iff$ $M'$ accepts $w$
+\end{enumerate}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item \textbf{``For every input $w$''} --- this is a universal quantifier over
+  ALL possible strings. Not just some test cases --- \emph{every} string in
+  $\Sigma^*$. The simulation must be correct on inputs we haven't even thought of.
+\item \textbf{``$M$ halts on $w$''} --- $M$ eventually reaches its accept state
+  $t$ or reject state $r$ (doesn't loop forever)
+\item \textbf{``$M'$ also halts on $w$''} --- condition (1) says: if $M$ stops,
+  $M'$ must stop too. It can't loop on inputs where $M$ halts.
+\item \textbf{``$M$ accepts $w$ $\iff$ $M'$ accepts $w$''} --- condition (2) says:
+  they agree on the \emph{verdict}. Both accept, or both reject. Combined with
+  condition (1): if $M$ halts and accepts, $M'$ halts and accepts; if $M$ halts
+  and rejects, $M'$ halts and rejects.
+\item \textbf{What if $M$ loops on $w$?} --- Then condition (1) doesn't apply
+  (it only triggers when $M$ halts). So $M'$ is \emph{allowed} to do anything
+  --- it can loop too, or it could even halt. The definition only constrains
+  $M'$'s behavior on inputs where $M$ halts.
+\end{itemize}
+
+\textbf{What is NOT required:}
+\begin{itemize}[nosep]
+\item \textbf{Same speed} --- $M'$ can take a million times more steps. A
+  flight simulator doesn't fly at 900 km/h.
+\item \textbf{Same tape contents} --- $M'$'s tape can look completely different
+  from $M$'s tape at every step
+\item \textbf{Same states} --- $M'$ can have thousands of states where $M$ has
+  five
+\item \textbf{Same number of tapes} --- $M'$ might be a single-tape machine
+  simulating a 5-tape machine
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}{Concrete Example: Simulating a 2-Tape $w\#w$ Machine}
+Suppose we build a 2-tape TM $M$ for $L_{w\#w} = \{w\#w \mid w \in \{0,1\}^*\}$
+that works like this:
+\begin{enumerate}[nosep]
+\item Tape 1 holds the input. Tape 2 is initially blank.
+\item Copy everything before the \texttt{\#} to Tape 2.
+\item Move both heads to compare symbol by symbol after the \texttt{\#}.
+\item Accept if all symbols match; reject otherwise.
+\end{enumerate}
+
+This 2-tape machine might process \texttt{011\#011} in about 20 steps (it's
+very efficient because it can copy and compare simultaneously).
+
+Now suppose we build a standard single-tape DTM $M'$ that outcome-simulates
+$M$. Here's what outcome-simulation requires:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Input $w$} & \textbf{$M$ (2-tape)} & \textbf{$M'$ (1-tape)} & \textbf{Must match?} \\
+\midrule
+\texttt{011\#011} & accepts (20 steps) & accepts (maybe 500 steps) & Yes --- both accept \\
+\texttt{01\#00} & rejects (15 steps) & rejects (maybe 400 steps) & Yes --- both reject \\
+\texttt{1\#0} & rejects (10 steps) & rejects (maybe 200 steps) & Yes --- both reject \\
+\texttt{$\varepsilon$} & rejects (5 steps) & rejects (maybe 50 steps) & Yes --- both reject \\
+\texttt{0\#0} & accepts (12 steps) & accepts (maybe 300 steps) & Yes --- both accept \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Notice:
+\begin{itemize}[nosep]
+\item The step counts are wildly different --- that's fine.
+\item The tape contents during computation are completely different (the 2-tape
+  machine uses two tapes; the 1-tape machine encodes everything on one tape) ---
+  that's fine.
+\item The only thing that must match is the \textbf{final verdict}: accept or reject.
+\end{itemize}
+\end{examplebox}
+
+\begin{conceptbox}{How Outcome-Simulation Powers Robustness Proofs}
+\textbf{The Core Insight:}
+
+Here's the exact logical structure that connects outcome-simulation to
+robustness. Every robustness proof in Sections 3--6 will follow this pattern:
+
+\begin{enumerate}[nosep]
+\item \textbf{Goal:} Show that extension $X$ doesn't add power to TMs
+\item \textbf{Method:} Take an \emph{arbitrary} TM-with-extension-$X$ called $M$.
+  Build a standard DTM $M'$ that outcome-simulates $M$.
+\item \textbf{Conclusion:} Since $M$ was arbitrary, EVERY TM-with-$X$ has a
+  standard DTM equivalent. Therefore: the class of languages decided by
+  TMs-with-$X$ $=$ the class of languages decided by standard DTMs.
+\end{enumerate}
+
+The argument always has two directions:
+\begin{itemize}[nosep]
+\item \textbf{Easy direction:} Every standard DTM is trivially a TM-with-$X$
+  (just don't use the extension). So standard DTMs $\subseteq$ TMs-with-$X$.
+\item \textbf{Hard direction:} We build the simulation. Every TM-with-$X$ is
+  outcome-simulated by some standard DTM. So TMs-with-$X$ $\subseteq$ standard
+  DTMs.
+\item \textbf{Both directions together:} Standard DTMs $=$ TMs-with-$X$ in
+  computational power.
+\end{itemize}
+
+\kt{Outcome-simulation is the formal tool for proving robustness. To show
+``extension $X$ doesn't add power,'' build a standard DTM that
+outcome-simulates every machine with extension $X$. Same verdicts on all inputs
+= same computational power.}
+\end{conceptbox}

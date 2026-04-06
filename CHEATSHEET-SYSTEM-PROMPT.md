@@ -211,18 +211,81 @@ def is_prime(n):           % Take the number we want to test
 - Always label: "Base case:", "Inductive step:", "Why this works:"
 - End with "What This Proof Tells Us:" in plain English
 
+### Diagrams: State Machines, Automata, Graphs (NON-NEGOTIABLE for AC/mtcps)
+- Courses like AC and mtcps are FULL of state diagrams (DFAs, TMs, timed automata, state machines). Text descriptions are NOT enough — **draw them with TikZ**.
+- Every TM, DFA, NFA, or automaton that appears in the lecture MUST be drawn as a proper state diagram using `tikz` + `automata` library
+- Every graph (directed, undirected, weighted) MUST be drawn with `tikz`
+- The pattern: **text description of what the machine does → TikZ state diagram → step-by-step trace on the diagram**
+- States are circles, transitions are labeled arrows, accept states are double circles, start states have an incoming arrow from nowhere
+- For TM transition labels, use the format: `a/b, R` (read a, write b, move Right) or `a/b, L`
+- For DFA transition labels, use the format: `a` (just the input symbol)
+- Color states to match the phase they represent (e.g., scanning right = blue, carrying a 1 = red)
+- If a diagram is too complex, break it into sub-diagrams with "zoomed in" views
+
+Required TikZ setup:
+```latex
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows.meta}
+
+% Standard style for state diagrams
+\tikzset{
+    ->,                         % directed edges
+    >=Stealth,                  % arrow style
+    node distance=2.5cm,        % space between states
+    every state/.style={
+        thick,
+        fill=blue!5,
+        minimum size=1cm
+    },
+    accepting/.style={double, double distance=1.5pt},
+}
+```
+
+Example of a properly drawn DFA inside a cheatsheet:
+```latex
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm]
+    \node[state, initial]   (q0) {$q_0$};
+    \node[state, accepting] (q1) [right of=q0] {$q_1$};
+    \node[state]            (q2) [right of=q1] {$q_2$};
+
+    \path (q0) edge [loop above] node {0} ()
+          (q0) edge              node {1} (q1)
+          (q1) edge              node {0,1} (q2)
+          (q2) edge [loop above] node {0,1} ();
+\end{tikzpicture}
+\end{center}
+```
+
+For TM transitions (more detail per arrow):
+```latex
+\path (qr) edge node {$0/0, R$} (qr)    % read 0, write 0, move Right
+      (qr) edge node {$\sqcup/\sqcup, L$} (qs);  % read blank, write blank, move Left
+```
+
+**When NOT to draw:** Simple concepts that are purely text-based (definitions, theorems without visual structure). But if the lecture slide has a diagram, the cheatsheet MUST have a matching TikZ diagram.
+
 ---
 
 ## LaTeX Implementation
 
-### CRITICAL: Boxes Must Never Clip Content
-- ALL tcolorboxes MUST use `breakable, enhanced jigsaw` — this prevents content from being cut off at page breaks
-- NEVER use `\begin{verbatim}` inside tcolorboxes — verbatim does not respect box width and WILL overflow
-- ALWAYS use `\begin{lstlisting}...\end{lstlisting}` (from the `listings` package) for any monospace/code/pseudocode/tape diagrams inside boxes
-- Configure listings with `breaklines=true` so long lines wrap instead of overflowing
-- Use `\small` or `\footnotesize` for lstlisting basicstyle to ensure tape diagrams fit within box margins
-- Load `\tcbuselibrary{breakable,skins}` — the `skins` library is needed for `enhanced jigsaw`
+### CRITICAL: Nothing May EVER Overflow a Color Box (THREE rules)
+
+**Rule 1 — No `verbatim` inside boxes.** Use `lstlisting` with `breaklines=true`. Verbatim ignores box width.
+
+**Rule 2 — No `$$...$$` display math.** Use `\fitmath{...}` instead. This auto-shrinks math to fit the box width. Define it as:
+```latex
+\usepackage{adjustbox}
+\newcommand{\fitmath}[1]{\begin{adjustbox}{max width=\linewidth}$\displaystyle #1$\end{adjustbox}}
+```
+NEVER write `$$L = \{w \in \Sigma^* \mid ...\}$$` — ALWAYS write `\fitmath{L = \{w \in \Sigma^* \mid ...\}}`.
+
+**Rule 3 — All boxes use `breakable, enhanced jigsaw`.** This prevents content from being cut off at page breaks. Load `\tcbuselibrary{breakable,skins}`.
+
+Additional rules:
 - If a box title contains commas, wrap the entire title in extra braces: `\begin{definitionbox}{{Title with, commas}}`
+- Configure listings with `breaklines=true`, `columns=fullflexible`, `postbreak=\hookrightarrow`
+- Long set-builder notation: shorten the English text inside `\text{}` rather than letting it overflow. E.g., "is the decimal representation of a prime number" → "is the decimal representation of a prime"
 
 ### Required Packages
 ```latex

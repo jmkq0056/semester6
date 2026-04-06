@@ -1,0 +1,955 @@
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Multi-Tape Turing Machines --- More Convenient, Equally Powerful}
+%═══════════════════════════════════════════════════════════════════════════════
+
+This is the biggest section of Lecture 2 and the one that matters most for building intuition about the Church--Turing thesis. The punchline: giving a TM more tapes makes programming \textit{easier} but does not let it solve any new problems. We will prove this by building a single-tape machine that \textit{simulates} any multi-tape machine step by step.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Why Do We Want Multiple Tapes?}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy --- Long Division on a Single Strip of Paper}
+Imagine you have to do long division --- but you are only allowed to use \textbf{one long horizontal strip of paper}. Your dividend, divisor, quotient, remainder, and scratch work all have to share the same strip. Every time you need to compare the divisor against the current partial remainder, you have to scroll left to re-read the divisor, then scroll right back to where you were. Need the quotient? Scroll further right. Need the dividend digits? Scroll left again.
+
+You spend most of your time \textbf{scanning back and forth} rather than doing useful arithmetic. The actual division takes maybe 10 operations, but the scanning takes hundreds.
+
+Now imagine you have \textbf{four separate strips}: one for the dividend, one for the divisor, one for the quotient, one for scratch work. Each strip has its own pointer (your finger). You can look at all four simultaneously. You never scan --- you just glance at each strip. The \textit{same} division now takes a fraction of the time.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item strips of paper = \textbf{tapes}
+\item your finger on each strip = \textbf{independent read/write head}
+\item scanning back and forth = \textbf{O(n) head movements per comparison}
+\item separate strips = \textbf{separate tapes, each with its own head}
+\item one brain doing the division = \textbf{one finite-state control}
+\end{itemize}
+\end{notebox}
+
+\subsubsection{Recap: The Pain of Single-Tape $w\#w$}
+
+In Lecture 1, we discussed the language $L = \{w\#w \mid w \in \{0,1\}^*\}$ --- the set of strings of the form ``a binary word, then a hash, then the same binary word again.'' A single-tape TM that decides this language works roughly as follows:
+
+\begin{enumerate}[nosep]
+\item Scan to the rightmost unmarked symbol on the right half (after $\#$).
+\item \textbf{Remember it in the state}: enter state $q_\ell^0$ if it was 0, or $q_\ell^1$ if it was 1. Mark the cell (e.g.\ replace 0 with X).
+\item Scan left past $\#$ to find the rightmost unmarked symbol on the left half.
+\item \textbf{Compare}: if the remembered symbol matches, mark this cell too and go back to step 1. If it does not match, \textbf{reject}.
+\item Repeat until all symbols on both sides are marked. If both halves are fully consumed, \textbf{accept}.
+\end{enumerate}
+
+\begin{conceptbox}{Why This Is Painfully Slow}
+Each ``round'' of the algorithm compares \textit{one} pair of symbols. To compare them, the head must travel from the right half all the way to the left half and back --- a journey of $O(n)$ cells (where $n = |w\#w|$). There are $O(n)$ symbols to compare, so the total number of head movements is:
+
+\fitmath{O(n) \text{ rounds} \times O(n) \text{ cells per round} = O(n^2) \text{ total steps}}
+
+For a 100-symbol input, that is roughly 10{,}000 steps. For a 1{,}000-symbol input, roughly 1{,}000{,}000 steps. The machine spends most of its time \textit{moving}, not \textit{thinking}.
+
+\kt{The single-tape $w\#w$ machine is $O(n^2)$ because it has to scan back and forth between the two halves for every single symbol comparison. The tape is the bottleneck.}
+\end{conceptbox}
+
+\subsubsection{Preview: A 2-Tape Machine Does It in $O(n)$}
+
+What if we had \textbf{two tapes}, each with its own head?
+
+\begin{itemize}[nosep]
+\item \textbf{Tape 1} holds the original input $w\#w$.
+\item \textbf{Tape 2} is initially blank --- we will use it as ``scratch paper.''
+\end{itemize}
+
+The strategy is beautifully simple:
+\begin{enumerate}[nosep]
+\item \textbf{Phase 1 (Copy):} Scan tape 1 left to right. Copy each symbol before $\#$ onto tape 2. When you hit $\#$, stop copying.
+\item \textbf{Phase 2 (Rewind):} Move tape 2's head back to the start. Move tape 1's head one cell past $\#$.
+\item \textbf{Phase 3 (Compare):} Move both heads right simultaneously. At each step, compare the symbol under tape 1's head with the symbol under tape 2's head. If they ever differ, \textbf{reject}. If both reach blank simultaneously, \textbf{accept}.
+\end{enumerate}
+
+Each phase does a single left-to-right pass --- that is $O(n)$ steps. Three passes, each $O(n)$, gives $O(n)$ total. \textbf{The same language, solved with the same correctness, but an entire order of magnitude faster.}
+
+\kt{Two tapes turn an $O(n^2)$ scan-and-compare nightmare into a clean $O(n)$ copy-rewind-compare pipeline. This is why we want multi-tape TMs: not more power, but more convenience.}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The 2-Tape TM for $w\#w$: How It Works}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy --- Two Scrolls and a Scribe}
+Imagine a medieval scribe who receives a long scroll with a message. The message reads ``HELLO\#HELLO'' --- a word, a separator mark, and (supposedly) the same word repeated. The scribe's task is to verify the repetition.
+
+With \textbf{one scroll}, the scribe has to keep rolling back and forth between the two copies to compare letter by letter. Exhausting.
+
+With \textbf{two scrolls}, the scribe copies everything before the $\#$ onto a fresh scroll. Then he places both scrolls side by side and reads them in parallel, checking letter by letter. One pass and done.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item the two scrolls = \textbf{tape 1} and \textbf{tape 2}
+\item copying before $\#$ = \textbf{Phase 1 (Copy)}
+\item rolling the second scroll back to the start = \textbf{Phase 2 (Rewind)}
+\item reading both in parallel = \textbf{Phase 3 (Compare)}
+\item the scribe's brain = \textbf{finite-state control} (one state at a time)
+\end{itemize}
+\end{notebox}
+
+Let us now describe the machine precisely. We use the following states:
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{State} & \textbf{Meaning} \\
+\midrule
+$s$ & Start / Copy phase --- scanning tape 1, copying to tape 2 \\
+$q_r$ & Rewind phase --- moving tape 2's head back to the start \\
+$q_c$ & Compare phase --- reading both tapes simultaneously \\
+$t$ & Accept (halt) \\
+$r$ & Reject (halt) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Alphabet:} $\Sigma = \{0, 1, \#\}$. Tape alphabet $\Gamma = \{0, 1, \#, 0', 1', \sqcup\}$, where $0'$ and $1'$ are ``primed'' versions used to mark the starting cell of tape 2 (so the rewind phase knows where to stop).
+
+\bigskip
+
+\begin{definitionbox}{Phase 1 --- Copy (State $s$)}
+\textbf{Plain English:} Read each symbol on tape 1 from left to right. For every 0 or 1 you see, write a copy on tape 2 and advance both heads. The very first symbol copied to tape 2 gets a ``prime'' mark (e.g., $0'$ or $1'$) so we can find the beginning of tape 2 later. When you reach $\#$ on tape 1, stop copying and transition to the rewind phase.
+
+\textbf{Transitions:}
+\begin{itemize}[nosep]
+\item $\delta(s,\;(0,\sqcup)) = (s,\;(0, 0'),\;(+1, +1))$ \quad [first cell: write $0'$ on tape 2]
+\item $\delta(s,\;(1,\sqcup)) = (s,\;(1, 1'),\;(+1, +1))$ \quad [first cell: write $1'$ on tape 2]
+\item $\delta(s,\;(0,0')) = (s,\;(0, 0),\;(+1, +1))$ \quad [subsequent 0: write plain 0 on tape 2]
+\item $\delta(s,\;(0,1')) = (s,\;(0, 0),\;(+1, +1))$ \quad [same idea]
+\item $\delta(s,\;(1,0')) = (s,\;(1, 1),\;(+1, +1))$
+\item $\delta(s,\;(1,1')) = (s,\;(1, 1),\;(+1, +1))$
+\item Generally: for $a \in \{0,1\}$ and any non-blank tape-2 symbol, write $a$ on tape 2, move both right.
+\item $\delta(s,\;(\#,\text{any})) = (q_r,\;(\#, \text{any}),\;(+1, 0))$ \quad [hit $\#$: move tape 1 past it, enter rewind]
+\end{itemize}
+
+\textbf{Simplification:} For clarity in our trace, we will handle the priming more simply. The first symbol written to tape 2 is primed; all subsequent ones are unprimed. When we hit $\#$ on tape 1, we move tape 1 one step right (past $\#$) and stop tape 2.
+\end{definitionbox}
+
+\begin{definitionbox}{Phase 2 --- Rewind (State $q_r$)}
+\textbf{Plain English:} Move tape 2's head left until it hits a primed symbol ($0'$ or $1'$). Tape 1's head stays where it is (one cell past $\#$). When the primed symbol is found, we are at the beginning of tape 2. Transition to the compare phase.
+
+\textbf{Transitions:}
+\begin{itemize}[nosep]
+\item $\delta(q_r,\;(\text{any},\;a))$ for $a \in \{0,1\}$: stay in $q_r$, move tape 2 left. Tape 1 stays.
+\item $\delta(q_r,\;(\text{any},\;a'))$ for $a' \in \{0',1'\}$: transition to $q_c$. Both heads stay.
+\end{itemize}
+\end{definitionbox}
+
+\begin{definitionbox}{Phase 3 --- Compare (State $q_c$)}
+\textbf{Plain English:} Move both heads right simultaneously. At each step, compare the symbol under tape 1's head with the symbol under tape 2's head (ignoring the prime mark on the first tape-2 cell). If they match, continue. If they differ, reject. If both are blank, accept.
+
+\textbf{Transitions:}
+\begin{itemize}[nosep]
+\item $\delta(q_c,\;(0, 0')) = (q_c,\;(0, 0'),\;(+1, +1))$ \quad [first cell: 0 matches $0'$, continue]
+\item $\delta(q_c,\;(1, 1')) = (q_c,\;(1, 1'),\;(+1, +1))$ \quad [first cell: 1 matches $1'$, continue]
+\item $\delta(q_c,\;(0, 0)) = (q_c,\;(0, 0),\;(+1, +1))$ \quad [0 matches 0, continue]
+\item $\delta(q_c,\;(1, 1)) = (q_c,\;(1, 1),\;(+1, +1))$ \quad [1 matches 1, continue]
+\item $\delta(q_c,\;(\sqcup, \sqcup)) = (t,\;(\sqcup, \sqcup),\;(0, 0))$ \quad [both blank: accept!]
+\item $\delta(q_c,\;(0, 1)) = (r,\;\ldots)$, \;$\delta(q_c,\;(1, 0)) = (r,\;\ldots)$ \quad [mismatch: reject]
+\item $\delta(q_c,\;(0, 1')) = (r,\;\ldots)$, \;$\delta(q_c,\;(1, 0')) = (r,\;\ldots)$ \quad [mismatch: reject]
+\item $\delta(q_c,\;(\sqcup, a)) = (r,\;\ldots)$ for $a \neq \sqcup$ \quad [tape 1 ended early: reject]
+\item $\delta(q_c,\;(a, \sqcup)) = (r,\;\ldots)$ for $a \neq \sqcup$ \quad [tape 2 ended early: reject]
+\end{itemize}
+\end{definitionbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Full Trace on Input $011\#011$ (Accepting)}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{examplebox}{{Full Trace: 2-Tape TM on Input $011\#011$ --- ACCEPT}}
+We trace every single step. Both tapes are shown. The caret (\texttt{\^{}}) marks each head's position. Tape 2 starts entirely blank.
+
+\textbf{--- Phase 1: Copy ---}
+
+\begin{lstlisting}
+Step 0: State = s
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+            ^
+  Tape 2: [ _ | _ | _ | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=_)
+  This is the FIRST symbol copied, so tape 2 gets a prime.
+  Transition: d(s, (0,_)) = (s, (0, 0'), (+1,+1))
+  Action: Write 0 on tape 1 (no change), write 0' on tape 2.
+          Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 1: State = s
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                ^
+  Tape 2: [ 0'| _ | _ | _ | _ | _ | _ | _ | ... ]
+                ^
+  Read: (tape1=1, tape2=_)
+  Transition: d(s, (1,_)) = (s, (1, 1), (+1,+1))
+  Action: Write 1 on tape 1 (no change), write 1 on tape 2.
+          Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 2: State = s
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                    ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | _ | ... ]
+                    ^
+  Read: (tape1=1, tape2=_)
+  Transition: d(s, (1,_)) = (s, (1, 1), (+1,+1))
+  Action: Write 1 on tape 2. Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 3: State = s
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                        ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                        ^
+  Read: (tape1=#, tape2=_)
+  We hit #! Copy phase is DONE.
+  Transition: d(s, (#,_)) = (q_r, (#,_), (+1, 0))
+  Action: Move tape 1 head right (past #). Tape 2 head STAYS.
+\end{lstlisting}
+
+\textbf{Copy phase complete.} Tape 2 now holds $0'11$ --- a copy of $w = 011$ with the first cell primed.
+
+\bigskip
+\textbf{--- Phase 2: Rewind ---}
+
+\begin{lstlisting}
+Step 4: State = q_r
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                            ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                        ^
+  Read: (tape1=0, tape2=1)
+  tape2 symbol is 1 (not primed) -- keep rewinding.
+  Transition: d(q_r, (0,1)) = (q_r, (0,1), (0,-1))
+  Action: Tape 1 stays. Tape 2 moves LEFT.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 5: State = q_r
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                            ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                ^
+  Read: (tape1=0, tape2=1)
+  tape2 symbol is 1 (not primed) -- keep rewinding.
+  Transition: d(q_r, (0,1)) = (q_r, (0,1), (0,-1))
+  Action: Tape 1 stays. Tape 2 moves LEFT.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 6: State = q_r
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                            ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=0')
+  tape2 symbol is 0' (PRIMED!) -- we found the start of tape 2!
+  Transition: d(q_r, (0,0')) = (q_c, (0,0'), (0,0))
+  Action: Both heads STAY. Enter compare phase.
+\end{lstlisting}
+
+\textbf{Rewind complete.} Tape 1's head is on the first symbol after $\#$ (which is 0). Tape 2's head is on $0'$ (the start). We are perfectly aligned to compare.
+
+\bigskip
+\textbf{--- Phase 3: Compare ---}
+
+\begin{lstlisting}
+Step 7: State = q_c
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                            ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=0')
+  Compare: 0 vs 0' -- MATCH (0' is just 0 with a prime mark).
+  Transition: d(q_c, (0,0')) = (q_c, (0,0'), (+1,+1))
+  Action: Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 8: State = q_c
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                                ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                ^
+  Read: (tape1=1, tape2=1)
+  Compare: 1 vs 1 -- MATCH.
+  Transition: d(q_c, (1,1)) = (q_c, (1,1), (+1,+1))
+  Action: Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 9: State = q_c
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                                    ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                    ^
+  Read: (tape1=1, tape2=1)
+  Compare: 1 vs 1 -- MATCH.
+  Transition: d(q_c, (1,1)) = (q_c, (1,1), (+1,+1))
+  Action: Move both heads right.
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 10: State = q_c
+  Tape 1: [ 0 | 1 | 1 | # | 0 | 1 | 1 | _ | ... ]
+                                        ^
+  Tape 2: [ 0'| 1 | 1 | _ | _ | _ | _ | _ | ... ]
+                        ^
+  Read: (tape1=_, tape2=_)
+  Both blanks simultaneously! Both halves fully consumed.
+  Transition: d(q_c, (_,_)) = (t, (_,_), (0,0))
+  Action: Enter state t. ACCEPT!
+\end{lstlisting}
+
+\kt{The 2-tape machine accepted $011\#011$ in \textbf{11 steps} (steps 0--10). A single-tape machine on this 7-symbol input would need roughly $7^2 / 2 \approx 25$ steps of scanning back and forth. On longer inputs, the difference is dramatic.}
+\end{examplebox}
+
+\bigskip
+
+\begin{examplebox}{{Full Trace: 2-Tape TM on Input $01\#00$ --- REJECT}}
+Now let us trace a \textbf{rejecting} input. The left half is $01$ and the right half is $00$. Since $01 \neq 00$, the machine should reject.
+
+\textbf{--- Phase 1: Copy ---}
+
+\begin{lstlisting}
+Step 0: State = s
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+            ^
+  Tape 2: [ _ | _ | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=_). First copy: prime it.
+  Transition: d(s, (0,_)) = (s, (0,0'), (+1,+1))
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 1: State = s
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                ^
+  Tape 2: [ 0'| _ | _ | _ | _ | _ | _ | ... ]
+                ^
+  Read: (tape1=1, tape2=_)
+  Transition: d(s, (1,_)) = (s, (1,1), (+1,+1))
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 2: State = s
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                    ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | ... ]
+                    ^
+  Read: (tape1=#, tape2=_). Hit #!
+  Transition: d(s, (#,_)) = (q_r, (#,_), (+1,0))
+  Action: Tape 1 moves right past #. Tape 2 stays.
+\end{lstlisting}
+
+\textbf{Copy complete.} Tape 2 holds $0'1$.
+
+\textbf{--- Phase 2: Rewind ---}
+
+\begin{lstlisting}
+Step 3: State = q_r
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                        ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | ... ]
+                    ^
+  Read: (tape1=0, tape2=1). Not primed -- keep rewinding.
+  Transition: d(q_r, (0,1)) = (q_r, (0,1), (0,-1))
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 4: State = q_r
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                        ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=0'). Primed! Found start.
+  Transition: d(q_r, (0,0')) = (q_c, (0,0'), (0,0))
+\end{lstlisting}
+
+\textbf{Rewind complete.} Tape 1 points to the first 0 after $\#$. Tape 2 points to $0'$.
+
+\textbf{--- Phase 3: Compare ---}
+
+\begin{lstlisting}
+Step 5: State = q_c
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                        ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | ... ]
+            ^
+  Read: (tape1=0, tape2=0')
+  Compare: 0 vs 0' -- MATCH. Continue.
+  Transition: d(q_c, (0,0')) = (q_c, (0,0'), (+1,+1))
+\end{lstlisting}
+
+\begin{lstlisting}
+Step 6: State = q_c
+  Tape 1: [ 0 | 1 | # | 0 | 0 | _ | _ | ... ]
+                            ^
+  Tape 2: [ 0'| 1 | _ | _ | _ | _ | _ | ... ]
+                ^
+  Read: (tape1=0, tape2=1)
+  Compare: 0 vs 1 -- MISMATCH!
+  Transition: d(q_c, (0,1)) = (r, (0,1), (0,0))
+  Action: Enter state r. REJECT!
+\end{lstlisting}
+
+\textbf{The machine caught the mismatch at the second symbol.} The left half's second symbol was 1 (copied as tape 2's second cell), but the right half's second symbol was 0. The machine rejected in just \textbf{7 steps} (steps 0--6). It did not even need to read the rest of the input.
+
+\kt{On a mismatch, the 2-tape machine rejects as soon as it finds the first differing symbol. It does not waste time scanning the rest. This ``early exit'' is natural with two tapes but hard to achieve with one tape (where you would have already committed to a particular scanning pattern).}
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Formal Definition: $k$-Tape Deterministic Turing Machine}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy --- A Chef with $k$ Cutting Boards}
+Imagine a chef with $k$ cutting boards laid out on the counter. On each cutting board, there is a row of ingredients (or blank spaces). The chef has $k$ knives, one resting on each board, pointing at a specific ingredient. At each moment, the chef:
+\begin{enumerate}[nosep]
+\item Looks at all $k$ knives simultaneously to see which ingredient each one is pointing at.
+\item Consults a single recipe book (one brain!) to decide what to do next.
+\item On each board, the knife can: replace the ingredient with a different one, then slide one position left, stay, or slide one position right.
+\end{enumerate}
+
+The chef has only \textbf{one brain} (one state) even though there are many cutting boards. The recipe book (transition function) takes as input ``what I see on ALL boards right now'' and outputs ``what to do on ALL boards.''
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item $k$ cutting boards = $k$ \textbf{tapes}
+\item $k$ knives = $k$ \textbf{read/write heads}
+\item one brain / one recipe book = \textbf{one state} $q \in Q$
+\item looking at all boards at once = reading a \textbf{$k$-tuple} from $\Gamma^k$
+\item the recipe's instruction for each board = writing a \textbf{$k$-tuple} and moving each head independently
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{$k$-Tape Deterministic Turing Machine ($k$-tape DTM)}
+
+\textbf{Plain English:}
+A $k$-tape DTM is a Turing machine with $k$ separate tapes, each with its own read/write head. All heads are controlled by a single finite-state control. At each step, the machine reads the symbol under \textit{every} head, consults the transition function, and then writes a symbol on \textit{every} tape and moves \textit{every} head --- all in one step.
+
+\textbf{Formal Definition:}
+
+A $k$-tape DTM is a tuple $M = (Q,\;\Sigma,\;\Gamma,\;s,\;t,\;r,\;\delta)$ where:
+\begin{itemize}[nosep]
+\item $Q$ is the finite set of states
+\item $\Sigma$ is the input alphabet ($\Sigma \subseteq \Gamma$, does not contain $\sqcup$)
+\item $\Gamma$ is the tape alphabet ($\sqcup \in \Gamma$)
+\item $s \in Q$ is the start state
+\item $t \in Q$ is the accept state
+\item $r \in Q$ is the reject state ($r \neq t$)
+\item $\delta$ is the transition function:
+\end{itemize}
+
+\fitmath{\delta \colon (Q \setminus \{t,r\}) \times \Gamma^k \;\longrightarrow\; Q \times \Gamma^k \times \{-1, 0, +1\}^k}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $Q \setminus \{t,r\}$ --- the machine only transitions when it is \textit{not} in a halting state (accept or reject).
+\item $\Gamma^k$ (input side) --- the machine reads a \textbf{$k$-tuple} of symbols, one from each tape. For $k = 2$: $(a_1, a_2)$ where $a_i \in \Gamma$.
+\item $Q$ (output side) --- the new state to enter.
+\item $\Gamma^k$ (output side) --- the \textbf{$k$-tuple} of symbols to write, one on each tape.
+\item $\{-1, 0, +1\}^k$ --- the \textbf{$k$-tuple} of head movements. Each head independently moves left ($-1$), stays ($0$), or moves right ($+1$).
+\end{itemize}
+
+\textbf{Input convention:} The input is written on \textbf{tape 1} only. All other tapes start blank (filled with $\sqcup$).
+
+\textbf{Example transition from our $w\#w$ machine:}
+
+\fitmath{\delta(s,\;(1, \sqcup)) = (s,\;(1, 1),\;(+1, +1))}
+
+This says: ``In state $s$, reading 1 on tape 1 and $\sqcup$ on tape 2, stay in state $s$, write 1 on tape 1 (no change), write 1 on tape 2 (copy!), and move both heads right.''
+
+\textbf{Connection to standard TMs:} A 1-tape DTM is exactly the standard DTM from Lecture 1:
+
+\fitmath{\delta \colon (Q \setminus \{t,r\}) \times \Gamma^1 \;\longrightarrow\; Q \times \Gamma^1 \times \{-1, 0, +1\}^1}
+
+which simplifies to $\delta \colon (Q \setminus \{t,r\}) \times \Gamma \longrightarrow Q \times \Gamma \times \{-1, 0, +1\}$. This is the exact same definition from Lecture 1.
+
+\kt{A $k$-tape DTM has $k$ tapes and $k$ heads, but only ONE state. The transition function reads ALL $k$ tapes at once and moves ALL $k$ heads at once. It is a natural generalization of the 1-tape DTM --- set $k=1$ and you recover the Lecture 1 definition exactly.}
+\end{definitionbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Simulation Theorem}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{conceptbox}{The Simulation Theorem --- Multi-Tape Adds No Power}
+
+\textbf{Analogy:} You can do everything with one cutting board that you can do with five --- it is just slower and messier. No recipe becomes \textit{impossible} because you only have one board. You might have to clean and reuse the board between steps, but every dish can still be cooked.
+
+\textbf{Theorem (Simulation).} For every $k$-tape DTM $M$, there exists a standard (1-tape) DTM $M'$ such that $M'$ \textbf{outcome-simulates} $M$. That is:
+\begin{itemize}[nosep]
+\item $M'$ accepts input $w$ if and only if $M$ accepts $w$.
+\item $M'$ rejects input $w$ if and only if $M$ rejects $w$.
+\item $M'$ diverges on input $w$ if and only if $M$ diverges on $w$.
+\end{itemize}
+
+\textbf{Plain English:} Anything a multi-tape TM can compute, a single-tape TM can also compute. The single-tape machine will be slower (more steps), but it will always produce the \textit{same} answer.
+
+\textbf{Immediate consequences:}
+
+\begin{itemize}[nosep]
+\item A language is \textbf{computable} (decidable) if and only if it is the language of some halting $k$-tape DTM.
+\item A language is \textbf{computably enumerable} (c.e.) if and only if it is the language of some $k$-tape DTM.
+\item \textbf{For computability purposes, you can freely use multi-tape TMs in exercises and proofs.} The simulation theorem guarantees that a single-tape TM exists.
+\end{itemize}
+
+\kt{Multi-tape TMs are ``syntactic sugar'': they make proofs easier to write and machines easier to design, but they do not extend the class of computable languages. This is a key pillar of the Church--Turing thesis: reasonable extensions to the TM model do not add computational power.}
+\end{conceptbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{How the Simulation Works: Interleaving Tapes on One Tape}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy --- Sharing One Whiteboard Among $k$ Students}
+Imagine $k$ students each have their own line of notes, but the classroom only has \textbf{one whiteboard}. Solution: divide the whiteboard into $k$ rows. Row 1 holds student 1's notes, row 2 holds student 2's notes, etc. Each student has a \textbf{marker} (a small arrow sticker) on their row showing where they are currently writing. To simulate one ``step'' where all students write simultaneously, the teacher must:
+\begin{enumerate}[nosep]
+\item Walk across the entire whiteboard to find each student's marker and read what is written there.
+\item Look up what each student should write next (using a master plan).
+\item Walk across again, writing the new symbols at each marker and moving the markers.
+\end{enumerate}
+
+This is slower (the teacher walks back and forth), but the \textit{result} is the same as if each student had their own whiteboard.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item the one whiteboard = \textbf{one tape} of $M'$
+\item $k$ rows on the whiteboard = \textbf{interleaved cells}, each storing a $k$-tuple
+\item the marker/arrow sticker = \textbf{hat notation} $\hat{a}$ marking head positions
+\item the teacher walking across = \textbf{$M'$ scanning left-to-right to find hatted symbols}
+\item the master plan = \textbf{$M$'s transition table, encoded in $M'$'s states}
+\end{itemize}
+\end{notebox}
+
+\subsubsection{The Key Idea: Enlarged Alphabet with Tuples and Hats}
+
+The single-tape simulator $M'$ uses an \textbf{enlarged tape alphabet}. Instead of storing one symbol per cell, each cell stores a \textbf{$k$-tuple} --- one symbol per simulated tape. Additionally, each component can be ``hatted'' to indicate that the corresponding tape's head is at this position.
+
+\begin{definitionbox}{{Enlarged Alphabet of the Simulator $M'$}}
+
+\textbf{Plain English:} Each cell on $M'$'s tape stores a little ``column'' of $k$ symbols, one for each tape of $M$. If tape $i$'s head is at this position, the $i$-th symbol wears a ``hat'' ($\hat{a}$ instead of $a$).
+
+\textbf{Formally:} For $k = 2$ and $\Gamma_M = \{0, 1, \#, \sqcup\}$, the simulator's tape alphabet includes all pairs:
+
+\fitmath{\Gamma' \supseteq \{(a_1, a_2) \mid a_i \in \Gamma_M \cup \{\hat{a} \mid a \in \Gamma_M\}\}}
+
+So a single cell might contain:
+\begin{itemize}[nosep]
+\item $(0, 1)$ --- tape 1 has 0 here, tape 2 has 1 here, neither head is here.
+\item $(\hat{0}, 1)$ --- tape 1 has 0 here \textbf{AND} tape 1's head is here. Tape 2 has 1, head is elsewhere.
+\item $(\hat{0}, \hat{1})$ --- \textbf{both} heads are at this position. Tape 1 reads 0, tape 2 reads 1.
+\item $(\sqcup, \hat{\sqcup})$ --- tape 1 is blank here (head elsewhere), tape 2 is blank here \textbf{AND} tape 2's head is here.
+\end{itemize}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $a_i$ --- the symbol on tape $i$ at this position (just data, no head here).
+\item $\hat{a}_i$ --- the symbol on tape $i$ at this position, \textbf{plus} tape $i$'s head is pointing here.
+\item The hat is not a new symbol --- it is a ``flag'' that says ``the head is here.'' Think of it like underlining a letter to mark your current position.
+\end{itemize}
+\end{definitionbox}
+
+\subsubsection{Initialization: Spreading the Input into Interleaved Format}
+
+Before the simulation begins, $M'$ must convert the input from its original format into the interleaved format. The input $w = w_1 w_2 \ldots w_n$ appears on $M'$'s tape as plain symbols. $M'$ converts this to:
+
+\fitmath{(\hat{w}_1, \hat{\sqcup})\;(w_2, \sqcup)\;(w_3, \sqcup)\;\cdots\;(w_n, \sqcup)\;(\sqcup, \sqcup)\;\cdots}
+
+\textbf{Reading this:} Position 1 stores $(w_1, \sqcup)$ with both hats --- because both heads of $M$ start at position 1. Tape 1's first symbol is $w_1$, tape 2's first symbol is $\sqcup$ (blank). All other positions have no hats (heads are not there).
+
+\subsubsection{Simulating One Step of $M$}
+
+To simulate a single step of the $k$-tape machine $M$, the single-tape simulator $M'$ performs the following four-part sweep:
+
+\begin{definitionbox}{{Simulating One Step of $M$ (4-Part Sweep)}}
+
+\textbf{Part 1 --- Scan right to collect.} $M'$ starts at the left end of the tape and scans rightward. Every time it encounters a hatted symbol $\hat{a}_i$ in the $i$-th component of a tuple, it records ``tape $i$ reads $a_i$.'' It stores these readings \textbf{in its own state} (this is possible because $k$ is fixed, so there are finitely many possible readings). After finding all $k$ hats, $M'$ knows the full $k$-tuple $(a_1, a_2, \ldots, a_k)$ that $M$ reads.
+
+\textbf{Part 2 --- Look up $M$'s transition.} Using the collected $k$-tuple and $M$'s current simulated state (also stored in $M'$'s state), $M'$ computes $M$'s transition:
+
+\fitmath{\delta_M(q,\;(a_1, \ldots, a_k)) = (q',\;(b_1, \ldots, b_k),\;(d_1, \ldots, d_k))}
+
+where $b_i$ is the symbol to write on tape $i$ and $d_i \in \{-1, 0, +1\}$ is the direction to move tape $i$'s head. This look-up happens ``inside $M'$'s head'' (encoded in the state transitions of $M'$).
+
+\textbf{Part 3 --- Scan right to update.} $M'$ scans rightward again across the whole tape. At each hatted position:
+\begin{itemize}[nosep]
+\item Replace $\hat{a}_i$ with $b_i$ (write the new symbol, remove the hat).
+\item Place the hat on the cell that is $d_i$ positions away (move the simulated head).
+\end{itemize}
+
+\textbf{Part 4 --- Return to start.} $M'$ moves its head all the way back to the left end, ready for the next simulated step.
+
+\textbf{Cost:} Each simulated step requires $M'$ to traverse its entire tape twice (scan right to collect, scan right to update) plus return to start. If $M$ has used $n$ cells so far, each simulated step costs $O(n)$ steps of $M'$.
+\end{definitionbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Full Trace of the Simulation}
+%───────────────────────────────────────────────────────────────────────────────
+
+Now for the deepest part: we will trace how the single-tape simulator $M'$ mimics our 2-tape $w\#w$ machine $M$ on input $011\#011$. We show the interleaved tape at every stage.
+
+\begin{examplebox}{{Simulation Trace: $M'$ Simulates the 2-Tape Machine on $011\#011$}}
+
+\textbf{Notation:} We write each cell as a column pair. A hat means the corresponding head is here. For readability, we use superscript hats: $\hat{0}$ means ``0 with tape-$i$ head here.''
+
+\textbf{Step 0: Initial Configuration (After Initialization)}
+
+$M'$ has converted the input $011\#011$ into interleaved format. Both simulated heads start at position 1.
+
+\begin{lstlisting}
+M' tape (interleaved):
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0^      |  1       |  1       |  #       |  0       |  1       |  1       |  _       |
+tape2: |  _^      |  _       |  _       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: s
+\end{lstlisting}
+
+We write this compactly as:
+
+\fitmath{[\;(\hat{0}, \hat{\sqcup})\;|\;(1, \sqcup)\;|\;(1, \sqcup)\;|\;(\#, \sqcup)\;|\;(0, \sqcup)\;|\;(1, \sqcup)\;|\;(1, \sqcup)\;|\;(\sqcup, \sqcup)\;\cdots\;]}
+
+Both hats are at position 1.
+
+\bigskip
+\textbf{--- Simulating Step 0 of $M$ (Copy: first symbol) ---}
+
+\textit{Part 1 (Collect):} $M'$ scans right. At position 1 it finds $\hat{0}$ in component 1 (tape 1 reads 0) and $\hat{\sqcup}$ in component 2 (tape 2 reads $\sqcup$). Both hats found! Collected tuple: $(0, \sqcup)$.
+
+\textit{Part 2 (Look up):} $M'$ knows the simulated state is $s$. It computes:
+
+\fitmath{\delta_M(s,\;(0, \sqcup)) = (s,\;(0, 0'),\;(+1, +1))}
+
+So: stay in state $s$, write 0 on tape 1 (no change), write $0'$ on tape 2, move both heads right.
+
+\textit{Part 3 (Update):} $M'$ scans right. At position 1: replace $(\hat{0}, \hat{\sqcup})$ with $(0, 0')$ (write new symbols, remove hats). Place hats at position 2: change $(1, \sqcup)$ to $(\hat{1}, \hat{\sqcup})$.
+
+\textit{Part 4 (Return):} $M'$ returns its head to the left end.
+
+\textbf{Result after simulating Step 0 of $M$:}
+
+\begin{lstlisting}
+M' tape (interleaved):
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1^      |  1       |  #       |  0       |  1       |  1       |  _       |
+tape2: |  0'      |  _^      |  _       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: s
+\end{lstlisting}
+
+Compact: $[\;(0, 0')\;|\;(\hat{1}, \hat{\sqcup})\;|\;(1, \sqcup)\;|\;(\#, \sqcup)\;|\;(0, \sqcup)\;|\;(1, \sqcup)\;|\;(1, \sqcup)\;|\;(\sqcup, \sqcup)\;\cdots\;]$
+
+\bigskip
+\textbf{--- Simulating Step 1 of $M$ (Copy: second symbol) ---}
+
+\textit{Part 1 (Collect):} $M'$ scans right. At position 2 it finds $\hat{1}$ (tape 1 reads 1) and $\hat{\sqcup}$ (tape 2 reads $\sqcup$). Collected: $(1, \sqcup)$.
+
+\textit{Part 2 (Look up):}
+
+\fitmath{\delta_M(s,\;(1, \sqcup)) = (s,\;(1, 1),\;(+1, +1))}
+
+Write 1 on both tapes, move both right.
+
+\textit{Part 3 (Update):} At position 2: replace $(\hat{1}, \hat{\sqcup})$ with $(1, 1)$. At position 3: change $(1, \sqcup)$ to $(\hat{1}, \hat{\sqcup})$.
+
+\textbf{Result after simulating Step 1 of $M$:}
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1^      |  #       |  0       |  1       |  1       |  _       |
+tape2: |  0'      |  1       |  _^      |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: s
+\end{lstlisting}
+
+Compact: $[\;(0, 0')\;|\;(1, 1)\;|\;(\hat{1}, \hat{\sqcup})\;|\;(\#, \sqcup)\;|\;(0, \sqcup)\;|\;(1, \sqcup)\;|\;(1, \sqcup)\;|\;(\sqcup, \sqcup)\;\cdots\;]$
+
+\bigskip
+\textbf{--- Simulating Step 2 of $M$ (Copy: third symbol) ---}
+
+\textit{Part 1 (Collect):} Scan right. Position 3: $\hat{1}$ and $\hat{\sqcup}$. Collected: $(1, \sqcup)$.
+
+\textit{Part 2 (Look up):}
+
+\fitmath{\delta_M(s,\;(1, \sqcup)) = (s,\;(1, 1),\;(+1, +1))}
+
+\textit{Part 3 (Update):} Position 3 becomes $(1, 1)$. Position 4 becomes $(\hat{\#}, \hat{\sqcup})$.
+
+\textbf{Result after simulating Step 2 of $M$:}
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #^      |  0       |  1       |  1       |  _       |
+tape2: |  0'      |  1       |  1       |  _^      |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: s
+\end{lstlisting}
+
+\bigskip
+\textbf{--- Simulating Step 3 of $M$ (Copy: hit $\#$, enter rewind) ---}
+
+\textit{Part 1 (Collect):} Position 4: $\hat{\#}$ and $\hat{\sqcup}$. Collected: $(\#, \sqcup)$.
+
+\textit{Part 2 (Look up):}
+
+\fitmath{\delta_M(s,\;(\#, \sqcup)) = (q_r,\;(\#, \sqcup),\;(+1, 0))}
+
+New state: $q_r$. Write $\#$ and $\sqcup$ (no change). Tape 1 head moves right, tape 2 head \textbf{stays}.
+
+\textit{Part 3 (Update):} Position 4: remove hats, write $(\#, \sqcup)$. Tape 1's hat goes to position 5: $0 \to \hat{0}$. Tape 2's hat \textbf{stays} at position 4: $\sqcup \to \hat{\sqcup}$. Wait --- but we just removed the hat from position 4's tape-2 component! We need to put it back. So position 4 becomes $(\#, \hat{\sqcup})$ and position 5 becomes $(\hat{0}, \sqcup)$.
+
+\textbf{Result after simulating Step 3 of $M$:}
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0^      |  1       |  1       |  _       |
+tape2: |  0'      |  1       |  1       |  _^      |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_r
+\end{lstlisting}
+
+The hats have \textbf{separated}: tape 1's head is at position 5, tape 2's head is at position 4. This is exactly what we want --- the two simulated heads are now at different positions, both tracked by hats on the single tape.
+
+\bigskip
+\textbf{--- The Rewind Phase (Steps 4--6 of $M$): Heads Move in Opposite Directions ---}
+
+During rewind, tape 1's head stays put while tape 2's head moves left. Let us trace this.
+
+\textit{Simulating Step 4 of $M$:}
+
+\textit{Collect:} $M'$ scans right. At position 4 it finds $\hat{\sqcup}$ in component 2 (tape 2 reads $\sqcup$). Wait --- tape 2 reads $\sqcup$? No: tape 2 at position 4 has $\sqcup$, but let us re-examine. After the copy phase, tape 2 holds $0', 1, 1$ at positions 1, 2, 3. Position 4 on tape 2 is $\sqcup$. The hat is at position 4, so tape 2 reads $\sqcup$.
+
+Hmm, but in the original 2-tape trace (Step 4), tape 2's head was at position 3 reading 1. Let us reconcile. In the 2-tape trace, after Step 3, the tape 2 head was at position 3 (it stayed when the $\#$ was hit --- the transition said tape 2 stays, and tape 2's head was at position 3 at that point, not position 4). Let us recount:
+
+After Step 2 of $M$, both heads were at position 3 (having copied positions 0, 1, 2). Then Step 3 moved tape 1 right to position 4, tape 2 stayed at position 3.
+
+We are using \textbf{1-indexed positions} on $M'$'s tape. Let us redo this carefully with 1-indexing. In the original 2-tape trace (using 1-indexing): after step 2, both heads are at position 4 (they started at position 1 and moved right 3 times). Wait --- step 0 started at position 1, moved to 2. Step 1: position 2 to 3. Step 2: position 3 to 4. Then step 3 reads at position 4 (which is $\#$ on tape 1, $\sqcup$ on tape 2), and moves tape 1 to position 5, tape 2 stays at position 4.
+
+So after step 3, tape 1 head is at position 5, tape 2 head is at position 4. Tape 2 at position 4 is $\sqcup$. The rewind phase now moves tape 2 left from position 4 to find the primed cell.
+
+Let me redo the rewind correctly:
+
+\textit{Collect:} Position 5 has $\hat{0}$ (tape 1 reads 0). Position 4 has $\hat{\sqcup}$ in tape 2 (tape 2 reads $\sqcup$). Collected: $(0, \sqcup)$.
+
+\textit{Look up:} $\delta_M(q_r,\;(0, \sqcup)) = (q_r,\;(0, \sqcup),\;(0, -1))$. Tape 1 stays, tape 2 moves left.
+
+\textit{Update:} Position 5 keeps $\hat{0}$ (tape 1 stays). Position 4: remove tape 2 hat, place hat at position 3 in tape 2 component.
+
+\textbf{Result after simulating Step 4 of $M$:}
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0^      |  1       |  1       |  _       |
+tape2: |  0'      |  1       |  1^      |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_r
+\end{lstlisting}
+
+\textit{Simulating Step 5 of $M$:}
+
+\textit{Collect:} Position 3: tape 2 hat on 1 (tape 2 reads 1). Position 5: tape 1 hat on 0 (tape 1 reads 0). Collected: $(0, 1)$.
+
+\textit{Look up:} $\delta_M(q_r,\;(0, 1)) = (q_r,\;(0, 1),\;(0, -1))$. Tape 2 moves left again.
+
+\textit{Update:} Tape 2 hat moves from position 3 to position 2.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0^      |  1       |  1       |  _       |
+tape2: |  0'      |  1^      |  1       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_r
+\end{lstlisting}
+
+\textit{Simulating Step 6 of $M$:}
+
+\textit{Collect:} Position 2: tape 2 hat on 1 (reads 1). Position 5: tape 1 hat on 0 (reads 0). Collected: $(0, 1)$.
+
+\textit{Look up:} $\delta_M(q_r,\;(0, 1)) = (q_r,\;(0, 1),\;(0, -1))$. Tape 2 moves left again.
+
+\textit{Update:} Tape 2 hat moves from position 2 to position 1.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0^      |  1       |  1       |  _       |
+tape2: |  0'^     |  1       |  1       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_r
+\end{lstlisting}
+
+Now tape 2's head is at position 1, which holds $0'$ --- a \textbf{primed} symbol! The rewind detects this.
+
+\textit{Simulating Step 6.5 (detecting the prime):} Actually, the detection happens in Step 6's collect phase --- $M'$ reads $0'$ with the hat, recognizes it as primed, and the look-up gives:
+
+\fitmath{\delta_M(q_r,\;(0, 0')) = (q_c,\;(0, 0'),\;(0, 0))}
+
+New state: $q_c$ (compare). Both heads stay. Let us correct: the collect in Step 6 read $(0, 1)$ from positions 5 and 2. But after moving the hat left to position 1, we need one more step where $M'$ actually reads from position 1. Let me redo this properly.
+
+After Step 5's simulation, tape 2 hat is at position 2 reading 1. The transition says move tape 2 left. So the hat moves to position 1. Now we need to simulate the \textit{next} step, where $M$ reads from the new head positions.
+
+\textit{Simulating Step 6 of $M$ (corrected):}
+
+\textit{Collect:} Position 1: tape 2 hat on $0'$ (tape 2 reads $0'$). Position 5: tape 1 hat on 0 (tape 1 reads 0). Collected: $(0, 0')$.
+
+\textit{Look up:} $\delta_M(q_r,\;(0, 0')) = (q_c,\;(0, 0'),\;(0, 0))$. Both heads stay. Enter compare phase.
+
+\textit{Update:} No changes needed --- symbols stay the same, hats stay at positions 1 and 5.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0^      |  1       |  1       |  _       |
+tape2: |  0'^     |  1       |  1       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_c
+\end{lstlisting}
+
+\textbf{Rewind complete!} Both heads are positioned correctly for comparison: tape 1 at position 5 (first symbol after $\#$), tape 2 at position 1 ($0'$, the start of the copy).
+
+\bigskip
+\textbf{--- Compare Phase: First Comparison Step ---}
+
+\textit{Simulating Step 7 of $M$:}
+
+\textit{Collect:} Position 1: tape 2 hat on $0'$ (reads $0'$, which represents 0). Position 5: tape 1 hat on 0 (reads 0). Collected: $(0, 0')$.
+
+\textit{Look up:} $\delta_M(q_c,\;(0, 0')) = (q_c,\;(0, 0'),\;(+1, +1))$. Match! Move both right.
+
+\textit{Update:} Remove hats from positions 1 and 5. Place tape 2 hat at position 2, tape 1 hat at position 6.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0       |  1^      |  1       |  _       |
+tape2: |  0'      |  1^      |  1       |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_c
+\end{lstlisting}
+
+\textit{Simulating Step 8 of $M$:}
+
+\textit{Collect:} Position 2: tape 2 hat on 1 (reads 1). Position 6: tape 1 hat on 1 (reads 1). Collected: $(1, 1)$.
+
+\textit{Look up:} $\delta_M(q_c,\;(1, 1)) = (q_c,\;(1, 1),\;(+1, +1))$. Match! Move both right.
+
+\textit{Update:} Tape 2 hat moves to position 3. Tape 1 hat moves to position 7.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0       |  1       |  1^      |  _       |
+tape2: |  0'      |  1       |  1^      |  _       |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_c
+\end{lstlisting}
+
+\textit{Simulating Step 9 of $M$:}
+
+\textit{Collect:} Position 3: tape 2 hat on 1 (reads 1). Position 7: tape 1 hat on 1 (reads 1). Collected: $(1, 1)$.
+
+\textit{Look up:} $\delta_M(q_c,\;(1, 1)) = (q_c,\;(1, 1),\;(+1, +1))$. Match! Move both right.
+
+\textit{Update:} Tape 2 hat moves to position 4. Tape 1 hat moves to position 8.
+
+\begin{lstlisting}
+M' tape:
+  Pos:    1          2          3          4          5          6          7          8
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+tape1: |  0       |  1       |  1       |  #       |  0       |  1       |  1       |  _^      |
+tape2: |  0'      |  1       |  1       |  _^      |  _       |  _       |  _       |  _       |
+       +----------+----------+----------+----------+----------+----------+----------+----------+
+
+Simulated state of M: q_c
+\end{lstlisting}
+
+\textit{Simulating Step 10 of $M$:}
+
+\textit{Collect:} Position 4: tape 2 hat on $\sqcup$ (reads $\sqcup$). Position 8: tape 1 hat on $\sqcup$ (reads $\sqcup$). Collected: $(\sqcup, \sqcup)$.
+
+\textit{Look up:} $\delta_M(q_c,\;(\sqcup, \sqcup)) = (t,\;(\sqcup, \sqcup),\;(0, 0))$. Both blanks --- \textbf{ACCEPT!}
+
+$M'$ enters state $t$. \textbf{Simulation complete. $M'$ accepts.}
+
+\kt{Notice the cost: each of the 11 steps of $M$ required $M'$ to scan across up to 8 cells twice (collect + update) plus return. That is roughly $3 \times 8 = 24$ steps of $M'$ per step of $M$, giving about $11 \times 24 \approx 264$ steps total for $M'$, compared to 11 steps for $M$. In general, if $M$ uses $n$ cells and runs for $T$ steps, $M'$ uses $O(n \cdot T)$ steps. For our $w\#w$ machine where $T = O(n)$, the simulation gives $O(n^2)$ --- the same complexity as the original single-tape machine! The simulation does not come for free.}
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{What This All Means}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{conceptbox}{{Same Power, Different Speed}}
+
+We have now seen three approaches to deciding $\{w\#w \mid w \in \{0,1\}^*\}$:
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Machine} & \textbf{Tapes} & \textbf{Steps} & \textbf{Decides $L$?} \\
+\midrule
+Single-tape TM (L1) & 1 & $O(n^2)$ & Yes \\
+2-tape TM (this section) & 2 & $O(n)$ & Yes \\
+Simulator $M'$ (this section) & 1 & $O(n^2)$ & Yes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All three machines accept exactly the same language. The 2-tape machine is faster, but the single-tape machine (and the simulator) are equally \textit{correct}. More tapes $\neq$ more power, just more speed.
+
+\textbf{For Lectures 1--4 (computability):} We only care about \textit{what} can be computed, not \textit{how fast}. A language is computable if \textit{some} TM decides it --- whether that TM has 1 tape or 100 tapes. So feel free to use multi-tape TMs in proofs and exercises. The simulation theorem guarantees an equivalent single-tape TM exists.
+
+\textbf{For Lectures 5--7 (complexity):} Speed will start to matter. We will define complexity classes like P and NP based on the number of steps a TM takes. At that point, the difference between $O(n)$ and $O(n^2)$ might matter --- but the simulation only costs a polynomial slowdown, so both machines will be in the \textit{same} complexity class. (More on this later.)
+
+\kt{Multi-tape TMs are syntactic sugar: more convenient, not more powerful. Feel free to use multi-tape in exercises because we proved the simulation works. Any $k$-tape TM can be converted to a 1-tape TM with at most a polynomial slowdown. For computability, this is irrelevant. For complexity, polynomial slowdowns preserve membership in P and NP.}
+\end{conceptbox}
+
+\begin{conceptbox}{Summary of the Simulation Argument}
+
+The simulation proof has a simple structure that is worth memorizing, as it appears in many forms throughout the course:
+
+\begin{enumerate}[nosep]
+\item \textbf{Claim:} Two models $A$ and $B$ are equivalent in computational power.
+\item \textbf{Direction 1 ($A \subseteq B$):} Every machine of type $A$ is trivially a machine of type $B$ (e.g., every 1-tape TM is a $k$-tape TM with $k = 1$).
+\item \textbf{Direction 2 ($B \subseteq A$):} Given any machine of type $B$, we \textit{construct} a machine of type $A$ that simulates it step by step. The construction is explicit: we describe exactly how the simulation works (interleaved alphabet, hat markers, sweep procedure).
+\end{enumerate}
+
+This ``simulate step by step'' pattern is the standard technique for proving that two computational models are equivalent. You will see it again for: nondeterministic TMs (Section 5), doubly-infinite tapes (Section 6), and more.
+
+\kt{Whenever the course says ``model X is equivalent to standard TMs,'' the proof is always: simulate X on a standard TM, step by step. Learn this pattern once and you can apply it everywhere.}
+\end{conceptbox}

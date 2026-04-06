@@ -3,3 +3,6 @@ Cleaned up 0 old history entries
 File placement guide loaded: /Users/jawadmehmoodkhanqayyum/Documents/GitHub/Semester6/course-materials/app/docs/FILE-PLACEMENT-GUIDE.md
 Server running at http://localhost:3000
 Serving subjects from: /Users/jawadmehmoodkhanqayyum/Documents/GitHub/Semester6/course-materials/app/subjects
+Extracting pages 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56 from subjects/AC/slides/lec03.pdf...
+Successfully extracted 26 page(s) to lec03_pages_29-56_1775462788972.pdf
+Running Study Claude command...

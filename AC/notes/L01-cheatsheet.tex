@@ -8,9 +8,15 @@
 \usepackage{xcolor}
 \usepackage{fancyhdr}
 \usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows.meta}
 \usepackage{listings}
+\usepackage{adjustbox}
 
 \tcbuselibrary{breakable,skins}
+
+% ── Prevent math overflow in boxes: shrink-to-fit for display math ──────
+% Usage: \fitmath{L = \{w \in \Sigma^* \mid \text{very long condition}\}}
+\newcommand{\fitmath}[1]{\begin{adjustbox}{max width=\linewidth}$\displaystyle #1$\end{adjustbox}}
 
 % ── Listings config (monospace that wraps inside boxes) ─────────────────────
 \lstset{
@@ -123,7 +129,7 @@ Say $n = 1{,}000{,}000{,}000$ (one billion). Then:
 
 \textbf{$2^{k/2}$ is \textbf{exponential} in $k$.} The algorithm looks at the \textit{value} of $n$ and says $O(\sqrt{n})$, but computer science measures complexity in the \textit{size of the input representation}. In terms of input size $k$:
 
-$$O(\sqrt{n}) = O(\sqrt{2^k}) = O(2^{k/2})$$
+\fitmath{O(\sqrt{n}) = O(\sqrt{2^k}) = O(2^{k/2})}
 
 That's \textbf{exponential}, not polynomial. For $k = 100$ bits ($n \approx 10^{30}$), the algorithm needs $2^{50} \approx 10^{15}$ iterations. That takes years.
 
@@ -423,7 +429,7 @@ If $w_1 = \textit{algorithms}$ and $w_2 = \textit{computability}$, then $w_1 w_2
 \textbf{Formal:} $\Sigma^* = \{$all finite sequences of symbols from $\Sigma\}$, including $\varepsilon$.
 
 \textbf{Example from the slide:}
-$$\mathbb{B}^* = \{\varepsilon, 0, 1, 00, 01, 10, 11, 000, 001, 010, 011, 100, \ldots\}$$
+\fitmath{\mathbb{B}^* = \{\varepsilon, 0, 1, 00, 01, 10, 11, 000, 001, 010, 011, 100, \ldots\}}
 
 Every binary string ever, of every length, is in $\mathbb{B}^*$.
 
@@ -456,23 +462,23 @@ Every binary string ever, of every length, is in $\mathbb{B}^*$.
 Let $L_1, L_2$ be two languages over $\Sigma$.
 
 \textbf{Union:}
-$$L_1 \cup L_2 = \{w \in \Sigma^* \mid w \in L_1 \text{ or } w \in L_2\}$$
+\fitmath{L_1 \cup L_2 = \{w \in \Sigma^* \mid w \in L_1 \text{ or } w \in L_2\}}
 Take all words that are in either language.
 
 \textbf{Intersection:}
-$$L_1 \cap L_2 = \{w \in \Sigma^* \mid w \in L_1 \text{ and } w \in L_2\}$$
+\fitmath{L_1 \cap L_2 = \{w \in \Sigma^* \mid w \in L_1 \text{ and } w \in L_2\}}
 Take only words that are in \textit{both} languages.
 
 \textbf{Complement} (with respect to $\Sigma^*$):
-$$\overline{L_1} = \{w \in \Sigma^* \mid w \notin L_1\}$$
+\fitmath{\overline{L_1} = \{w \in \Sigma^* \mid w \notin L_1\}}
 All words that are NOT in $L_1$.
 
 \textbf{Concatenation:}
-$$L_1 \cdot L_2 = \{w = w_1 w_2 \mid w_1 \in L_1 \text{ and } w_2 \in L_2\}$$
+\fitmath{L_1 \cdot L_2 = \{w = w_1 w_2 \mid w_1 \in L_1 \text{ and } w_2 \in L_2\}}
 All words you can make by concatenating one word from $L_1$ with one from $L_2$.
 
 \textbf{Kleene star (iteration):}
-$$(L_1)^* = \{w = w_1 w_2 \cdots w_k \mid k \geq 0 \text{ and } w_i \in L_1 \text{ for all } i \in \{1, \ldots, k\}\}$$
+\fitmath{(L_1)^* = \{w = w_1 w_2 \cdots w_k \mid k \geq 0,\; w_i \in L_1 \text{ for all } i\}}
 All words you can make by concatenating zero or more words from $L_1$. Note: $k=0$ gives $\varepsilon$, so $\varepsilon \in (L_1)^*$ always.
 
 \textbf{Example:} If $L_1 = \{a, b\}$ and $L_2 = \{1, 2\}$:
@@ -488,19 +494,19 @@ All words you can make by concatenating zero or more words from $L_1$. Note: $k=
 \begin{examplebox}{Four Problems Rewritten as Languages}
 
 \textbf{1. ``Is a given number prime?''}
-$$L_{\text{prime}} = \{w \in \{0, 1, 2, \ldots, 9\}^* \mid w \text{ is the decimal representation of a prime number}\}$$
+\fitmath{L_{\text{prime}} = \{w \in \{0, 1, 2, \ldots, 9\}^* \mid w \text{ is the decimal representation of a prime}\}}
 \textit{Example:} ``17'' $\in L_{\text{prime}}$. ``15'' $\notin L_{\text{prime}}$.
 
 \textbf{2. ``Does a graph have a path from vertex 1 to vertex 2?''}
-$$L_{\text{path}} = \{w \in \mathbb{B}^* \mid w \text{ encodes an adjacency matrix that has a path from vertex 1 to vertex 2}\}$$
+\fitmath{L_{\text{path}} = \{w \in \mathbb{B}^* \mid w \text{ encodes adj.\ matrix with path from vertex 1 to 2}\}}
 \textit{How to encode:} A graph with $n$ vertices can be represented by its $n \times n$ adjacency matrix, which has $n^2$ entries of 0 or 1. Linearize it row by row into a binary string.
 
 \textbf{3. ``Is a propositional formula satisfiable?''}
-$$L_{\text{SAT}} = \{w \in \Sigma_L^* \mid w \text{ encodes a satisfiable formula}\}$$
+\fitmath{L_{\text{SAT}} = \{w \in \Sigma_L^* \mid w \text{ encodes a satisfiable formula}\}}
 \textit{This is THE central problem of NP-completeness (Lecture 6).}
 
 \textbf{4. ``Does a given program ever output \texttt{False}?''}
-$$L_{\text{output}} = \{w \in \{a, b, c, \ldots\}^* \mid w \text{ is Python source code of a function that outputs \texttt{False} for some input}\}$$
+\fitmath{L_{\text{output}} = \{w \in \{a, b, c, \ldots\}^* \mid w \text{ is Python source that outputs \texttt{False} for some input}\}}
 \textit{This problem is \textbf{undecidable} --- no Turing machine can solve it. We'll prove this in Lectures 2--3.}
 \end{examplebox}
 
@@ -542,9 +548,21 @@ This is easy for some problems (primality, graph reachability) but seems much ha
 \textbf{Example from the slide:} A DFA for $\{0^n 1 \mid n \geq 0\}$ (any number of 0s followed by exactly one 1):
 
 States: $q_0$ (start, reading 0s), $q_1$ (read a 1, accepting), $q_2$ (read something wrong, reject sink).
+
 \begin{center}
-$q_0 \xrightarrow{1} q_1 \xrightarrow{0,1} q_2 \xrightarrow{0,1} q_2$ \quad and \quad $q_0 \xrightarrow{0} q_0$
+\begin{tikzpicture}[->, >=Stealth, node distance=2.5cm, every state/.style={thick, fill=blue!5, minimum size=0.9cm}]
+    \node[state, initial]                (q0) {$q_0$};
+    \node[state, accepting]              (q1) [right of=q0] {$q_1$};
+    \node[state]                         (q2) [right of=q1] {$q_2$};
+
+    \path (q0) edge [loop above] node {0} ()
+          (q0) edge              node {1} (q1)
+          (q1) edge              node {0,1} (q2)
+          (q2) edge [loop above] node {0,1} ();
+\end{tikzpicture}
 \end{center}
+
+\textit{Read the diagram: start at $q_0$. Reading 0s stays in $q_0$. Reading a 1 moves to $q_1$ (double circle = accept). Any further input goes to $q_2$ (reject sink --- no escape).}
 
 \textbf{Why DFAs aren't enough:}
 
@@ -654,6 +672,28 @@ The slides trace a Turing machine on input $101\#11$ through roughly 15 animatio
 \item $q_a^1$ = ``arrived left, carrying a 1'' --- crossed the \#, now looking for the match
 \item $t$ = accept
 \end{itemize}
+
+\textbf{State diagram} (showing the main transitions for matching a 1):
+
+\begin{center}
+\begin{tikzpicture}[->, >=Stealth, node distance=2.8cm, every state/.style={thick, minimum size=0.9cm}]
+    \node[state, initial, fill=blue!8]          (qr)  {$q_r$};
+    \node[state, fill=orange!10]                (qs)  [right of=qr] {$q_s$};
+    \node[state, fill=red!8]                    (ql1) [below of=qs] {$q_\ell^1$};
+    \node[state, fill=red!15]                   (qa1) [left of=ql1] {$q_a^1$};
+    \node[state, accepting, fill=green!10]      (t)   [below of=qa1] {$t$};
+
+    \path (qr)  edge [loop above] node {\scriptsize $0/0,R$\; $1/1,R$\; $\#/\#,R$} ()
+          (qr)  edge              node [above] {\scriptsize $\sqcup/\sqcup,L$} (qs)
+          (qs)  edge              node [right] {\scriptsize $1/0,L$} (ql1)
+          (ql1) edge [loop right] node {\scriptsize $0/0,L$\; $1/1,L$} ()
+          (ql1) edge              node [below] {\scriptsize $\#/\#,L$} (qa1)
+          (qa1) edge              node [left]  {\scriptsize $1/0,R$} (t)
+          (qa1) edge [bend left]  node [left]  {\scriptsize match$\to q_r$} (qr);
+\end{tikzpicture}
+\end{center}
+
+\textit{Blue = scanning phase, orange = reading last symbol, red = carrying \& matching, green = accept. Arrows show: read/write, direction.}
 
 \textbf{The transition rules shown on the slides:}
 
@@ -860,9 +900,18 @@ The machine eventually reaches state $t$ and accepts, confirming that the last t
 
 \begin{examplebox}{DFA for $\{0^n 1 \mid n \geq 0\}$ Simulated as a Turing Machine}
 
-The slide shows the DFA:
+The slide shows the DFA (same one from the DFA reminder):
 \begin{center}
-$q_0 \xrightarrow{0} q_0$, \quad $q_0 \xrightarrow{1} q_1$, \quad $q_1 \xrightarrow{0,1} q_2$, \quad $q_2 \xrightarrow{0,1} q_2$
+\begin{tikzpicture}[->, >=Stealth, node distance=2.5cm, every state/.style={thick, fill=blue!5, minimum size=0.9cm}]
+    \node[state, initial]                (q0) {$q_0$};
+    \node[state, accepting]              (q1) [right of=q0] {$q_1$};
+    \node[state]                         (q2) [right of=q1] {$q_2$};
+
+    \path (q0) edge [loop above] node {0} ()
+          (q0) edge              node {1} (q1)
+          (q1) edge              node {0,1} (q2)
+          (q2) edge [loop above] node {0,1} ();
+\end{tikzpicture}
 \end{center}
 ($q_1$ is the only accepting state.)
 
@@ -928,7 +977,7 @@ A TM is the same idea, but instead of coins and drinks, it processes symbols on 
 \textbf{Plain English:} A DTM is fully specified by 7 ingredients. Give me these 7 things and I can simulate the entire machine on any input.
 
 \textbf{Formal:} A \textbf{deterministic Turing machine} (DTM) is a 7-tuple
-$$M = (Q, \Sigma, \Gamma, s, t, r, \delta)$$
+\fitmath{M = (Q, \Sigma, \Gamma, s, t, r, \delta)}
 
 \textbf{Breaking Down Each Component:}
 
@@ -974,7 +1023,7 @@ $$M = (Q, \Sigma, \Gamma, s, t, r, \delta)$$
 \textit{Why $t$ and $r$ are excluded from the domain:} Once the machine reaches $t$ or $r$, it \textbf{stops}. There's no rule for ``what to do next'' because there IS no next step. The computation is over.
 
 \textit{Notation shorthand:}
-$$\delta(q, a) = (q', a', d) \quad \text{means} \quad \text{``If state $q$ and reading $a$: go to $q'$, write $a'$, move $d$''}$$
+\fitmath{\delta(q, a) = (q', a', d) \;\;\text{means}\;\; \text{``If state } q \text{ reading } a\text{: go to } q'\text{, write } a'\text{, move } d\text{''}}
 Using $-1$ for left, $+1$ for right.
 \end{enumerate}
 \end{definitionbox}
@@ -985,7 +1034,7 @@ Let's build a DTM for a simpler language: $L = \{w \in \{0,1\}^* \mid w \text{ c
 
 \textbf{Strategy:} Scan right. If you ever see a 1, accept. If you hit a blank without seeing a 1, reject.
 
-$$M = (Q, \Sigma, \Gamma, s, t, r, \delta)$$
+\fitmath{M = (Q, \Sigma, \Gamma, s, t, r, \delta)}
 \begin{itemize}[nosep]
 \item $Q = \{q_0, t, r\}$ --- just one working state plus accept and reject
 \item $\Sigma = \{0, 1\}$
@@ -1006,6 +1055,21 @@ $q_0$ & $\sqcup$ & $r$ & $\sqcup$ & $+1$ (right) \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\textbf{State diagram:}
+\begin{center}
+\begin{tikzpicture}[->, >=Stealth, node distance=2.8cm, every state/.style={thick, minimum size=0.9cm}]
+    \node[state, initial, fill=blue!8]      (q0) {$q_0$};
+    \node[state, accepting, fill=green!10]  (t)  [above right of=q0] {$t$};
+    \node[state, fill=red!10]               (r)  [below right of=q0] {$r$};
+
+    \path (q0) edge [loop above] node {\scriptsize $0/0, R$} ()
+          (q0) edge              node [above left] {\scriptsize $1/1, R$} (t)
+          (q0) edge              node [below left] {\scriptsize $\sqcup/\sqcup, R$} (r);
+\end{tikzpicture}
+\end{center}
+
+\textit{Simple: stay in $q_0$ scanning 0s. See a 1 $\to$ accept. See blank $\to$ reject (no 1 found).}
 
 \textbf{Trace on input ``001'':}
 \begin{lstlisting}
@@ -1119,7 +1183,7 @@ A \textbf{configuration} is exactly that --- a breakpoint snapshot for a Turing 
 Given a configuration, you can completely predict what happens next (by applying $\delta$). Two different moments in time with the same configuration would produce the exact same future behavior.
 
 \textbf{Formal:} A \textbf{configuration} of DTM $M = (Q, \Sigma, \Gamma, s, t, r, \delta)$ is a triple
-$$[q, \tau, \ell]$$
+\fitmath{[q, \tau, \ell]}
 
 \textbf{Breaking Down the Notation:}
 \begin{itemize}
@@ -1139,7 +1203,7 @@ $$[q, \tau, \ell]$$
 \end{lstlisting}
 
 This is the configuration $[q_0, \tau, 3]$ where:
-$$\tau(n) = \begin{cases} 0 & \text{if } n \leq 5 \\ 1 & \text{if } n = 6 \\ \sqcup & \text{if } n \geq 7 \end{cases}$$
+\fitmath{\tau(n) = \begin{cases} 0 & \text{if } n \leq 5 \\ 1 & \text{if } n = 6 \\ \sqcup & \text{if } n \geq 7 \end{cases}}
 
 \textbf{Example 2:} Same tape, but head moved to position 7 and state changed to $q_1$:
 \begin{lstlisting}
@@ -1169,7 +1233,7 @@ This is $[q_\ell^1, 101\#10, 5]$. The tape changed from $101\#11$ to $101\#10$ (
 The tape is infinite, but only finitely many cells are non-blank. So there exists some position $n_0$ such that $\tau(n) = \sqcup$ for all $n > n_0$.
 
 Instead of writing out the full function, we write:
-$$\tau = \tau(1)\tau(2)\cdots\tau(n_0)\sqcup\ldots$$
+\fitmath{\tau = \tau(1)\tau(2)\cdots\tau(n_0)\sqcup\ldots}
 
 Or just $\tau(1)\tau(2)\cdots\tau(n_0)$ (leaving the trailing blanks implicit).
 
@@ -1187,7 +1251,7 @@ So the configuration $[q_0, \tau, 3]$ can be written as $[q_0, 000001, 3]$.
 \textbf{Plain English:} The starting snapshot --- before the machine has done anything. The input $w$ is on the tape, everything else is blank, the head is at position 1, and the state is $s$.
 
 \textbf{Formal:} The \textbf{initial configuration} of $M$ on input $w \in \Sigma^*$ is:
-$$\alpha_w = [s, w\sqcup\ldots, 1]$$
+\fitmath{\alpha_w = [s, w\sqcup\ldots, 1]}
 
 \textbf{Examples:}
 \begin{itemize}[nosep]
@@ -1207,7 +1271,7 @@ $$\alpha_w = [s, w\sqcup\ldots, 1]$$
 \textbf{Step 1:} Look up the transition: $\delta(q, \tau(\ell)) = (p, a, d)$
 
 \textbf{Step 2:} The successor is $[p, \tau', \max\{\ell + d, 1\}]$ where:
-$$\tau'(n) = \begin{cases} a & \text{if } n = \ell \quad \text{(write $a$ at the head's current position)} \\ \tau(n) & \text{otherwise} \quad \text{(all other cells unchanged)} \end{cases}$$
+\fitmath{\tau'(n) = \begin{cases} a & \text{if } n = \ell \;\text{(write } a \text{ at head position)} \\ \tau(n) & \text{otherwise} \;\text{(unchanged)} \end{cases}}
 
 \textbf{Breaking down what happens:}
 \begin{enumerate}[nosep]
@@ -1420,6 +1484,19 @@ The simplest looping machine:
 \item $\delta(q_0, \sqcup) = (q_0, \sqcup, +1)$
 \end{itemize}
 
+\begin{center}
+\begin{tikzpicture}[->, >=Stealth, node distance=2.8cm, every state/.style={thick, minimum size=0.9cm}]
+    \node[state, initial, fill=yellow!15]       (q0) {$q_0$};
+    \node[state, accepting, fill=green!10]      (t)  [above right of=q0] {$t$};
+    \node[state, fill=red!10]                   (r)  [below right of=q0] {$r$};
+
+    \path (q0) edge [loop above] node {\scriptsize $0/0,R$\;\; $1/1,R$\;\; $\sqcup/\sqcup,R$} ();
+    % No arrows to t or r! That's why it loops.
+\end{tikzpicture}
+\end{center}
+
+\textit{Notice: there are \textbf{no arrows to $t$ or $r$}. Every symbol loops back to $q_0$. The machine can never stop.}
+
 This machine moves right forever. On ANY input, it just scans right, reading each cell, never changing state, never reaching $t$ or $r$. It loops on every input.
 
 \textbf{Trace on input ``01'':}
@@ -1467,7 +1544,7 @@ This section defines the last two classes formally. These are the ones that matt
 \textbf{Plain English:} $L(M)$ is the set of all inputs that $M$ accepts. Nothing more, nothing less. If $M$ rejects an input, it's not in $L(M)$. If $M$ loops on an input, it's also not in $L(M)$.
 
 \textbf{Formal:} For a DTM $M$ with input alphabet $\Sigma$:
-$$L(M) = \{w \in \Sigma^* \mid M \text{ accepts } w\}$$
+\fitmath{L(M) = \{w \in \Sigma^* \mid M \text{ accepts } w\}}
 
 \textbf{Important subtlety:} $L(M)$ only counts \textit{acceptances}. Both rejection and looping result in $w \notin L(M)$, but for very different reasons:
 \begin{itemize}[nosep]

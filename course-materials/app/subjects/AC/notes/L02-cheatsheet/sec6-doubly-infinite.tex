@@ -1,0 +1,981 @@
+%═══════════════════════════════════════════════════════════════════════════════
+\section{More Robustness: The Doubly-Infinite Tape (Exercise 2, Tutorial 2)} \kemark
+%═══════════════════════════════════════════════════════════════════════════════
+
+This section covers \textbf{Exercise 2 from Tutorial 2}. The exercise has three
+parts, and we walk through each one in full detail. By the end, you will have a
+fourth robustness result: changing the shape of the tape does not add
+computational power.
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{What Is a Doubly-Infinite Tape?}
+\label{subsec:doubly-infinite-what}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: Receipt Paper vs.\ a Strip Floating in Space}
+Picture a receipt printer at a grocery store. The paper roll has a clear
+\textbf{beginning} --- the point where the paper is attached to the roll ---
+and it unrolls infinitely to one side (you can always print more). If you try
+to pull the paper \emph{backwards} past the attachment point, you can't ---
+there's nothing there. That beginning is a hard boundary.
+
+Now imagine you rip the receipt off the roll and let it float in zero gravity
+in the middle of a room. There is no ``start'' and no ``end'' anymore. You
+can drift to the left as far as you want, or drift to the right as far as you
+want. The strip extends infinitely in \emph{both} directions.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Receipt paper roll = \textbf{singly-infinite tape} (standard TM). The
+  attachment point is cell 1 --- the leftmost cell. Cells are numbered
+  $1, 2, 3, \ldots$ The head cannot go left of cell 1.
+\item Strip floating in space = \textbf{doubly-infinite tape}. No left wall,
+  no right wall. Cells are numbered $\ldots, -2, -1, 0, 1, 2, \ldots$ (all
+  integers $\mathbb{Z}$). The head can go left forever.
+\item Attachment point = position 1 boundary on a singly-infinite tape.
+\item No attachment point = no boundary at all on a doubly-infinite tape.
+\end{itemize}
+\end{notebox}
+
+\begin{conceptbox}{Why Consider a Doubly-Infinite Tape?}
+\textbf{The Core Problem:}
+
+On a standard (singly-infinite) TM, when the head is at position 1 and the
+transition says ``move left,'' the head \textbf{stays at position 1}. It gets
+``stuck'' against the left wall. This means:
+\begin{itemize}[nosep]
+\item Every TM algorithm must \emph{remember} that the left boundary exists.
+\item Some algorithms require awkward workarounds to avoid running into the
+  wall (e.g., placing a special marker at the leftmost cell so you know
+  you've reached the edge).
+\end{itemize}
+
+On a doubly-infinite tape, you can \textbf{always go left}. The tape extends
+infinitely in both directions. Some algorithms become simpler to design when
+you don't have to worry about the left boundary.
+
+\textbf{The Question:} Does this convenience add \textbf{computational power}?
+Can a doubly-infinite tape TM decide languages that a standard TM cannot?
+
+Spoiler: \textbf{No.} The two models are equivalent. That is exactly what
+Exercise 2 asks you to prove, and that is exactly what we will trace through
+in this section.
+
+\kt{The doubly-infinite tape removes the left boundary of a standard TM.
+The question is whether this makes the machine more powerful --- and the
+answer is no. This is our fourth robustness result.}
+\end{conceptbox}
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Part 1: Formal Definition of a Doubly-Infinite Tape DTM}
+\label{subsec:doubly-infinite-formal}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{{Analogy: Same Vending Machine, Different Shelf Layout}}
+Think of a vending machine. The \textbf{machine itself} --- its buttons, its
+coin slot, its dispensing mechanism --- doesn't change. What changes is the
+\textbf{shelf layout inside}: instead of shelves labeled $1, 2, 3, \ldots$
+(starting from shelf 1 at the top), you now have shelves labeled
+$\ldots, -2, -1, 0, 1, 2, \ldots$ (extending upward and downward
+indefinitely). The robot arm that fetches items can now reach shelves in
+\emph{both} directions.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Vending machine = the TM tuple $(Q, \Sigma, \Gamma, s, t, r, \delta)$
+  --- this does NOT change.
+\item Shelf layout = the tape and how cells are indexed --- this is what
+  changes (from $\mathbb{N}$ to $\mathbb{Z}$).
+\item Robot arm = the read/write head --- now it can reach negative-numbered
+  cells too.
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{{Doubly-Infinite Tape DTM --- The Tuple}}
+\textbf{Plain English:}
+A doubly-infinite tape DTM has \textbf{exactly the same 7-tuple} as a standard
+DTM. The states, alphabets, start/accept/reject states, and transition
+function are all identical. What changes is not the machine's description but
+\textbf{how the machine operates} --- specifically, how we define
+configurations and how the head moves.
+
+\textbf{Formal:}
+A doubly-infinite tape DTM is a 7-tuple:
+\fitmath{M = (Q,\; \Sigma,\; \Gamma,\; s,\; t,\; r,\; \delta)}
+with exactly the same meaning as for a standard DTM:
+\begin{itemize}[nosep]
+\item $Q$ = finite set of states
+\item $\Sigma$ = input alphabet (no blank symbol)
+\item $\Gamma \supseteq \Sigma \cup \{\sqcup\}$ = tape alphabet
+\item $s \in Q$ = start state
+\item $t \in Q$ = accept state
+\item $r \in Q$, $r \neq t$ = reject state
+\item $\delta \colon (Q \setminus \{t,r\}) \times \Gamma \to Q \times \Gamma \times \{-1,+1\}$ = transition function
+\end{itemize}
+
+The transition function is identical: read a symbol, write a symbol, move left
+($-1$) or right ($+1$). Nothing in the tuple changes.
+
+\textbf{What changes is the SEMANTICS} --- the meaning of ``configuration''
+and ``successor configuration.'' That's in the next box.
+\end{definitionbox}
+
+\begin{definitionbox}{{Doubly-Infinite Tape DTM --- Configurations}}
+\textbf{Plain English:}
+A configuration is a snapshot of the machine at one moment in time: what state
+it's in, what's on the tape, and where the head is. For a doubly-infinite
+tape, the tape content is a function from \emph{all integers} (not just
+positive integers) to tape symbols. The head position can be any integer,
+including negative numbers.
+
+\textbf{Formal:}
+A \textbf{configuration} is a triple $[q, \tau, \ell]$ where:
+\begin{itemize}[nosep]
+\item $q \in Q$ is the current state
+\item $\tau \colon \mathbb{Z} \to \Gamma$ is the tape content
+\item $\ell \in \mathbb{Z}$ is the head position
+\end{itemize}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $\mathbb{Z}$ means \textbf{all integers}: $\ldots, -3, -2, -1, 0, 1, 2, 3, \ldots$ This is the key difference from a standard TM, where the tape is indexed by $\mathbb{N} = \{1, 2, 3, \ldots\}$.
+\item $\tau \colon \mathbb{Z} \to \Gamma$ means every integer position maps to some tape symbol. Position $-5$ has a symbol, position $0$ has a symbol, position $42$ has a symbol.
+\item $\ell \in \mathbb{Z}$ means the head can be at position $-3$, or $0$, or $17$ --- any integer at all, including negative ones. On a standard TM, the head position is always $\geq 1$.
+\end{itemize}
+
+\textbf{Initial configuration} on input $w = w_1 w_2 \cdots w_k$:
+\fitmath{[s,\; \tau_0,\; 1]}
+where:
+\fitmath{\tau_0(n) = \begin{cases} w_n & \text{if } n \in \{1, \ldots, k\} \\ \sqcup & \text{otherwise (including } n = 0, -1, -2, \ldots\text{)} \end{cases}}
+
+\textbf{In words:} The input is placed at positions $1$ through $k$ (just
+like a standard TM). Every other cell --- including all the negative
+positions and zero --- contains the blank symbol $\sqcup$. The head starts at
+position 1, in the start state $s$.
+\end{definitionbox}
+
+\begin{definitionbox}{{Doubly-Infinite Tape DTM --- Successor Configuration}}
+\textbf{Plain English:}
+Given a configuration $[q, \tau, \ell]$, the machine reads the symbol at the
+head position, looks up the transition, writes a new symbol, changes state,
+and moves the head. This is exactly the same as a standard TM --- with one
+critical difference: there is \textbf{no special case} for the head being at
+the leftmost cell.
+
+\textbf{Formal:}
+If $\delta(q, \tau(\ell)) = (p, a, d)$ where $d \in \{-1, +1\}$, then the
+successor configuration is:
+\fitmath{[p,\; \tau',\; \ell + d]}
+where:
+\fitmath{\tau'(n) = \begin{cases} a & \text{if } n = \ell \\ \tau(n) & \text{otherwise} \end{cases}}
+
+\textbf{Breaking Down the Notation:}
+\begin{itemize}[nosep]
+\item $\tau(\ell)$ = the symbol currently under the head (at position $\ell$)
+\item $(p, a, d)$ = the transition's output: go to state $p$, write symbol
+  $a$, move in direction $d$
+\item $\tau'$ = the updated tape: identical to $\tau$ everywhere except at
+  position $\ell$, where the old symbol is replaced by $a$
+\item $\ell + d$ = the new head position. If $d = +1$, head moves right. If
+  $d = -1$, head moves left.
+\end{itemize}
+
+\textbf{THE KEY DIFFERENCE from a standard TM:}
+
+On a standard singly-infinite tape, the successor rule has a special case:
+\begin{quote}
+``If $\ell = 1$ and $d = -1$, the head stays at position 1 (cannot go left
+of the boundary).''
+\end{quote}
+
+On a doubly-infinite tape, \textbf{this special case does not exist}. If the
+head is at position 1 and the transition says ``move left,'' the head goes to
+position \textbf{0}. If the head is at position 0 and says ``move left,'' it
+goes to position $-1$. The head can always go left, without limit.
+
+\textbf{Accepting, rejecting, and halting:} Same as standard DTM. The machine
+accepts when it enters state $t$, rejects when it enters state $r$, and halts
+when it enters either.
+\end{definitionbox}
+
+\begin{examplebox}{Concrete Example: Input ``01'' on a Doubly-Infinite Tape}
+Let's see exactly what the tape looks like for input $w = 01$ (so $k = 2$,
+$w_1 = 0$, $w_2 = 1$).
+
+\textbf{Initial configuration:} $[s, \tau_0, 1]$
+
+The tape content $\tau_0$ assigns symbols to every integer:
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Position & $\cdots$ & $-2$ & $-1$ & $0$ & $1$ & $2$ & $3$ & $\cdots$ \\
+\hline
+Symbol & $\cdots$ & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\end{center}
+
+The head is at position 1 (pointing at the $\mathtt{0}$). All positions outside
+$\{1, 2\}$ contain blanks --- including position 0, $-1$, $-2$, and so on.
+
+\textbf{What happens if the head moves left from position 1?}
+
+On a \textbf{standard TM}: the head stays at position 1 (stuck against the
+left wall).
+
+On a \textbf{doubly-infinite tape TM}: the head moves to position 0. It reads
+$\sqcup$ (blank) there. If it moves left again, it goes to position $-1$ ---
+also blank. There is no wall. The head just keeps finding blank cells as it
+moves further left.
+
+\kt{The only difference between a singly-infinite and doubly-infinite tape DTM
+is in the successor configuration: no left boundary means the head can always
+move left, finding blank cells extending infinitely to the left.}
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Part 2: Singly-Infinite Simulates Doubly-Infinite (The Hard Direction)}
+\label{subsec:singly-simulates-doubly}
+%───────────────────────────────────────────────────────────────────────────────
+
+This is the hard direction. A singly-infinite tape has positions $1, 2, 3,
+\ldots$ but a doubly-infinite tape needs $\ldots, -2, -1, 0, 1, 2, \ldots$
+How do you fit an infinite-in-both-directions tape onto a tape that only goes
+one way?
+
+\begin{notebox}{Analogy: Fitting a Two-Way Street onto a One-Way Street}
+Imagine you have a street that goes in \textbf{both directions} --- cars drive
+east and west. Now the city needs to convert it into a \textbf{one-way street}
+(only east). But you still need to handle all the traffic that used to go
+west.
+
+The solution: put up \textbf{barriers} at the beginning and end of the active
+zone. Whenever a car needs to go west past the barrier, you \textbf{shift} all
+the parked cars one space to the right to make room, then let the car park in
+the newly created space. The one-way street handles the same traffic --- it
+just requires occasional reshuffling.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Two-way street = doubly-infinite tape (extends left and right)
+\item One-way street = singly-infinite tape (extends only right)
+\item Traffic going west = the head trying to move to negative positions
+\item Barriers = special boundary markers $\ell$ (left) and $r$ (right)
+\item Shifting parked cars = shifting tape content one cell right to create
+  space for a new blank cell on the left
+\end{itemize}
+\end{notebox}
+
+\begin{conceptbox}{The Big Idea of the Construction}
+\textbf{The Core Insight:}
+
+We cannot physically add negative-numbered cells to a singly-infinite tape.
+But we can maintain a ``window'' of cells that contains everything the
+doubly-infinite machine has ever touched. This window is marked by two special
+symbols:
+\begin{itemize}[nosep]
+\item $\ell$ = left boundary marker (``the leftmost cell $M$ has visited'')
+\item $r$ = right boundary marker (``the rightmost cell $M$ has visited'')
+\end{itemize}
+
+The content between $\ell$ and $r$ is a faithful copy of the corresponding
+region of $M$'s doubly-infinite tape. Whenever $M$ tries to move \emph{outside}
+this window (to a cell it hasn't visited before), our simulator \textbf{expands
+the window} to accommodate it.
+
+\textbf{Why This Matters:}
+
+At any finite point in a computation, $M$ has only visited finitely many cells.
+Even though the doubly-infinite tape is infinite in both directions, the
+machine has only used a finite portion. Our window captures exactly that
+portion.
+
+\kt{The key insight: a doubly-infinite tape machine only uses finitely many
+cells at any finite step. We track those cells with boundary markers and
+expand as needed.}
+\end{conceptbox}
+
+\begin{definitionbox}{{The Simulation Construction ($M'$ Simulates $M$)}}
+\textbf{Plain English:}
+Given a doubly-infinite tape DTM $M$, we build a singly-infinite tape DTM
+$M'$ that outcome-simulates $M$. The simulator $M'$ uses two special markers
+not in $M$'s tape alphabet to keep track of boundaries, and it ``expands'' the
+tracked region whenever $M$ needs a new cell.
+
+\textbf{The construction:}
+
+Let $M = (Q, \Sigma, \Gamma, s, t, r, \delta)$ be a doubly-infinite tape DTM.
+We build $M'$ with tape alphabet
+$\Gamma' = \Gamma \cup \{\ell, r\}$ where $\ell, r \notin \Gamma$ are fresh
+symbols (the boundary markers).
+
+$M'$ operates as follows:
+
+\textbf{Step (a) --- Initialization:}
+Replace the input $w = w_1 \cdots w_k$ on the tape by
+$\ell\, w_1 \cdots w_k\, r$. That is, place marker $\ell$ immediately before
+the input and marker $r$ immediately after. Position the head at the first
+letter of $w$ (or at $r$ if $w = \varepsilon$).
+
+\begin{lstlisting}
+Before: [ w1 | w2 | ... | wk | _ | _ | ... ]
+After:  [  l | w1 | w2 | ... | wk | r | _ | _ | ... ]
+                ^
+          head here (at w1)
+\end{lstlisting}
+
+\textbf{Step (b) --- Check for halt:}
+If the current simulated state is $t$ (accept) $\to$ accept.
+If the current simulated state is $r_{\text{rej}}$ (reject) $\to$ reject.
+
+\textbf{Step (c) --- Simulate one transition of $M$:}
+Read the symbol under the head (ignoring $\ell$ and $r$ markers --- the head
+should never be reading a marker during normal simulation). Look up
+$\delta(q, a)$ where $q$ is the current simulated state and $a$ is the symbol
+read. Write the new symbol, update the simulated state, and move the head
+according to $\delta$.
+
+\textbf{Step (d) --- Left expansion (head hit $\ell$):}
+If after step (c) the head is pointing at the $\ell$ marker, that means $M$
+wants to access a cell to the left of the current window. We need to create
+space:
+\begin{enumerate}[nosep]
+\item Shift ALL content from $\ell$ to $r$ (inclusive) one cell to the right.
+  This frees up one cell immediately after $\ell$.
+\item Write $\sqcup$ (blank) in the freed cell --- this represents the new
+  cell $M$ is visiting for the first time (which would be blank on $M$'s tape).
+\item Move the head to that blank cell.
+\end{enumerate}
+
+\begin{lstlisting}
+Before shift: [ l | A | B | C | r | _ | ... ]  head at pos 1 (l)
+After shift:  [ l | _ | A | B | C | r | _ | ... ]  head at pos 2 (blank)
+\end{lstlisting}
+
+\textbf{Step (e) --- Right expansion (head hit $r$):}
+If after step (c) the head is pointing at the $r$ marker, $M$ wants to access
+a cell to the right of the current window. This is simpler:
+\begin{enumerate}[nosep]
+\item Replace $r$ with $\sqcup$ (the new cell, which would be blank on
+  $M$'s tape).
+\item Write $r$ one cell further to the right (extending the right boundary).
+\item The head stays on the newly created blank cell.
+\end{enumerate}
+
+\begin{lstlisting}
+Before: [ l | A | B | C | r | _ | ... ]  head at pos 5 (r)
+After:  [ l | A | B | C | _ | r | ... ]  head at pos 5 (now blank)
+\end{lstlisting}
+
+\textbf{Step (f):} Go back to step (b).
+
+\textbf{Breaking Down the Key Ideas:}
+\begin{itemize}[nosep]
+\item \textbf{$\ell$ and $r$ markers:} These are NOT part of $M$'s alphabet.
+  They are bookkeeping symbols used only by $M'$ to know where the
+  ``active window'' is. $M$ never sees them.
+\item \textbf{Left expansion vs.\ right expansion:} Left expansion requires
+  shifting (expensive --- $O(n)$ work where $n$ is the window size). Right
+  expansion just moves the $r$ marker (cheap --- $O(1)$ work). This asymmetry
+  exists because the singly-infinite tape extends freely to the right but has
+  a wall on the left.
+\item \textbf{Blank cells:} When $M$ moves to a cell it has never visited
+  before, that cell contains $\sqcup$ on $M$'s tape. Our expansion steps
+  ensure that the corresponding cell on $M'$'s tape also contains $\sqcup$.
+\end{itemize}
+\end{definitionbox}
+
+Now let's trace this on a concrete example, step by step, showing every tape
+cell at every stage.
+
+\begin{examplebox}{{Full Trace: Simulating a Doubly-Infinite DTM on Input ``01''}}
+
+\textbf{Setup:} Let $M$ be a doubly-infinite tape DTM that does the following:
+\begin{itemize}[nosep]
+\item Starts on input $01$ at position 1.
+\item Scans left from position 1 to position $-1$ (needs 3 cells to the left
+  of the input).
+\item Writes symbols $A$ and $B$ on the way, then accepts.
+\end{itemize}
+
+Concretely, $M$ has these transitions:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Current state, symbol read} & \textbf{Transition} & \textbf{Meaning} \\
+\midrule
+$(s, \mathtt{0})$ & $(q_1, \mathtt{0}, -1)$ & In start state, read 0: keep 0, go left \\
+$(q_1, \sqcup)$ & $(q_2, A, -1)$ & Read blank: write $A$, go left \\
+$(q_2, \sqcup)$ & $(t, B, +1)$ & Read blank: write $B$, accept \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip
+\textbf{--- $M$'s behavior on the doubly-infinite tape (what we are simulating) ---}
+
+\textbf{Step 0:} Configuration $[s, \tau, 1]$.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-2$ & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at position 1, state $s$.
+\end{center}
+
+Read $\mathtt{0}$. Transition: $\delta(s, \mathtt{0}) = (q_1, \mathtt{0}, -1)$.
+Write $\mathtt{0}$ (no change), move left.
+
+\textbf{Step 1:} Configuration $[q_1, \tau, 0]$.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-2$ & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at position 0, state $q_1$.
+\end{center}
+
+Read $\sqcup$. Transition: $\delta(q_1, \sqcup) = (q_2, A, -1)$.
+Write $A$ at position 0, move left.
+
+\textbf{Step 2:} Configuration $[q_2, \tau', -1]$.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-2$ & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\sqcup$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at position $-1$, state $q_2$.
+\end{center}
+
+Read $\sqcup$. Transition: $\delta(q_2, \sqcup) = (t, B, +1)$.
+Write $B$ at position $-1$, move right. Enter state $t$ (accept).
+
+\textbf{Final:} Configuration $[t, \tau'', 0]$.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-2$ & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $B$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at position 0, state $t$. \textbf{ACCEPTED.}
+\end{center}
+
+$M$ used cells at positions $-1, 0, 1, 2$ --- including two cells to the left
+of the input. A standard TM cannot do this directly.
+
+\bigskip
+\textbf{--- Now: $M'$ simulating $M$ on a singly-infinite tape ---}
+
+\textbf{Initialization (Step a):} Place $\ell$ and $r$ markers around the input.
+
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 2, simulated state $s$.
+\end{center}
+
+The window $[\ell \cdots r]$ currently represents $M$'s positions 1 through 2.
+
+\bigskip
+\textbf{Simulating Step 0 of $M$ (Step c):}
+
+Head reads $\mathtt{0}$ at cell 2. Look up $\delta(s, \mathtt{0}) = (q_1, \mathtt{0}, -1)$.
+Write $\mathtt{0}$ (no visible change). Update simulated state to $q_1$.
+Move head left to cell 1.
+
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 1, simulated state $q_1$.
+\end{center}
+
+\textbf{Problem!} The head is at cell 1, which contains $\ell$ --- the left
+boundary marker. This means $M$ needs a cell to the left of the current
+window. We must expand.
+
+\bigskip
+\textbf{Left Expansion (Step d):}
+
+We need to shift everything from $\ell$ to $r$ one cell to the right, creating
+a blank cell right after $\ell$:
+
+\textit{Before shift:}
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 1.
+\end{center}
+
+Shift $\mathtt{0}, \mathtt{1}, r$ each one cell to the right. Insert $\sqcup$
+at cell 2:
+
+\textit{After shift:}
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 2 (the new blank cell), simulated state $q_1$.
+\end{center}
+
+The window $[\ell \cdots r]$ now represents $M$'s positions $0$ through $2$.
+Cell 2 corresponds to $M$'s position 0 (the newly accessed cell, which is
+blank). Cell 3 corresponds to $M$'s position 1. Cell 4 corresponds to
+$M$'s position 2.
+
+\bigskip
+\textbf{Simulating Step 1 of $M$ (Step c):}
+
+Head reads $\sqcup$ at cell 2. Look up $\delta(q_1, \sqcup) = (q_2, A, -1)$.
+Write $A$ at cell 2. Update simulated state to $q_2$. Move head left to cell 1.
+
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 1, simulated state $q_2$.
+\end{center}
+
+\textbf{Problem again!} The head hit the $\ell$ marker \emph{again}. $M$ needs
+yet another cell to the left. We expand again.
+
+\bigskip
+\textbf{Left Expansion (Step d) --- second time:}
+
+\textit{Before shift:}
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\end{center}
+
+Shift $A, \mathtt{0}, \mathtt{1}, r$ each one cell right. Insert $\sqcup$ at
+cell 2:
+
+\textit{After shift:}
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $\sqcup$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 2, simulated state $q_2$.
+\end{center}
+
+The window $[\ell \cdots r]$ now represents $M$'s positions $-1$ through $2$.
+Cell 2 = position $-1$, cell 3 = position $0$, cell 4 = position $1$,
+cell 5 = position $2$.
+
+\bigskip
+\textbf{Simulating Step 2 of $M$ (Step c):}
+
+Head reads $\sqcup$ at cell 2. Look up $\delta(q_2, \sqcup) = (t, B, +1)$.
+Write $B$ at cell 2. Update simulated state to $t$ (accept!). Move head right
+to cell 3.
+
+\begin{center}
+\begin{tabular}{c|cccccccc}
+Cell & 1 & 2 & 3 & 4 & 5 & 6 & 7 & $\cdots$ \\
+\hline
+Symbol & $\ell$ & $B$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ & $r$ & $\sqcup$ & $\cdots$ \\
+\end{tabular}
+\quad Head at cell 3, simulated state $t$. \textbf{ACCEPTED!}
+\end{center}
+
+\bigskip
+\textbf{Verification --- do the tape contents match?}
+
+Let's line up $M$'s final tape with $M'$'s final tape (ignoring the boundary
+markers):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{l|ccccc}
+\toprule
+\textbf{$M$'s position (doubly-infinite)} & $-1$ & $0$ & $1$ & $2$ \\
+\midrule
+\textbf{$M$'s final tape} & $B$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ \\
+\textbf{$M'$'s tape (cells 2--5)} & $B$ & $A$ & $\mathtt{0}$ & $\mathtt{1}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Perfect match. Both machines accepted. The simulation is correct.
+
+\textbf{Key observations from this trace:}
+\begin{itemize}[nosep]
+\item $M$ took 3 steps. $M'$ took 3 simulation steps \textbf{plus} 2 shift
+  operations. Each shift scans the entire window (costing $O(n)$ where $n$
+  is the window size). The simulation is \textbf{slower} but \textbf{correct}.
+\item The left expansion (shifting) happened twice because $M$ moved to
+  positions 0 and $-1$, which were both outside the initial window. Each
+  expansion grew the window by one cell.
+\item The right expansion (step e) was never needed in this example because
+  $M$ never moved past position 2.
+\end{itemize}
+\end{examplebox}
+
+\begin{conceptbox}{Why the Simulation Is Correct}
+\textbf{The Core Argument:}
+
+$M'$ maintains the following \textbf{invariant} at all times:
+
+\begin{quote}
+The content between $\ell$ and $r$ on $M'$'s tape is an exact copy of the
+corresponding region of $M$'s doubly-infinite tape. The head position on
+$M'$'s tape (relative to $\ell$) corresponds to the head position on $M$'s
+tape. The simulated state matches $M$'s state.
+\end{quote}
+
+\textbf{Why the invariant holds:}
+\begin{enumerate}[nosep]
+\item \textbf{Initially:} The input $w$ is placed between $\ell$ and $r$,
+  matching $M$'s initial tape at positions $1$ through $k$. All other cells
+  in $M$'s tape are blank, and our window doesn't need to include them yet.
+\item \textbf{Normal simulation step:} When $M'$ simulates a transition of
+  $M$, it reads the same symbol, writes the same symbol, and moves in the
+  same direction. The tape content and head position stay synchronized.
+\item \textbf{Left expansion:} When $M$ moves to a new cell on the left, that
+  cell contains $\sqcup$ (it was never visited). The expansion creates a
+  $\sqcup$ cell on $M'$'s tape in the correct position. The window grows,
+  but the content still matches.
+\item \textbf{Right expansion:} Symmetric argument. The new cell contains
+  $\sqcup$ on both tapes.
+\end{enumerate}
+
+\textbf{Why accept/reject behavior is preserved:}
+
+Since the invariant holds, $M'$ always reads the same symbol as $M$ at
+corresponding positions. Therefore, $M'$ makes the same state transitions as
+$M$. If $M$ reaches state $t$, so does $M'$. If $M$ reaches state $r$, so
+does $M'$. If $M$ loops, $M'$ loops too (possibly slower, but forever).
+
+\kt{The simulation works because $M'$ maintains a perfect copy of $M$'s
+active tape region between the boundary markers $\ell$ and $r$. Whenever $M$
+needs a new cell, $M'$ expands the window. The shifting is expensive --- each
+left expansion costs $O(n)$ steps --- but it is always finite, and the
+content always stays synchronized.}
+\end{conceptbox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{Part 3: Doubly-Infinite Simulates Singly-Infinite (The Easy Direction)}
+\label{subsec:doubly-simulates-singly}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}{Analogy: A Bigger Room Contains a Smaller Room}
+Imagine you have a large warehouse with infinite space in both directions
+(left and right). Someone gives you a floor plan that only uses the right
+half of the warehouse (rooms 1, 2, 3, \ldots). Can you implement that floor
+plan in your warehouse?
+
+Of course! You just use the right half and ignore the left half. There's only
+one catch: the floor plan says ``if you walk into the left wall at room 1,
+you bounce off and stay in room 1.'' Your warehouse doesn't have a wall
+there --- room 0 exists. So you \textbf{build a wall}: put a barrier at
+position 0 that forces anyone who hits it to bounce back to position 1.
+
+\textbf{In our formal world:}
+\begin{itemize}[nosep]
+\item Large warehouse = doubly-infinite tape (positions $\mathbb{Z}$)
+\item Right half = cells $1, 2, 3, \ldots$ (same as a singly-infinite tape)
+\item Left wall at room 1 = the boundary behavior of a singly-infinite tape
+  (head at position 1 trying to go left stays at 1)
+\item Barrier at position 0 = a special marker symbol \texttt{\#} placed at
+  position 0 that causes the head to ``bounce right''
+\end{itemize}
+\end{notebox}
+
+\begin{definitionbox}{{Simulation Construction: Doubly-Infinite Simulates Singly-Infinite}}
+\textbf{Plain English:}
+Given a singly-infinite tape DTM $M$, we build a doubly-infinite tape DTM
+$M'$ that does the same thing. The cells $1, 2, 3, \ldots$ are used normally.
+To simulate the left wall, $M'$ places a marker \texttt{\#} at position 0.
+Whenever the head hits \texttt{\#}, it ``bounces'' to the right --- mimicking
+the singly-infinite behavior of ``head stays at position 1 when trying to
+move left.''
+
+\textbf{Formal construction:}
+
+Let $M = (Q, \Sigma, \Gamma, s, t, r, \delta)$ be a singly-infinite tape DTM.
+Define $M' = (Q', \Sigma, \Gamma', s', t, r, \delta')$ as a doubly-infinite
+tape DTM where:
+
+\begin{itemize}[nosep]
+\item $Q' = Q \cup \{s', q_\#\}$ where $s', q_\#$ are fresh states not in $Q$
+\item $\Gamma' = \Gamma \cup \{\#\}$ where $\# \notin \Gamma$ is a fresh marker
+  symbol
+\item $s'$ is the new start state (not $s$ --- we need two setup steps first)
+\end{itemize}
+
+\textbf{Transition function $\delta'$:}
+
+\textbf{(1) Initialization --- place the marker:}
+\begin{itemize}[nosep]
+\item $\delta'(s', a) = (q_\#, a, -1)$ for all $a \in \Gamma'$
+
+  \textit{``In the new start state $s'$, no matter what symbol we read,
+  keep that symbol, and move left to position 0.''}
+\item $\delta'(q_\#, \sqcup) = (s, \#, +1)$
+
+  \textit{``At position 0 (which is blank), write the marker \texttt{\#},
+  then move right back to position 1 and enter $M$'s original start state
+  $s$.''}
+\end{itemize}
+
+After these two transitions, the tape looks like:
+\begin{lstlisting}
+... | _ | # | w1 | w2 | ... | wk | _ | ...
+         0    1     2          k
+              ^
+        head here, state s
+\end{lstlisting}
+Position 0 has the marker \texttt{\#}. The head is at position 1, in state
+$s$ --- exactly how $M$ would start.
+
+\textbf{(2) Normal simulation:}
+\begin{itemize}[nosep]
+\item $\delta'(q, a) = \delta(q, a)$ for all $q \in Q \setminus \{t, r\}$
+  and all $a \in \Gamma$
+
+  \textit{``For any non-halting state of $M$ and any symbol from $M$'s
+  alphabet, do exactly what $M$ would do.''}
+\end{itemize}
+
+\textbf{(3) Boundary bounce --- the wall simulation:}
+\begin{itemize}[nosep]
+\item $\delta'(q, \#) = (q, \#, +1)$ for all $q \in Q \setminus \{t, r\}$
+
+  \textit{``If any non-halting state reads the \texttt{\#} marker, don't
+  change state, keep the marker, and move right. This simulates the
+  singly-infinite tape behavior where the head bounces off the left wall.''}
+\end{itemize}
+
+\textbf{Breaking Down the Construction:}
+\begin{itemize}[nosep]
+\item \textbf{$s'$ and $q_\#$:} Two new states used only during initialization.
+  Once the marker is placed, these states are never visited again.
+\item \textbf{The marker \texttt{\#}:} Sits at position 0 for the entire
+  computation. It never gets overwritten (rule 3 always writes \texttt{\#}
+  back). It acts as an artificial left wall.
+\item \textbf{The bounce (rule 3):} On a singly-infinite tape, if $M$ is in
+  state $q$ at position 1 and tries to move left, the head stays at position
+  1 and $M$ continues in whatever state the transition specifies. On our
+  doubly-infinite simulation, the head would move to position 0 and read
+  \texttt{\#}. Rule 3 sends the head back to position 1 \emph{without
+  changing state}. The net effect is the same: the head ``stays'' at
+  position 1.
+\item \textbf{Why we don't change state in the bounce:} On a singly-infinite
+  tape, when the head ``stays at position 1,'' it still transitions to the
+  new state specified by $\delta$. That state change already happened in
+  step (2) when the transition was executed. Rule (3) just handles the
+  physical bounce-back --- no additional state change needed.
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}{{Trace: Doubly-Infinite Simulating a Singly-Infinite DTM (Bounce Example)}}
+
+\textbf{Setup:} Let $M$ be a singly-infinite tape DTM with these transitions:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{State, symbol} & \textbf{Transition} & \textbf{Meaning} \\
+\midrule
+$(s, \mathtt{0})$ & $(q_1, X, -1)$ & Read 0: write $X$, go left \\
+$(q_1, \mathtt{0})$ & $(t, \mathtt{0}, +1)$ & Read 0: accept \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+On input $\mathtt{01}$ with a \textbf{singly-infinite} tape:
+\begin{enumerate}[nosep]
+\item $[s, \text{tape}, 1]$: Read $\mathtt{0}$. Write $X$, go left. New state $q_1$.
+  But head is at position 1 and tries to go left $\to$ \textbf{stays at position 1} (left wall!).
+\item $[q_1, \text{tape}, 1]$: Read $X$ (we just wrote it). Hmm --- $\delta(q_1, X)$ is undefined.
+\end{enumerate}
+
+Wait --- that doesn't work well. Let's pick a cleaner example. Suppose $M$ has:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{State, symbol} & \textbf{Transition} & \textbf{Meaning} \\
+\midrule
+$(s, \mathtt{0})$ & $(q_1, \mathtt{0}, -1)$ & Read 0: keep 0, go left \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+On input $\mathtt{01}$, singly-infinite tape:
+\begin{enumerate}[nosep]
+\item $[s, \text{tape}, 1]$: Read $\mathtt{0}$. $\delta(s, 0) = (q_1, 0, -1)$.
+  Write 0 (no change), try to move left. Position is 1 $\to$ head \textbf{stays at 1}. State becomes $q_1$.
+\item $[q_1, \text{tape}, 1]$: Head is at position 1, reads $\mathtt{0}$.
+  (The computation continues from here with whatever $\delta(q_1, 0)$ says.)
+\end{enumerate}
+
+The key point: the head bounced off the left wall. It tried to go to position 0
+but couldn't.
+
+\textbf{Now $M'$ (doubly-infinite) simulating $M$:}
+
+\textbf{Initialization:}
+
+Start: head at position 1, state $s'$.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at 1, state $s'$.
+\end{center}
+
+$\delta'(s', \mathtt{0}) = (q_\#, \mathtt{0}, -1)$: keep the 0, move left.
+Head goes to position 0.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\sqcup$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at 0, state $q_\#$.
+\end{center}
+
+$\delta'(q_\#, \sqcup) = (s, \#, +1)$: write \texttt{\#}, move right.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\#$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at 1, state $s$. Initialization complete.
+\end{center}
+
+\textbf{Simulating Step 1 of $M$:}
+
+$\delta'(s, \mathtt{0}) = \delta(s, \mathtt{0}) = (q_1, \mathtt{0}, -1)$:
+write 0 (no change), move left. Head goes to position \textbf{0}.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\#$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at 0, state $q_1$.
+\end{center}
+
+The head reads \texttt{\#}! This triggers the \textbf{bounce rule}:
+$\delta'(q_1, \#) = (q_1, \#, +1)$: keep state $q_1$, keep \texttt{\#},
+move right.
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+Position & $-1$ & $0$ & $1$ & $2$ & $3$ \\
+\hline
+Symbol & $\sqcup$ & $\#$ & $\mathtt{0}$ & $\mathtt{1}$ & $\sqcup$ \\
+\end{tabular}
+\quad Head at 1, state $q_1$. \textbf{Bounce complete!}
+\end{center}
+
+\textbf{Result:} After the bounce, the head is at position 1 in state $q_1$
+--- exactly where it would be on the singly-infinite tape after bouncing off
+the left wall.
+
+\kt{The bounce works in two micro-steps on $M'$ (move to \# at position 0,
+then bounce back to position 1) but produces the same result as one step on
+$M$ (head stays at position 1). The simulation is correct because the net
+effect on state and head position is identical.}
+\end{examplebox}
+
+
+%───────────────────────────────────────────────────────────────────────────────
+\subsection{The Conclusion: Doubly-Infinite = Singly-Infinite}
+\label{subsec:doubly-infinite-conclusion}
+%───────────────────────────────────────────────────────────────────────────────
+
+\begin{conceptbox}{Putting Both Directions Together}
+We have shown:
+
+\textbf{Direction 1 (Part 2):} Every singly-infinite tape DTM can simulate
+every doubly-infinite tape DTM. Given any doubly-infinite machine $M$, we
+built a singly-infinite machine $M'$ with boundary markers $\ell$ and $r$
+that tracks $M$'s active region and expands as needed.
+\begin{center}
+Doubly-infinite tape DTMs $\subseteq$ Singly-infinite tape DTMs (in power)
+\end{center}
+
+\textbf{Direction 2 (Part 3):} Every doubly-infinite tape DTM can simulate
+every singly-infinite tape DTM. Given any singly-infinite machine $M$, we
+built a doubly-infinite machine $M'$ that places a marker \texttt{\#} at
+position 0 and bounces the head whenever it hits the marker.
+\begin{center}
+Singly-infinite tape DTMs $\subseteq$ Doubly-infinite tape DTMs (in power)
+\end{center}
+
+\textbf{Both directions together:}
+\fitmath{\text{Languages decided by singly-infinite DTMs} \;=\; \text{Languages decided by doubly-infinite DTMs}}
+
+The doubly-infinite tape is a convenience, not a power upgrade. You can always
+convert between the two models. The class of decidable (and c.e.) languages
+remains the same.
+\end{conceptbox}
+
+\begin{conceptbox}{{The Robustness Pattern --- Four Proofs, One Template}}
+Looking back at Sections 3 through 6, every robustness proof followed the
+\textbf{same three-step template}:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{clll}
+\toprule
+\textbf{Sec.} & \textbf{Extension} & \textbf{Simulation Trick} & \textbf{Cost} \\
+\midrule
+3 & Stay direction & Encode ``stay'' as right-then-left & 2 extra steps per stay \\
+4 & Multi-tape & Encode $k$ tapes on 1 tape & $O(n)$ overhead per step \\
+5 & Nondeterminism & BFS over computation tree & Exponential blowup \\
+6 & Doubly-infinite tape & Boundary markers + shifting & $O(n)$ per left expansion \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The template:
+\begin{enumerate}[nosep]
+\item \textbf{Define the extension:} What does the fancy machine look like formally?
+\item \textbf{Build a simulation:} Construct a standard DTM that mimics the fancy machine step by step.
+\item \textbf{Argue correctness:} Show the simulator produces the same accept/reject/loop on every input.
+\end{enumerate}
+
+Each simulation is slower than the original (sometimes dramatically slower),
+but speed doesn't matter for robustness --- only the final verdict matters.
+
+\kt{Together with stay direction (Section 3), multi-tape (Section 4), and
+nondeterminism (Section 5), the doubly-infinite tape gives us four robustness
+proofs. Each follows the same template: define the extension, build a
+simulation, trace it, argue correctness. The TM model is remarkably robust
+--- no ``reasonable'' extension adds computational power. This is strong
+evidence for the Church-Turing Thesis.}
+\end{conceptbox}
